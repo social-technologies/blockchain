@@ -39,6 +39,7 @@ use sp_core::{
 	crypto::KeyTypeId,
 	u32_trait::{_1, _2, _3, _4},
 	OpaqueMetadata,
+	U256
 };
 pub use node_primitives::{AccountId, Signature};
 use node_primitives::{AccountIndex, Balance, BlockNumber, Hash, Index, Moment};
@@ -46,6 +47,7 @@ use sp_api::impl_runtime_apis;
 use sp_runtime::{
 	Permill, Perbill, Perquintill, Percent, ApplyExtrinsicResult,
 	impl_opaque_keys, generic, create_runtime_str, ModuleId, FixedPointNumber,
+	MultiSigner
 };
 use sp_runtime::curve::PiecewiseLinear;
 use sp_runtime::transaction_validity::{TransactionValidity, TransactionSource, TransactionPriority};
@@ -102,15 +104,15 @@ pub fn wasm_binary_unwrap() -> &'static [u8] {
 
 /// Runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("node"),
-	impl_name: create_runtime_str!("substrate-node"),
-	authoring_version: 10,
+	spec_name: create_runtime_str!("spec"),
+	impl_name: create_runtime_str!("impl"),
+	authoring_version: 1,
 	// Per convention: if the runtime behavior changes, increment spec_version
 	// and set impl_version to 0. If only runtime
 	// implementation changes and behavior does not, then leave spec_version as
 	// is and increment impl_version.
-	spec_version: 259,
-	impl_version: 1,
+	spec_version: 1,
+	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
@@ -130,11 +132,11 @@ pub struct DealWithFees;
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item=NegativeImbalance>) {
 		if let Some(fees) = fees_then_tips.next() {
-			// for fees, 80% to treasury, 20% to author
-			let mut split = fees.ration(80, 20);
+			// for fees, 30% to treasury, 70% to author
+			let mut split = fees.ration(99, 1);
 			if let Some(tips) = fees_then_tips.next() {
 				// for tips, if any, 80% to treasury, 20% to author (though this can be anything)
-				tips.ration_merge_into(80, 20, &mut split);
+				tips.ration_merge_into(99, 1, &mut split);
 			}
 			Treasury::on_unbalanced(split.0);
 			Author::on_unbalanced(split.1);
@@ -473,9 +475,9 @@ impl pallet_staking::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
-	pub const VotingPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * 24 * 60 * MINUTES;
+	pub const LaunchPeriod: BlockNumber = 3 * 24 * 60 * MINUTES;
+	pub const VotingPeriod: BlockNumber = 4 * 24 * 60 * MINUTES;
+	pub const FastTrackVotingPeriod: BlockNumber = 1 * 24 * 60 * MINUTES;
 	pub const InstantAllowed: bool = true;
 	pub const MinimumDeposit: Balance = 100 * DOLLARS;
 	pub const EnactmentPeriod: BlockNumber = 30 * 24 * 60 * MINUTES;
@@ -833,7 +835,7 @@ impl pallet_identity::Trait for Runtime {
 parameter_types! {
 	pub const ConfigDepositBase: Balance = 5 * DOLLARS;
 	pub const FriendDepositFactor: Balance = 50 * CENTS;
-	pub const MaxFriends: u16 = 9;
+	pub const MaxFriends: u16 = 15;
 	pub const RecoveryDeposit: Balance = 5 * DOLLARS;
 }
 
@@ -887,6 +889,119 @@ impl pallet_vesting::Trait for Runtime {
 	type WeightInfo = weights::pallet_vesting::WeightInfo;
 }
 
+pub struct GasPriceCalculator;
+
+impl pallet_evm::FeeCalculator for GasPriceCalculator {
+	fn min_gas_price() -> U256 {
+		U256::from(1)
+	}
+}
+
+impl pallet_evm::Trait for Runtime {
+	type FeeCalculator = GasPriceCalculator;
+	type CallOrigin = pallet_evm::EnsureAddressTruncated;
+	type WithdrawOrigin = pallet_evm::EnsureAddressTruncated;
+	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
+	type Currency = Balances;
+	type Event = Event;
+	type Precompiles = (
+		pallet_evm::precompiles::ECRecover,
+		pallet_evm::precompiles::Sha256,
+		pallet_evm::precompiles::Ripemd160,
+		pallet_evm::precompiles::Identity,
+	);
+	type ChainId = pallet_evm::SystemChainId;
+}
+
+impl pallet_did::Trait for Runtime {
+	type Event = Event;
+	type Public = MultiSigner;
+	type Signature = Signature;
+}
+
+parameter_types! {
+	pub const ExistentialDepositOfMissionTokens: u128 = 1;
+	pub const MaxMissionTokensSupply: u128 = 7_777_777_777 * DOLLARS;
+}
+
+impl pallet_mission_tokens::Trait for Runtime {
+	type Event = Event;
+	type Balance = u128;
+	type MissionTokenId = u32;
+	type ExistentialDeposit = ExistentialDepositOfMissionTokens;
+	type OnNewAccount = ();
+	type MaxMissionTokensSupply = MaxMissionTokensSupply;
+	type MissionCreatorOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureMembers<_4, AccountId, CouncilCollective>
+	>;
+}
+
+impl pallet_social_treasury::Trait for Runtime {
+	type ApproveOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureMembers<_4, AccountId, CouncilCollective>
+	>;
+	type RejectOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureMembers<_2, AccountId, CouncilCollective>
+	>;
+	type Tippers = Elections;
+	type TipCountdown = TipCountdown;
+	type TipFindersFee = TipFindersFee;
+	type TipReportDepositBase = TipReportDepositBase;
+	type DataDepositPerByte = DataDepositPerByte;
+	type Event = Event;
+	type OnSlash = ();
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type BountyDepositBase = BountyDepositBase;
+	type BountyDepositPayoutDelay = BountyDepositPayoutDelay;
+	type BountyUpdatePeriod = BountyUpdatePeriod;
+	type BountyCuratorDeposit = BountyCuratorDeposit;
+	type BountyValueMinimum = BountyValueMinimum;
+	type MaximumReasonLength = MaximumReasonLength;
+	type BurnDestination = ();
+	type WeightInfo = weights::pallet_social_treasury::WeightInfo;
+}
+
+impl pallet_validator_registry::Trait for Runtime {
+	type Event = Event;
+}
+
+parameter_types! {
+	pub const MinUsernameLength: u32 = 4;
+	pub const MaxUsernameLength: u32 = 21;
+}
+
+impl pallet_username_registry::Trait for Runtime {
+	type Event = Event;
+	type MaxRegistrars = MaxRegistrars;
+	type MinUsernameLength = MinUsernameLength;
+	type MaxUsernameLength = MaxUsernameLength;
+	type ForceOrigin = EnsureRootOrHalfCouncil;
+	type RegistrarOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::pallet_username_registry::WeightInfo;
+}
+
+parameter_types! {
+    pub const ChainId: u8 = 5;
+    pub const ProposalLifetime: u32 = 50;
+}
+
+impl pallet_chainbridge::Trait for Runtime {
+	type Event = Event;
+    type AdminOrigin = EnsureRoot<Self::AccountId>;
+    type Proposal = Call;
+    type ChainId = ChainId;
+    type ProposalLifetime = ProposalLifetime;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -925,6 +1040,13 @@ construct_runtime!(
 		Scheduler: pallet_scheduler::{Module, Call, Storage, Event<T>},
 		Proxy: pallet_proxy::{Module, Call, Storage, Event<T>},
 		Multisig: pallet_multisig::{Module, Call, Storage, Event<T>},
+		Evm: pallet_evm::{Module, Call, Storage, Event<T>},
+		Did: pallet_did::{Module, Call, Storage, Event<T>},
+		MissionTokens: pallet_mission_tokens::{Module, Call, Storage, Event<T>},
+		SocialTreasury: pallet_social_treasury::{Module, Call, Storage, Event<T>},
+		ValidatorRegistry: pallet_validator_registry::{Module, Call, Storage, Event<T>},
+		UsernameRegistry: pallet_username_registry::{Module, Call, Storage, Event<T>},
+		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
 	}
 );
 

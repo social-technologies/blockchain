@@ -48,18 +48,22 @@ pallet-authority-discovery = { version = "2.0.0", default-features = false, path
 pallet-authorship = { version = "2.0.0", default-features = false, path = "../../../frame/authorship" }
 pallet-babe = { version = "2.0.0", default-features = false, path = "../../../frame/babe" }
 pallet-balances = { version = "2.0.0", default-features = false, path = "../../../frame/balances" }
+pallet-chainbridge = { version = "0.0.2", default-features = false, path = "../../../frame/chainbridge", package = "chainbridge" }
 pallet-collective = { version = "2.0.0", default-features = false, path = "../../../frame/collective" }
 pallet-contracts = { version = "2.0.0", default-features = false, path = "../../../frame/contracts" }
 pallet-contracts-primitives = { version = "2.0.0", default-features = false, path = "../../../frame/contracts/common/" }
 pallet-contracts-rpc-runtime-api = { version = "0.8.0", default-features = false, path = "../../../frame/contracts/rpc/runtime-api/" }
 pallet-democracy = { version = "2.0.0", default-features = false, path = "../../../frame/democracy" }
+pallet-did = { version = "2.0.0", default-features = false, path = "../../../frame/did" }
 pallet-elections-phragmen = { version = "2.0.0", default-features = false, path = "../../../frame/elections-phragmen" }
+pallet-evm = { version = "2.0.0", default-features = false, path = "../../../frame/evm" }
 pallet-finality-tracker = { version = "2.0.0", default-features = false, path = "../../../frame/finality-tracker" }
 pallet-grandpa = { version = "2.0.0", default-features = false, path = "../../../frame/grandpa" }
 pallet-im-online = { version = "2.0.0", default-features = false, path = "../../../frame/im-online" }
 pallet-indices = { version = "2.0.0", default-features = false, path = "../../../frame/indices" }
 pallet-identity = { version = "2.0.0", default-features = false, path = "../../../frame/identity" }
 pallet-membership = { version = "2.0.0", default-features = false, path = "../../../frame/membership" }
+pallet-mission-tokens = { version = "0.1.0", default-features = false, path = "../../../frame/mission-tokens" }
 pallet-multisig = { version = "2.0.0", default-features = false, path = "../../../frame/multisig" }
 pallet-offences = { version = "2.0.0", default-features = false, path = "../../../frame/offences" }
 pallet-offences-benchmarking = { version = "2.0.0", path = "../../../frame/offences/benchmarking", default-features = false, optional = true }
@@ -71,13 +75,16 @@ pallet-session-benchmarking = { version = "2.0.0", path = "../../../frame/sessio
 pallet-staking = { version = "2.0.0", default-features = false, path = "../../../frame/staking" }
 pallet-staking-reward-curve = { version = "2.0.0", default-features = false, path = "../../../frame/staking/reward-curve" }
 pallet-scheduler = { version = "2.0.0", default-features = false, path = "../../../frame/scheduler" }
+pallet-social-treasury = { version = "0.1.0", default-features = false, path = "../../../frame/social-treasury" }
 pallet-society = { version = "2.0.0", default-features = false, path = "../../../frame/society" }
 pallet-sudo = { version = "2.0.0", default-features = false, path = "../../../frame/sudo" }
 pallet-timestamp = { version = "2.0.0", default-features = false, path = "../../../frame/timestamp" }
 pallet-treasury = { version = "2.0.0", default-features = false, path = "../../../frame/treasury" }
+pallet-username-registry = { version = "0.1.0", default-features = false, path = "../../../frame/username-registry" }
 pallet-utility = { version = "2.0.0", default-features = false, path = "../../../frame/utility" }
 pallet-transaction-payment = { version = "2.0.0", default-features = false, path = "../../../frame/transaction-payment" }
 pallet-transaction-payment-rpc-runtime-api = { version = "2.0.0", default-features = false, path = "../../../frame/transaction-payment/rpc/runtime-api/" }
+pallet-validator-registry = { version = "0.1.0", default-features = false, path = "../../../frame/validator-registry" }
 pallet-vesting = { version = "2.0.0", default-features = false, path = "../../../frame/vesting" }
 
 [build-dependencies]
@@ -144,6 +151,13 @@ std = [
 	"pallet-society/std",
 	"pallet-recovery/std",
 	"pallet-vesting/std",
+	"pallet-did/std",
+    "pallet-evm/std",
+    "pallet-mission-tokens/std",
+    "pallet-social-treasury/std",
+    "pallet-validator-registry/std",
+    "pallet-username-registry/std",
+    "pallet-chainbridge/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",

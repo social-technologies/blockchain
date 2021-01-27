@@ -1,0 +1,42 @@
+{{- if .Values.k8s_v19_used }}
+apiVersion: networking.k8s.io/v1
+{{- else }}
+apiVersion: networking.k8s.io/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: {{ .Values.app }}-nginx-ingress
+  namespace: {{ .Values.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    {{- if .Values.production_issuer }}
+    cert-manager.io/issuer: "letsencrypt-prod"
+    {{- else }}
+    cert-manager.io/issuer: "letsencrypt-staging"
+    {{- end }}
+spec:
+  tls:
+  - hosts:
+    - {{ .Values.domain }}
+    secretName: {{ .Values.app }}-tls
+  rules:
+  - host: {{ .Values.domain }}
+    http:
+      paths:
+      - path: /
+        {{- if .Values.k8s_v19_used }}
+        pathType: Prefix
+        {{- end }}
+        backend:
+          {{- if .Values.k8s_v19_used }}
+            service:
+              name: {{ .Values.app }}
+              port:
+                number: 80
+          {{- else }}
+          serviceName: {{ .Values.app }}
+          servicePort: 80
+          {{- end }}

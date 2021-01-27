@@ -1,0 +1,84 @@
+namespace: node
+node_selector: false
+
+
+# set tag manually --set image.tag=latest
+image:
+  repository: socialnetwork/node
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+  basepath: /substrate
+
+
+# if set to true a service account for substrate will be created
+rbac:
+  enable: true
+  name: node
+
+
+# name of the statefulset
+app: node
+listen_node_port: false
+
+
+# base domain
+domain: node.example.com
+
+
+# certificate issuer
+production_issuer: true
+acme_registration_email: my-email@example.com
+
+
+k8s_v19_used: false
+
+
+nodes:
+  replicas: 2
+  args:
+    # name and data directory are set by the chart itself
+    # key and node-key may be provided on commandline invocation
+    #
+    - --chain chi
+    # - krummelanke
+    # serve rpc within the local network
+    # - fenced off the world via firewall
+    # - used for health checks
+    - --rpc-external
+    - --rpc-cors all
+    - --ws-external
+    # - --log
+    # - sub-libp2p=trace
+
+
+validator: {}
+  # providing 'keys' string via --set commandline parameter will run the nodes
+  # in validator mode (--validator).
+  #
+  # name, key and node-key can be given in a base64 encoded keyfile string (at
+  # validator.keys) which has the following format:
+  #
+  # substrate-0-name <node-name>
+  # substrate-0-key <key-seed>
+  # substrate-0-node-key <node-secret-key>
+  # substrate-1-name <node-name>
+  # substrate-1-key <key-seed>
+  # substrate-1-node-key <node-secret-key>
+  #
+  # pod names are canonical. changing these or providing different amount of
+  # keys than the replicas count will lead to behavior no one ever has
+  # experienced before.
+
+
+requests:
+  cpu: 1
+  memory: 1Gi
+limits:
+  cpu: 1.5
+  memory: 2Gi
+
+
+storage_size: 32Gi
+
+
+storage_class: do-block-storage

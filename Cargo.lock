@@ -686,6 +686,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "chainbridge"
+version = "0.0.2"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-wasm-builder-runner 2.0.0",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3846,6 +3862,7 @@ dependencies = [
 name = "node-runtime"
 version = "2.0.1"
 dependencies = [
+ "chainbridge",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -3864,13 +3881,16 @@ dependencies = [
  "pallet-contracts-primitives",
  "pallet-contracts-rpc-runtime-api",
  "pallet-democracy",
+ "pallet-did",
  "pallet-elections-phragmen",
+ "pallet-evm",
  "pallet-finality-tracker",
  "pallet-grandpa",
  "pallet-identity",
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",
+ "pallet-mission-tokens",
  "pallet-multisig",
  "pallet-offences",
  "pallet-offences-benchmarking",
@@ -3880,6 +3900,7 @@ dependencies = [
  "pallet-scheduler",
  "pallet-session",
  "pallet-session-benchmarking",
+ "pallet-social-treasury",
  "pallet-society",
  "pallet-staking",
  "pallet-staking-reward-curve",
@@ -3888,7 +3909,9 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
+ "pallet-username-registry",
  "pallet-utility",
+ "pallet-validator-registry",
  "pallet-vesting",
  "parity-scale-codec",
  "serde",
@@ -3908,7 +3931,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "static_assertions",
- "substrate-wasm-builder-runner",
+ "substrate-wasm-builder-runner 1.0.6",
 ]
 
 [[package]]
@@ -3979,7 +4002,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder-runner",
+ "substrate-wasm-builder-runner 1.0.6",
 ]
 
 [[package]]
@@ -4424,6 +4447,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-did"
+version = "2.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-elections"
 version = "2.0.1"
 dependencies = [
@@ -4613,6 +4651,20 @@ dependencies = [
 [[package]]
 name = "pallet-membership"
 version = "2.0.1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-mission-tokens"
+version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4832,6 +4884,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-social-treasury"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-mission-tokens",
+ "pallet-offences",
+ "pallet-session",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-timestamp",
+ "pallet-treasury",
+ "pallet-validator-registry",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-society"
 version = "2.0.1"
 dependencies = [
@@ -5019,6 +5095,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-username-registry"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-utility"
 version = "2.0.1"
 dependencies = [
@@ -5028,6 +5117,20 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-validator-registry"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-mission-tokens",
+ "parity-scale-codec",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -7127,7 +7230,7 @@ dependencies = [
  "sp-runtime",
  "sp-sandbox",
  "sp-std",
- "substrate-wasm-builder-runner",
+ "substrate-wasm-builder-runner 1.0.6",
 ]
 
 [[package]]
@@ -8287,7 +8390,7 @@ dependencies = [
  "sp-io",
  "sp-runtime-interface",
  "sp-std",
- "substrate-wasm-builder-runner",
+ "substrate-wasm-builder-runner 1.0.6",
 ]
 
 [[package]]
@@ -8298,7 +8401,7 @@ dependencies = [
  "sp-io",
  "sp-runtime-interface",
  "sp-std",
- "substrate-wasm-builder-runner",
+ "substrate-wasm-builder-runner 1.0.6",
 ]
 
 [[package]]
@@ -8777,7 +8880,7 @@ dependencies = [
  "sp-trie",
  "sp-version",
  "substrate-test-runtime-client",
- "substrate-wasm-builder-runner",
+ "substrate-wasm-builder-runner 1.0.6",
  "trie-db",
 ]
 
@@ -8864,6 +8967,12 @@ dependencies = [
 [[package]]
 name = "substrate-wasm-builder-runner"
 version = "1.0.6"
+
+[[package]]
+name = "substrate-wasm-builder-runner"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54cab12167e32b38a62c5ea5825aa0874cde315f907a46aad2b05aa8ef3d862f"
 
 [[package]]
 name = "subtle"
