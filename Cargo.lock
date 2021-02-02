@@ -4666,6 +4666,7 @@ dependencies = [
 name = "pallet-mission-tokens"
 version = "0.1.0"
 dependencies = [
+ "chainbridge",
  "frame-support",
  "frame-system",
  "parity-scale-codec",

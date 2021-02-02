@@ -13,6 +13,7 @@ use frame_support::{
     Parameter,
 };
 use frame_system::{ensure_signed, split_inner, RefCount};
+use sp_core::U256;
 use sp_runtime::{
     traits::{
         AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, Member, Saturating, StaticLookup,
@@ -23,13 +24,15 @@ use sp_runtime::{
 use sp_std::prelude::*;
 use sp_std::{cmp, convert::Infallible, ops::BitOr, result};
 
+use pallet_chainbridge as bridge;
+
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
 
-pub trait Trait: frame_system::Trait {
+pub trait Trait: frame_system::Trait + bridge::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 
     /// The balance of an account.
@@ -209,6 +212,7 @@ decl_error! {
         ExistingVestingSchedule,
         /// Beneficiary account must pre-exist
         DeadAccount,
+        InvalidTransfer,
     }
 }
 
@@ -240,6 +244,25 @@ decl_module! {
             <MaxMissionTokenId<T>>::put(new_mission_id);
 
             Self::deposit_event(RawEvent::MissionCreated(new_mission_id));
+        }
+
+        /// Transfers some amount of the mission tokens to some recipient on a (whitelisted) destination chain.
+        #[weight = 195_000_000]
+        pub fn transfer_mission_tokens(
+            origin,
+            #[compact] token_id: T::MissionTokenId,
+            #[compact] value: T::Balance,
+            recipient: Vec<u8>,
+            dest_id: bridge::ChainId
+        ) -> DispatchResult {
+            let source = ensure_signed(origin)?;
+            ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
+            Self::validate_mission_token_id(token_id)?;
+            let bridge_id = <bridge::Module<T>>::account_id();
+            Self::do_transfer(&source, &bridge_id, token_id, value, ExistenceRequirement::AllowDeath)?;
+
+            let resource_id = bridge::derive_resource_id(dest_id, &Self::mission_token_acronym(token_id));
+            <bridge::Module<T>>::transfer_fungible(dest_id, resource_id, recipient, U256::from(value.saturated_into::<u128>()))
         }
     }
 }
@@ -296,6 +319,15 @@ impl<T: Trait> Module<T> {
 
     pub fn mission_token_ids() -> (T::MissionTokenId, T::MissionTokenId) {
         (<MinMissionTokenId<T>>::get(), <MaxMissionTokenId<T>>::get())
+    }
+
+    fn mission_token_acronym(token_id: T::MissionTokenId) -> Vec<u8> {
+        let mut acronym = b"NET".to_vec();
+        let postfix = U256::from(token_id.saturated_into::<u128>());
+        let mut buf = vec![];
+        postfix.to_big_endian(&mut buf);
+        acronym.append(&mut buf);
+        acronym
     }
 
     // Transfer some free balance from `transactor` to `dest`, respecting existence requirements.
