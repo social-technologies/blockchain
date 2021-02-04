@@ -1,10 +1,95 @@
-# The Social Network &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE) [![GitLab Status](https://gitlab.parity.io/parity/substrate/badges/master/pipeline.svg)](https://gitlab.parity.io/parity/substrate/pipelines) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
+# The Social Network &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
-The Social Network is a next-generation governance, economic, and social system for humanity 🚀. [Read the Whitepaper](https://bit.ly/2Jheagq).
+The Social Network is a next-generation governance, economic, and social system for humanity built on Polkadot Substrate. To learn more [read the whitepaper](https://bit.ly/2Jheagq) 🚀🌎.
 
-## Contributions & Code of Conduct
+![Substrate Builders Program](/docs/SBP_M2.png)
 
-Please follow the contributions guidelines as outlined in [`docs/CONTRIBUTING.adoc`](docs/CONTRIBUTING.adoc). In all communications and contributions, this project follows the [Contributor Covenant Code of Conduct](docs/CODE_OF_CONDUCT.md).
+## Join the network of Guardians
+
+The Social Network is powered by a decentralized, permissionless blockchain which anyone can participate in by running a Guardian node. This allows anyone to verify transactions, replicate data, and remove the ability for any central party or middleman to extract rent or censor the network for personal gain, control, or power.
+
+Guardians are responsible for securing the integrity of the network by running the software in this repo, this secures the ledger, and enables front end social networking platforms and interfaces to connect to a decentralized source of truth. Guardians are rewarded with NET tokens for keeping their node online and available, and incentivized with higher rewards the more reliable their servers are for platforms.
+
+Individuals and Societies on The Social Network can stake NET tokens to guardians they wish to support, determined by their reputation on the open markets and which global mission the validator chooses to support. A mission could be something like renewable energy.
+
+## Running a Guardian
+
+To get started, you can follow the steps depending on your operating system:
+
+### Macos
+
+Open the Terminal application and execute the following commands:
+```
+# Install Homebrew if necessary https://brew.sh/
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+
+# Make sure Homebrew is up-to-date, install openssl and cmake
+brew update
+brew install openssl cmake
+```
+
+### Ubuntu/Debian
+
+Use a terminal shell to execute the following commands:
+
+```
+sudo apt update
+# May prompt for location information
+sudo apt install -y cmake pkg-config libssl-dev git build-essential clang libclang-dev curl libz-dev
+```
+
+### Arch Linux
+
+Run these commands from a terminal:
+
+```
+pacman -Syu --needed --noconfirm cmake gcc openssl-1.0 pkgconf git clang
+export OPENSSL_LIB_DIR="/usr/lib/openssl-1.0"
+export OPENSSL_INCLUDE_DIR="/usr/include/openssl-1.0"
+```
+
+### Windows
+
+Please see [this guide](https://substrate.dev/docs/en/knowledgebase/getting-started/windows-users) to get setup using Windows.
+
+## Setup your Rust Environment
+
+The Social Network software is built in rust, so Guardians must setup their tooling as follows:
+
+Install rust with the following:
+```
+# Install
+curl https://sh.rustup.rs -sSf | sh
+# Configure
+source ~/.cargo/env
+# Configure Rust toolchain to the one we use for The Social Network
+rustup install nightly-2021-01-25
+# Install WebAssembly (WASM)
+rustup target add wasm32-unknown-unknown --toolchain nightly-2021-01-25
+```
+
+## Download The Social Network
+
+To get a copy of The Social Network software on your machine:
+
+```
+git clone https://github.com/social-network/substrate.git
+```
+
+The runtime of the blockchain is compiled down to [Web Assembly (WASM)](https://webassembly.org/) so it can be ran in embedded devices, or even the browser. To compile it run:
+
+```
+cd substrate
+WASM_BUILD_TOOLCHAIN=nightly-2021-01-25 cargo build --release
+```
+
+Note if you are doing other substrate development work, you will need to update your toolchain to match our version for the compilation to work. Feel free to join the #support circle in the [Social Technologies Society](https://social.network/join/tech) if you need help getting setup.
+
+## Help Build The Social Network
+
+As a decentralized project, we welcome all contributions that help us reach our mission faster, but ask that you follow our values. See our [welcome blog](https://blog.social.network/welcome-to-social) for more details.
+
+To jump right in, visit our [jobs](https://social.network/jobs) page to find a job or bounty that you think you can complete. Contributors will earn NET tokens to participate in the platform governance and help steward the decentralized technical development.
 
 ## Security
 
@@ -19,19 +104,9 @@ The reason for the split-licensing is to ensure that for the vast majority of te
 
 In the interests of the community, we require any deeper improvements made to Substrate's core logic (e.g. Substrate's internal consensus, crypto or database code) to be contributed back so everyone can benefit.
 
-## Development
-
-### Installation
-
-Follow the [installation](https://substrate.dev/docs/en/knowledgebase/getting-started/) instructions.
-
-### Run a local node
-
-```bash
-cargo run -- --dev --tmp
-```
-
 ### Type definitions
+
+In order to be compatible with polkadot.js the following type definitions will need to be added:
 
 ```
 {
