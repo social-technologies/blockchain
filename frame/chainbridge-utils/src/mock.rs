@@ -3,7 +3,7 @@
 use super::*;
 
 use frame_support::{ord_parameter_types, parameter_types, weights::Weight};
-use frame_system::{self as system};
+use frame_system::{self as system, EnsureRoot};
 use sp_core::{hashing::blake2_128, H256};
 use sp_runtime::{
     testing::Header,
@@ -83,6 +83,20 @@ impl bridge::Trait for Test {
 }
 
 parameter_types! {
+    pub const MaxMissionTokensSupply: u128 = 77_777_777;
+}
+
+impl pallet_mission_tokens::Trait for Test {
+    type Event = Event;
+    type Balance = u64;
+    type MissionTokenId = u32;
+    type ExistentialDeposit = ExistentialDeposit;
+    type OnNewAccount = ();
+    type MaxMissionTokensSupply = MaxMissionTokensSupply;
+    type MissionCreatorOrigin = EnsureRoot<u64>;
+}
+
+parameter_types! {
     pub HashId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"hash"));
     pub NativeTokenId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NET"));
 }
@@ -107,6 +121,7 @@ frame_support::construct_runtime!(
         System: system::{Module, Call, Event<T>},
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         Bridge: bridge::{Module, Call, Storage, Event<T>},
+        MissionToken: pallet_mission_tokens::{Module, Call, Storage, Event<T>},
         BridgeUtils: bridge_utils::{Module, Call, Event<T>}
     }
 );

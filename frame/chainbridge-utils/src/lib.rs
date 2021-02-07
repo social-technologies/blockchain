@@ -3,7 +3,10 @@
 
 use chainbridge as bridge;
 use frame_support::traits::{Currency, EnsureOrigin, ExistenceRequirement::AllowDeath, Get};
-use frame_support::{decl_error, decl_event, decl_module, dispatch::DispatchResult, ensure};
+use frame_support::{
+    decl_error, decl_event, decl_module, dispatch::DispatchResult, ensure,
+    traits::ExistenceRequirement,
+};
 use frame_system::{self as system, ensure_signed};
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_core::U256;
@@ -17,7 +20,7 @@ type ResourceId = bridge::ResourceId;
 type BalanceOf<T> =
     <<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 
-pub trait Trait: system::Trait + bridge::Trait {
+pub trait Trait: system::Trait + bridge::Trait + pallet_mission_tokens::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     /// Specifies the origin check provided by the bridge for calls that can only be called by the bridge pallet
     type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
@@ -73,6 +76,25 @@ decl_module! {
             <bridge::Module<T>>::transfer_fungible(dest_id, resource_id, recipient, U256::from(amount.saturated_into::<u128>()))
         }
 
+        /// Transfers some amount of the mission tokens to some recipient on a (whitelisted) destination chain.
+        #[weight = 195_000_000]
+        pub fn transfer_mission_tokens(
+            origin,
+            #[compact] token_id: T::MissionTokenId,
+            #[compact] value: T::Balance,
+            recipient: Vec<u8>,
+            dest_id: bridge::ChainId
+        ) -> DispatchResult {
+            let source = ensure_signed(origin)?;
+            ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
+            <pallet_mission_tokens::Module<T>>::validate_mission_token_id(token_id)?;
+            let bridge_id = <bridge::Module<T>>::account_id();
+            <pallet_mission_tokens::Module<T>>::do_transfer(&source, &bridge_id, token_id, value, ExistenceRequirement::AllowDeath)?;
+
+            let resource_id = bridge::derive_resource_id(dest_id, &Self::mission_token_acronym(token_id));
+            <bridge::Module<T>>::transfer_fungible(dest_id, resource_id, recipient, U256::from(value.saturated_into::<u128>()))
+        }
+
         //
         // Executable calls. These can be triggered by a bridge transfer initiated on another chain
         //
@@ -92,5 +114,16 @@ decl_module! {
             Self::deposit_event(RawEvent::Remark(hash));
             Ok(())
         }
+    }
+}
+
+impl<T: Trait> Module<T> {
+    fn mission_token_acronym(token_id: T::MissionTokenId) -> Vec<u8> {
+        let mut acronym = b"NET".to_vec();
+        let postfix = U256::from(token_id.saturated_into::<u128>());
+        let mut buf = vec![];
+        postfix.to_big_endian(&mut buf);
+        acronym.append(&mut buf);
+        acronym
     }
 }
