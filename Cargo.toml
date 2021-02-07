@@ -67,6 +67,7 @@ members = [
 	"frame/balances",
 	"frame/benchmarking",
 	"frame/chainbridge",
+	"frame/chainbridge-utils",
 	"frame/collective",
 	"frame/contracts",
 	"frame/contracts/rpc",

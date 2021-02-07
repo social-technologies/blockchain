@@ -1002,6 +1002,19 @@ impl pallet_chainbridge::Trait for Runtime {
     type ProposalLifetime = ProposalLifetime;
 }
 
+parameter_types! {
+	pub HashId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_HASH");
+	pub NativeTokenId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET");
+}
+
+impl pallet_chainbridge_utils::Trait for Runtime {
+	type Event = Event;
+	type BridgeOrigin = pallet_chainbridge::EnsureBridge<Self>;
+	type Currency = Balances;
+	type HashId = HashId;
+	type NativeTokenId = NativeTokenId;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1047,6 +1060,7 @@ construct_runtime!(
 		ValidatorRegistry: pallet_validator_registry::{Module, Call, Storage, Event<T>},
 		UsernameRegistry: pallet_username_registry::{Module, Call, Storage, Event<T>},
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
+		ChainBridgeUtils: pallet_chainbridge_utils::{Module, Call, Event<T>},
 	}
 );
 

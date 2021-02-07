@@ -3876,6 +3876,7 @@ dependencies = [
  "pallet-authorship",
  "pallet-babe",
  "pallet-balances",
+ "pallet-chainbridge-utils",
  "pallet-collective",
  "pallet-contracts",
  "pallet-contracts-primitives",
@@ -4340,6 +4341,24 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-chainbridge-utils"
+version = "0.1.0"
+dependencies = [
+ "chainbridge",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-wasm-builder-runner 2.0.0",
 ]
 
 [[package]]
