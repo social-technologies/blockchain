@@ -43,9 +43,9 @@ pub fn compute_total_payout<N>(
 
 #[cfg(test)]
 mod test {
-    pub const MILLICENTS: u128 = 1_000_000_000;
-    pub const CENTS: u128 = 1_000 * MILLICENTS;
-    pub const DOLLARS: u128 = 100 * CENTS;
+    pub const MICRONET: u128 = 1_000_000_000;
+    pub const MILLINET: u128 = 1_000 * MICRONET;
+    pub const NET: u128 = 100 * MILLINET;
 
 	#[test]
 	fn calculation_is_sensible() {
@@ -128,8 +128,8 @@ mod test {
         assert_eq!(super::compute_total_payout(500_000u32, TOTAL_TOKENS, TOTAL_ISSUANCE5), (0, 0));
 
 
-        const TOTAL_TOKENS2: u128 = 77 * DOLLARS;
-        const TOTAL_ISSUANCE6: u128 = 77_777_777 * DOLLARS;
+        const TOTAL_TOKENS2: u128 = 77 * NET;
+        const TOTAL_ISSUANCE6: u128 = 77_777_777 * NET;
 
         assert_eq!(super::compute_total_payout(0u32, TOTAL_TOKENS2, TOTAL_ISSUANCE6), (1796240600000, 1814384426300600000));
         assert_eq!(super::compute_total_payout(1u32, TOTAL_TOKENS2, TOTAL_ISSUANCE6), (1796150787970, 1814293707079284970));
@@ -175,8 +175,8 @@ mod test {
 
     #[test]
     fn total_issuance_should_grow_predictable() {
-        const TOTAL_TOKENS: u128 = 399_999_900 * MILLICENTS;
-        const TOTAL_ISSUANCE: u128 = 77_777_777 * DOLLARS;
+        const TOTAL_TOKENS: u128 = 399_999_900 * MICRONET;
+        const TOTAL_ISSUANCE: u128 = 77_777_777 * NET;
 
         assert_eq!(total_issuance_after_n_eras(1, TOTAL_TOKENS, TOTAL_ISSUANCE), 7779591991115123927800);
         assert_eq!(total_issuance_after_n_eras(2, TOTAL_TOKENS, TOTAL_ISSUANCE), 7781406614728733143145);
@@ -208,8 +208,8 @@ mod test {
         assert_eq!(total_issuance_after_n_eras(100, TOTAL_TOKENS, TOTAL_ISSUANCE), 7960859106422864852172);
 
 
-        const TOTAL_TOKENS2: u128 = 9_999_900 * MILLICENTS;
-        const TOTAL_ISSUANCE2: u128 = 93_328_000 * DOLLARS;
+        const TOTAL_TOKENS2: u128 = 9_999_900 * MICRONET;
+        const TOTAL_ISSUANCE2: u128 = 93_328_000 * NET;
 
         assert_eq!(total_issuance_after_n_eras(1, TOTAL_TOKENS2, TOTAL_ISSUANCE2), 9_334_977_134_585_643_327_800);
         assert_eq!(total_issuance_after_n_eras(2, TOTAL_TOKENS2, TOTAL_ISSUANCE2), 9_337_154_668_166_765_363_044);

@@ -504,7 +504,10 @@ ss58_address_format!(
 		(46, "reserved46", "Reserved for future use (46).")
 	Reserved47 =>
 		(47, "reserved47", "Reserved for future use (47).")
-	// Note: 48 and above are reserved.
+	SocialTestAccount =>
+		(251, "social-testnet", "Social Test Network, standard account (*25519).")
+	SocialAccount =>
+		(252, "social-network", "Social Network, standard account (*25519).")
 );
 
 /// Set the default "version" (actually, this is a bit of a misnomer and the version byte is

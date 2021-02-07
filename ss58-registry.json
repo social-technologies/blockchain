@@ -315,6 +315,23 @@
 			"decimals": null,
 			"standardAccount": null,
 			"website": null
+		},
+		{
+			"prefix": 251,
+			"network": "social-testnet",
+			"displayName": "Social Network Testnet",
+			"symbols": ["TNET"],
+			"decimals": [18],
+			"standardAccount": "*25519",
+			"website": "https://dev.social.network"
+		},
+			"prefix": 252,
+			"network": "social-network",
+			"displayName": "Social Network",
+			"symbols": ["NET"],
+			"decimals": [18],
+			"standardAccount": "*25519",
+			"website": "https://social.network"
 		}
 	]
 }

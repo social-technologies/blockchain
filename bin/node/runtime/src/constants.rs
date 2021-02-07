@@ -21,12 +21,13 @@
 pub mod currency {
 	use node_primitives::Balance;
 
-	pub const MILLICENTS: Balance = 1_000_000_000;
-	pub const CENTS: Balance = 1_000 * MILLICENTS;    // assume this is worth about a cent.
-	pub const DOLLARS: Balance = 100 * CENTS;
+	pub const SANGHAS: Balance = 1_000_000_000;
+	pub const MICRONET: Balance = 1_000 * SANGHAS;
+	pub const MILLINET: Balance = 1_000 * MICRONET;    // assume this is worth about a cent.
+	pub const NET: Balance = 100 * MILLINET;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
+		items as Balance * 15 * MILLINET + (bytes as Balance) * 6 * MILLINET
 	}
 }
 

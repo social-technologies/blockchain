@@ -64,9 +64,9 @@ pub type ChainSpec = sc_service::GenericChainSpec<
 	Extensions,
 >;
 
-/// Chi config generator
-pub fn chi_config() -> Result<ChainSpec, String> {
-	ChainSpec::from_json_bytes(&include_bytes!("../res/NET.json")[..])
+/// NET config generator
+pub fn net_config() -> Result<ChainSpec, String> {
+	ChainSpec::from_json_bytes(&include_bytes!("../res/TNET.json")[..])
 }
 
 fn session_keys(
@@ -237,8 +237,8 @@ pub fn testnet_genesis(
 	});
 	let num_endowed_accounts = endowed_accounts.len();
 
-	const ENDOWMENT: Balance = 7_777_377 * DOLLARS;
-	const STASH: Balance = 100 * DOLLARS;
+	const ENDOWMENT: Balance = 7_777_377 * NET;
+	const STASH: Balance = 100 * NET;
 
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
