@@ -1005,6 +1005,7 @@ impl pallet_chainbridge::Trait for Runtime {
 parameter_types! {
 	pub HashId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_HASH");
 	pub NativeTokenId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET");
+	pub Erc721Id: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_NFT");
 }
 
 impl pallet_social_bridge::Trait for Runtime {
@@ -1013,6 +1014,12 @@ impl pallet_social_bridge::Trait for Runtime {
 	type Currency = Balances;
 	type HashId = HashId;
 	type NativeTokenId = NativeTokenId;
+	type Erc721Id = Erc721Id;
+}
+
+impl pallet_social_nft::Trait for Runtime {
+	type Event = Event;
+	type Identifier = Erc721Id;
 }
 
 construct_runtime!(
@@ -1061,6 +1068,7 @@ construct_runtime!(
 		UsernameRegistry: pallet_username_registry::{Module, Call, Storage, Event<T>},
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
 		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},
+		SocialNFT: pallet_social_nft::{Module, Call, Event<T>},
 	}
 );
 

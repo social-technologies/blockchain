@@ -99,6 +99,12 @@ impl pallet_social_tokens::Trait for Test {
 parameter_types! {
     pub HashId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"hash"));
     pub NativeTokenId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NET"));
+    pub Erc721Id: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NFT"));
+}
+
+impl erc721::Trait for Test {
+    type Event = Event;
+    type Identifier = Erc721Id;
 }
 
 impl Trait for Test {
@@ -107,6 +113,7 @@ impl Trait for Test {
     type Currency = Balances;
     type HashId = HashId;
     type NativeTokenId = NativeTokenId;
+    type Erc721Id = Erc721Id;
 }
 
 pub type Block = sp_runtime::generic::Block<Header, UncheckedExtrinsic>;
@@ -122,7 +129,8 @@ frame_support::construct_runtime!(
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         Bridge: bridge::{Module, Call, Storage, Event<T>},
         SocialToken: pallet_social_tokens::{Module, Call, Storage, Event<T>},
-        SocialBridge: social_bridge::{Module, Call, Event<T>}
+        SocialBridge: social_bridge::{Module, Call, Event<T>},
+        Erc721: erc721::{Module, Call, Storage, Event<T>},
     }
 );
 

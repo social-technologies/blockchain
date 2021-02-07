@@ -8,6 +8,7 @@ use frame_support::{
     traits::ExistenceRequirement,
 };
 use frame_system::{self as system, ensure_signed};
+use pallet_social_nft as erc721;
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_core::U256;
 use sp_std::prelude::*;
@@ -20,7 +21,9 @@ type ResourceId = bridge::ResourceId;
 type BalanceOf<T> =
     <<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
 
-pub trait Trait: system::Trait + bridge::Trait + pallet_social_tokens::Trait {
+pub trait Trait:
+    system::Trait + bridge::Trait + pallet_social_tokens::Trait + erc721::Trait
+{
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
     /// Specifies the origin check provided by the bridge for calls that can only be called by the bridge pallet
     type BridgeOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
@@ -31,6 +34,7 @@ pub trait Trait: system::Trait + bridge::Trait + pallet_social_tokens::Trait {
     /// Ids can be defined by the runtime and passed in, perhaps from blake2b_128 hashes.
     type HashId: Get<ResourceId>;
     type NativeTokenId: Get<ResourceId>;
+    type Erc721Id: Get<ResourceId>;
 }
 
 decl_event! {
@@ -95,6 +99,23 @@ decl_module! {
             <bridge::Module<T>>::transfer_fungible(dest_id, resource_id, recipient, U256::from(value.saturated_into::<u128>()))
         }
 
+        /// Transfer a non-fungible token (erc721) to a (whitelisted) destination chain.
+        #[weight = 195_000_000]
+        pub fn transfer_erc721(origin, recipient: Vec<u8>, token_id: U256, dest_id: bridge::ChainId) -> DispatchResult {
+            let source = ensure_signed(origin)?;
+            ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
+            match <erc721::Module<T>>::tokens(&token_id) {
+                Some(token) => {
+                    <erc721::Module<T>>::burn_token(source, token_id)?;
+                    let resource_id = T::Erc721Id::get();
+                    let tid: &mut [u8] = &mut[0; 32];
+                    token_id.to_big_endian(tid);
+                    <bridge::Module<T>>::transfer_nonfungible(dest_id, resource_id, tid.to_vec(), recipient, token.metadata)
+                }
+                None => Err(Error::<T>::InvalidTransfer.into())
+            }
+        }
+
         //
         // Executable calls. These can be triggered by a bridge transfer initiated on another chain
         //
@@ -112,6 +133,14 @@ decl_module! {
         pub fn remark(origin, hash: T::Hash, r_id: ResourceId) -> DispatchResult {
             T::BridgeOrigin::ensure_origin(origin)?;
             Self::deposit_event(RawEvent::Remark(hash));
+            Ok(())
+        }
+
+        /// Allows the bridge to issue new erc721 tokens
+        #[weight = 195_000_000]
+        pub fn mint_erc721(origin, recipient: T::AccountId, id: U256, metadata: Vec<u8>, r_id: ResourceId) -> DispatchResult {
+            T::BridgeOrigin::ensure_origin(origin)?;
+            <erc721::Module<T>>::mint_token(recipient, id, metadata)?;
             Ok(())
         }
     }

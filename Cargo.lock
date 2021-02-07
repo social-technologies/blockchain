@@ -3900,6 +3900,7 @@ dependencies = [
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-social-bridge",
+ "pallet-social-nft",
  "pallet-social-tokens",
  "pallet-social-treasury",
  "pallet-society",
@@ -4878,10 +4879,28 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
+ "pallet-social-nft",
  "pallet-social-tokens",
  "parity-scale-codec",
  "serde",
  "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-wasm-builder-runner 2.0.0",
+]
+
+[[package]]
+name = "pallet-social-nft"
+version = "0.0.1"
+dependencies = [
+ "chainbridge",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
