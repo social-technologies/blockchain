@@ -1007,7 +1007,7 @@ parameter_types! {
 	pub NativeTokenId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET");
 }
 
-impl pallet_chainbridge_utils::Trait for Runtime {
+impl pallet_social_bridge::Trait for Runtime {
 	type Event = Event;
 	type BridgeOrigin = pallet_chainbridge::EnsureBridge<Self>;
 	type Currency = Balances;
@@ -1060,7 +1060,7 @@ construct_runtime!(
 		ValidatorRegistry: pallet_validator_registry::{Module, Call, Storage, Event<T>},
 		UsernameRegistry: pallet_username_registry::{Module, Call, Storage, Event<T>},
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
-		ChainBridgeUtils: pallet_chainbridge_utils::{Module, Call, Event<T>},
+		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},
 	}
 );
 

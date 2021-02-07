@@ -2,7 +2,7 @@
 
 use super::mock::{
     assert_events, balances, event_exists, expect_event, new_test_ext, Balances, Bridge,
-    BridgeUtils, Call, Event, HashId, NativeTokenId, Origin, ProposalLifetime, ENDOWED_BALANCE,
+    SocialBridge, Call, Event, HashId, NativeTokenId, Origin, ProposalLifetime, ENDOWED_BALANCE,
     RELAYER_A, RELAYER_B, RELAYER_C,
 };
 use super::*;
@@ -16,12 +16,12 @@ const TEST_THRESHOLD: u32 = 2;
 
 fn make_remark_proposal(hash: H256) -> Call {
     let resource_id = HashId::get();
-    Call::BridgeUtils(crate::Call::remark(hash, resource_id))
+    Call::SocialBridge(crate::Call::remark(hash, resource_id))
 }
 
 fn make_transfer_proposal(to: u64, amount: u64) -> Call {
     let resource_id = HashId::get();
-    Call::BridgeUtils(crate::Call::transfer(to, amount, resource_id))
+    Call::SocialBridge(crate::Call::transfer(to, amount, resource_id))
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn transfer_hash() {
         assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD,));
 
         assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain));
-        assert_ok!(BridgeUtils::transfer_hash(
+        assert_ok!(SocialBridge::transfer_hash(
             Origin::signed(1),
             hash,
             dest_chain,
@@ -58,7 +58,7 @@ fn transfer_native() {
         let recipient = vec![99];
 
         assert_ok!(Bridge::whitelist_chain(Origin::root(), dest_chain));
-        assert_ok!(BridgeUtils::transfer_native(
+        assert_ok!(SocialBridge::transfer_native(
             Origin::signed(RELAYER_A),
             amount,
             recipient.clone(),
@@ -83,7 +83,7 @@ fn execute_remark() {
         let prop_id = 1;
         let src_id = 1;
         let r_id = bridge::derive_resource_id(src_id, b"hash");
-        let resource = b"BridgeUtils.remark".to_vec();
+        let resource = b"SocialBridge.remark".to_vec();
 
         assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD,));
         assert_ok!(Bridge::add_relayer(Origin::root(), RELAYER_A));
@@ -115,19 +115,19 @@ fn execute_remark_bad_origin() {
     new_test_ext().execute_with(|| {
         let hash: H256 = "ABC".using_encoded(blake2_256).into();
         let resource_id = HashId::get();
-        assert_ok!(BridgeUtils::remark(
+        assert_ok!(SocialBridge::remark(
             Origin::signed(Bridge::account_id()),
             hash,
             resource_id
         ));
         // Don't allow any signed origin except from bridge addr
         assert_noop!(
-            BridgeUtils::remark(Origin::signed(RELAYER_A), hash, resource_id),
+            SocialBridge::remark(Origin::signed(RELAYER_A), hash, resource_id),
             DispatchError::BadOrigin
         );
         // Don't allow root calls
         assert_noop!(
-            BridgeUtils::remark(Origin::root(), hash, resource_id),
+            SocialBridge::remark(Origin::root(), hash, resource_id),
             DispatchError::BadOrigin
         );
     })
@@ -141,7 +141,7 @@ fn transfer() {
         let resource_id = HashId::get();
         assert_eq!(Balances::free_balance(&bridge_id), ENDOWED_BALANCE);
         // Transfer and check result
-        assert_ok!(BridgeUtils::transfer(
+        assert_ok!(SocialBridge::transfer(
             Origin::signed(Bridge::account_id()),
             RELAYER_A,
             10,
@@ -164,7 +164,7 @@ fn create_sucessful_transfer_proposal() {
         let prop_id = 1;
         let src_id = 1;
         let r_id = bridge::derive_resource_id(src_id, b"transfer");
-        let resource = b"BridgeUtils.transfer".to_vec();
+        let resource = b"SocialBridge.transfer".to_vec();
         let proposal = make_transfer_proposal(RELAYER_A, 10);
 
         assert_ok!(Bridge::set_threshold(Origin::root(), TEST_THRESHOLD,));

@@ -49,7 +49,6 @@ pallet-authorship = { version = "2.0.0", default-features = false, path = "../..
 pallet-babe = { version = "2.0.0", default-features = false, path = "../../../frame/babe" }
 pallet-balances = { version = "2.0.0", default-features = false, path = "../../../frame/balances" }
 pallet-chainbridge = { version = "0.0.2", default-features = false, path = "../../../frame/chainbridge", package = "chainbridge" }
-pallet-chainbridge-utils = { version = "0.1.0", default-features = false, path = "../../../frame/chainbridge-utils" }
 pallet-collective = { version = "2.0.0", default-features = false, path = "../../../frame/collective" }
 pallet-contracts = { version = "2.0.0", default-features = false, path = "../../../frame/contracts" }
 pallet-contracts-primitives = { version = "2.0.0", default-features = false, path = "../../../frame/contracts/common/" }
@@ -64,7 +63,6 @@ pallet-im-online = { version = "2.0.0", default-features = false, path = "../../
 pallet-indices = { version = "2.0.0", default-features = false, path = "../../../frame/indices" }
 pallet-identity = { version = "2.0.0", default-features = false, path = "../../../frame/identity" }
 pallet-membership = { version = "2.0.0", default-features = false, path = "../../../frame/membership" }
-pallet-social-tokens = { version = "0.1.0", default-features = false, path = "../../../frame/social-tokens" }
 pallet-multisig = { version = "2.0.0", default-features = false, path = "../../../frame/multisig" }
 pallet-offences = { version = "2.0.0", default-features = false, path = "../../../frame/offences" }
 pallet-offences-benchmarking = { version = "2.0.0", path = "../../../frame/offences/benchmarking", default-features = false, optional = true }
@@ -76,6 +74,8 @@ pallet-session-benchmarking = { version = "2.0.0", path = "../../../frame/sessio
 pallet-staking = { version = "2.0.0", default-features = false, path = "../../../frame/staking" }
 pallet-staking-reward-curve = { version = "2.0.0", default-features = false, path = "../../../frame/staking/reward-curve" }
 pallet-scheduler = { version = "2.0.0", default-features = false, path = "../../../frame/scheduler" }
+pallet-social-bridge = { version = "0.1.0", default-features = false, path = "../../../frame/social-bridge" }
+pallet-social-tokens = { version = "0.1.0", default-features = false, path = "../../../frame/social-tokens" }
 pallet-social-treasury = { version = "0.1.0", default-features = false, path = "../../../frame/social-treasury" }
 pallet-society = { version = "2.0.0", default-features = false, path = "../../../frame/society" }
 pallet-sudo = { version = "2.0.0", default-features = false, path = "../../../frame/sudo" }
@@ -159,7 +159,7 @@ std = [
     "pallet-validator-registry/std",
     "pallet-username-registry/std",
     "pallet-chainbridge/std",
-    "pallet-chainbridge-utils/std",
+    "pallet-social-bridge/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",

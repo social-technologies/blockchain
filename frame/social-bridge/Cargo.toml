@@ -1,5 +1,5 @@
 [package]
-name = 'pallet-chainbridge-utils'
+name = 'pallet-social-bridge'
 version = '0.1.0'
 authors = ['andrey@social.network']
 edition = '2018'

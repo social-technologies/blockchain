@@ -11,7 +11,7 @@ use sp_runtime::{
     ModuleId, Perbill,
 };
 
-use crate::{self as bridge_utils, Trait};
+use crate::{self as social_bridge, Trait};
 use chainbridge as bridge;
 pub use pallet_balances as balances;
 
@@ -122,7 +122,7 @@ frame_support::construct_runtime!(
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         Bridge: bridge::{Module, Call, Storage, Event<T>},
         SocialToken: pallet_social_tokens::{Module, Call, Storage, Event<T>},
-        BridgeUtils: bridge_utils::{Module, Call, Event<T>}
+        SocialBridge: social_bridge::{Module, Call, Event<T>}
     }
 );
 
