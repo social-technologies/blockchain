@@ -64,7 +64,7 @@ pallet-im-online = { version = "2.0.0", default-features = false, path = "../../
 pallet-indices = { version = "2.0.0", default-features = false, path = "../../../frame/indices" }
 pallet-identity = { version = "2.0.0", default-features = false, path = "../../../frame/identity" }
 pallet-membership = { version = "2.0.0", default-features = false, path = "../../../frame/membership" }
-pallet-mission-tokens = { version = "0.1.0", default-features = false, path = "../../../frame/mission-tokens" }
+pallet-social-tokens = { version = "0.1.0", default-features = false, path = "../../../frame/social-tokens" }
 pallet-multisig = { version = "2.0.0", default-features = false, path = "../../../frame/multisig" }
 pallet-offences = { version = "2.0.0", default-features = false, path = "../../../frame/offences" }
 pallet-offences-benchmarking = { version = "2.0.0", path = "../../../frame/offences/benchmarking", default-features = false, optional = true }
@@ -154,7 +154,7 @@ std = [
 	"pallet-vesting/std",
 	"pallet-did/std",
     "pallet-evm/std",
-    "pallet-mission-tokens/std",
+    "pallet-social-tokens/std",
     "pallet-social-treasury/std",
     "pallet-validator-registry/std",
     "pallet-username-registry/std",

@@ -133,9 +133,9 @@ In order to be compatible with polkadot.js the following type definitions will n
     "swap_token": "TokenId",
     "account": "AccountId"
   },
-  "MissionId": "u32",
-  "MissionTokenId": "u32",
-  "MissionTokenBalance": "u128",
+  "SocialId": "u32",
+  "SocialTokenId": "u32",
+  "SocialTokenBalance": "u128",
   "RegistrarIndex": "u32",
   "Judgement": {
     "_enum": [

@@ -920,18 +920,18 @@ impl pallet_did::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDepositOfMissionTokens: u128 = 1;
-	pub const MaxMissionTokensSupply: u128 = 7_777_777_777 * DOLLARS;
+	pub const ExistentialDepositOfSocialTokens: u128 = 1;
+	pub const MaxSocialTokensSupply: u128 = 7_777_777_777 * DOLLARS;
 }
 
-impl pallet_mission_tokens::Trait for Runtime {
+impl pallet_social_tokens::Trait for Runtime {
 	type Event = Event;
 	type Balance = u128;
-	type MissionTokenId = u32;
-	type ExistentialDeposit = ExistentialDepositOfMissionTokens;
+	type SocialTokenId = u32;
+	type ExistentialDeposit = ExistentialDepositOfSocialTokens;
 	type OnNewAccount = ();
-	type MaxMissionTokensSupply = MaxMissionTokensSupply;
-	type MissionCreatorOrigin = EnsureOneOf<
+	type MaxSocialTokensSupply = MaxSocialTokensSupply;
+	type SocialCreatorOrigin = EnsureOneOf<
 		AccountId,
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureMembers<_4, AccountId, CouncilCollective>
@@ -1055,7 +1055,7 @@ construct_runtime!(
 		Multisig: pallet_multisig::{Module, Call, Storage, Event<T>},
 		Evm: pallet_evm::{Module, Call, Storage, Event<T>},
 		Did: pallet_did::{Module, Call, Storage, Event<T>},
-		MissionTokens: pallet_mission_tokens::{Module, Call, Storage, Event<T>},
+		SocialTokens: pallet_social_tokens::{Module, Call, Storage, Event<T>},
 		SocialTreasury: pallet_social_treasury::{Module, Call, Storage, Event<T>},
 		ValidatorRegistry: pallet_validator_registry::{Module, Call, Storage, Event<T>},
 		UsernameRegistry: pallet_username_registry::{Module, Call, Storage, Event<T>},

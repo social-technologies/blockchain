@@ -87,7 +87,7 @@ members = [
 	"frame/indices",
 	"frame/membership",
 	"frame/metadata",
-	"frame/mission-tokens",
+	"frame/social-tokens",
 	"frame/multisig",
 	"frame/nicks",
 	"frame/node-authorization",

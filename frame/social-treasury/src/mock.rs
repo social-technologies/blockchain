@@ -365,15 +365,15 @@ impl pallet_offences::Trait for Test {
     type WeightSoftLimit = OffencesWeightSoftLimit;
 }
 
-impl pallet_mission_tokens::Trait for Test {
+impl pallet_social_tokens::Trait for Test {
     type Event = ();
     type Balance = u64;
-    type MissionTokenId = u32;
+    type SocialTokenId = u32;
 }
 
 impl pallet_validator_registry::Trait for Test {
     type Event = ();
-    type MissionId = u32;
+    type SocialId = u32;
 }
 
 impl Trait for Test {

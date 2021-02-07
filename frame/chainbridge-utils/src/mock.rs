@@ -83,17 +83,17 @@ impl bridge::Trait for Test {
 }
 
 parameter_types! {
-    pub const MaxMissionTokensSupply: u128 = 77_777_777;
+    pub const MaxSocialTokensSupply: u128 = 77_777_777;
 }
 
-impl pallet_mission_tokens::Trait for Test {
+impl pallet_social_tokens::Trait for Test {
     type Event = Event;
     type Balance = u64;
-    type MissionTokenId = u32;
+    type SocialTokenId = u32;
     type ExistentialDeposit = ExistentialDeposit;
     type OnNewAccount = ();
-    type MaxMissionTokensSupply = MaxMissionTokensSupply;
-    type MissionCreatorOrigin = EnsureRoot<u64>;
+    type MaxSocialTokensSupply = MaxSocialTokensSupply;
+    type SocialCreatorOrigin = EnsureRoot<u64>;
 }
 
 parameter_types! {
@@ -121,7 +121,7 @@ frame_support::construct_runtime!(
         System: system::{Module, Call, Event<T>},
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         Bridge: bridge::{Module, Call, Storage, Event<T>},
-        MissionToken: pallet_mission_tokens::{Module, Call, Storage, Event<T>},
+        SocialToken: pallet_social_tokens::{Module, Call, Storage, Event<T>},
         BridgeUtils: bridge_utils::{Module, Call, Event<T>}
     }
 );

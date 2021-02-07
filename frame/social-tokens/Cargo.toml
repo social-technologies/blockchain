@@ -4,7 +4,7 @@ description = 'FRAME pallet to manage mission tokens.'
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Apache-2.0'
-name = 'pallet-mission-tokens'
+name = 'pallet-social-tokens'
 repository = 'https://github.com/aristosplatos/the-social-network/'
 version = '0.1.0'
 

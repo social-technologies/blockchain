@@ -28,10 +28,10 @@ mod tests;
 
 mod default_weights;
 
-type BalanceOf<T> = <T as pallet_mission_tokens::Trait>::Balance;
-type PositiveImbalanceOf<T> = pallet_mission_tokens::PositiveImbalance<T>;
-type NegativeImbalanceOf<T> = pallet_mission_tokens::NegativeImbalance<T>;
-type TokenId<T> = <T as pallet_mission_tokens::Trait>::MissionTokenId;
+type BalanceOf<T> = <T as pallet_social_tokens::Trait>::Balance;
+type PositiveImbalanceOf<T> = pallet_social_tokens::PositiveImbalance<T>;
+type NegativeImbalanceOf<T> = pallet_social_tokens::NegativeImbalance<T>;
+type TokenId<T> = <T as pallet_social_tokens::Trait>::SocialTokenId;
 
 pub trait WeightInfo {
     fn propose_spend() -> Weight;
@@ -60,7 +60,7 @@ pub trait Trait:
     frame_system::Trait
     + pallet_treasury::Trait
     + pallet_staking::Trait
-    + pallet_mission_tokens::Trait
+    + pallet_social_tokens::Trait
     + pallet_validator_registry::Trait
 {
     /// Origin from which approvals must come.
@@ -136,7 +136,7 @@ pub type ProposalIndex = u32;
 /// A spending proposal.
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct Proposal<AccountId, Balance, MissionTokenId> {
+pub struct Proposal<AccountId, Balance, SocialTokenId> {
     /// The account proposing it.
     proposer: AccountId,
     /// The (total) amount that should be paid if the proposal is accepted.
@@ -145,7 +145,7 @@ pub struct Proposal<AccountId, Balance, MissionTokenId> {
     beneficiary: AccountId,
     /// The amount held on deposit (reserved) for making this proposal.
     bond: Balance,
-    mission_token_id: MissionTokenId,
+    social_token_id: SocialTokenId,
 }
 
 /// An open tipping "motion". Retains all details of a tip including information on the finder
@@ -156,7 +156,7 @@ pub struct OpenTip<
     Balance: Parameter,
     BlockNumber: Parameter,
     Hash: Parameter,
-    MissionTokenId: Parameter,
+    SocialTokenId: Parameter,
 > {
     /// The hash of the reason for the tip. The reason should be a human-readable UTF-8 encoded string. A URL would be
     /// sensible.
@@ -174,7 +174,7 @@ pub struct OpenTip<
     tips: Vec<(AccountId, Balance)>,
     /// Whether this tip should result in the finder taking a fee.
     finders_fee: bool,
-    mission_token_id: MissionTokenId,
+    social_token_id: SocialTokenId,
 }
 
 /// An index of a bounty. Just a `u32`.
@@ -182,7 +182,7 @@ pub type BountyIndex = u32;
 
 /// A bounty proposal.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct Bounty<AccountId, Balance, BlockNumber, MissionTokenId> {
+pub struct Bounty<AccountId, Balance, BlockNumber, SocialTokenId> {
     /// The account proposing it.
     proposer: AccountId,
     /// The (total) amount that should be paid if the bounty is rewarded.
@@ -195,7 +195,7 @@ pub struct Bounty<AccountId, Balance, BlockNumber, MissionTokenId> {
     bond: Balance,
     /// The status of this bounty.
     status: BountyStatus<AccountId, BlockNumber>,
-    mission_token_id: MissionTokenId,
+    social_token_id: SocialTokenId,
 }
 
 /// The status of a bounty proposal.
@@ -278,47 +278,47 @@ decl_event!(
     where
         AccountId = <T as frame_system::Trait>::AccountId,
         Hash = <T as frame_system::Trait>::Hash,
-        MissionTokenBalance = <T as pallet_mission_tokens::Trait>::Balance,
-        MissionTokenId = <T as pallet_mission_tokens::Trait>::MissionTokenId,
+        SocialTokenBalance = <T as pallet_social_tokens::Trait>::Balance,
+        SocialTokenId = <T as pallet_social_tokens::Trait>::SocialTokenId,
     {
         /// New proposal. \[proposal_index\]
         Proposed(ProposalIndex),
         /// We have ended a spend period and will now allocate funds. \[budget_remaining\]
-        Spending(MissionTokenId, MissionTokenBalance),
+        Spending(SocialTokenId, SocialTokenBalance),
         /// Some funds have been allocated. \[proposal_index, award, beneficiary\]
         Awarded(
             ProposalIndex,
-            MissionTokenId,
-            MissionTokenBalance,
+            SocialTokenId,
+            SocialTokenBalance,
             AccountId,
         ),
         /// A proposal was rejected; funds were slashed. \[proposal_index, slashed\]
-        Rejected(ProposalIndex, MissionTokenId, MissionTokenBalance),
+        Rejected(ProposalIndex, SocialTokenId, SocialTokenBalance),
         /// Some of our funds have been burnt. \[burn\]
-        Burnt(MissionTokenId, MissionTokenBalance),
+        Burnt(SocialTokenId, SocialTokenBalance),
         /// Spending has finished; this is the amount that rolls over until next spend.
         /// \[budget_remaining\]
-        Rollover(MissionTokenId, MissionTokenBalance),
+        Rollover(SocialTokenId, SocialTokenBalance),
         /// Some funds have been deposited. \[deposit\]
-        Deposit(MissionTokenId, MissionTokenBalance),
+        Deposit(SocialTokenId, SocialTokenBalance),
         /// A new tip suggestion has been opened. \[tip_hash\]
         NewTip(Hash),
         /// A tip suggestion has reached threshold and is closing. \[tip_hash\]
         TipClosing(Hash),
         /// A tip suggestion has been closed. \[tip_hash, who, payout\]
-        TipClosed(Hash, AccountId, MissionTokenId, MissionTokenBalance),
+        TipClosed(Hash, AccountId, SocialTokenId, SocialTokenBalance),
         /// A tip suggestion has been retracted. \[tip_hash\]
         TipRetracted(Hash),
         /// New bounty proposal. [index]
         BountyProposed(BountyIndex),
         /// A bounty proposal was rejected; funds were slashed. [index, bond]
-        BountyRejected(BountyIndex, MissionTokenId, MissionTokenBalance),
+        BountyRejected(BountyIndex, SocialTokenId, SocialTokenBalance),
         /// A bounty proposal is funded and became active. [index]
         BountyBecameActive(BountyIndex),
         /// A bounty is awarded to a beneficiary. [index, beneficiary]
         BountyAwarded(BountyIndex, AccountId),
         /// A bounty is claimed by beneficiary. [index, payout, beneficiary]
-        BountyClaimed(BountyIndex, MissionTokenId, MissionTokenBalance, AccountId),
+        BountyClaimed(BountyIndex, SocialTokenId, SocialTokenBalance, AccountId),
         /// A bounty is cancelled. [index]
         BountyCanceled(BountyIndex),
         /// A bounty expiry is extended. [index]
@@ -387,15 +387,15 @@ decl_module! {
         ) {
             let proposer = ensure_signed(origin)?;
             let beneficiary = T::Lookup::lookup(beneficiary)?;
-            <pallet_mission_tokens::Module<T>>::validate_mission_token_id(token_id)?;
+            <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
 
             let bond = Self::calculate_bond(value);
-            <pallet_mission_tokens::Module<T>>::reserve(&proposer, token_id, bond)
+            <pallet_social_tokens::Module<T>>::reserve(&proposer, token_id, bond)
                 .map_err(|_| Error::<T>::InsufficientProposersBalance)?;
 
             let c = Self::proposal_count();
             <ProposalCount>::put(c + 1);
-            <Proposals<T>>::insert(c, Proposal { proposer, value, beneficiary, bond, mission_token_id: token_id });
+            <Proposals<T>>::insert(c, Proposal { proposer, value, beneficiary, bond, social_token_id: token_id });
 
             Self::deposit_event(RawEvent::Proposed(c));
         }
@@ -415,14 +415,14 @@ decl_module! {
 
             let proposal = <Proposals<T>>::take(&proposal_id).ok_or(Error::<T>::InvalidIndex)?;
             let value = proposal.bond;
-            let imbalance = <pallet_mission_tokens::Module<T>>::slash_reserved(
+            let imbalance = <pallet_social_tokens::Module<T>>::slash_reserved(
                 &proposal.proposer,
-                proposal.mission_token_id,
+                proposal.social_token_id,
                 value
             ).0;
             <T as Trait>::OnSlash::on_unbalanced(imbalance);
 
-            Self::deposit_event(Event::<T>::Rejected(proposal_id, proposal.mission_token_id, value));
+            Self::deposit_event(Event::<T>::Rejected(proposal_id, proposal.social_token_id, value));
         }
 
         /// Approve a proposal. At a later time, the proposal will be allocated to the beneficiary
@@ -467,7 +467,7 @@ decl_module! {
             let finder = ensure_signed(origin)?;
 
             ensure!(reason.len() <= <T as Trait>::MaximumReasonLength::get() as usize, Error::<T>::ReasonTooBig);
-            <pallet_mission_tokens::Module<T>>::validate_mission_token_id(token_id)?;
+            <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
 
             let reason_hash = <T as frame_system::Trait>::Hashing::hash(&reason[..]);
             ensure!(!Reasons::<T>::contains_key(&reason_hash), Error::<T>::AlreadyKnown);
@@ -476,7 +476,7 @@ decl_module! {
 
             let deposit = <T as Trait>::TipReportDepositBase::get()
                 + <T as Trait>::DataDepositPerByte::get() * (reason.len() as u32).into();
-            <pallet_mission_tokens::Module<T>>::reserve(&finder, token_id, deposit)?;
+            <pallet_social_tokens::Module<T>>::reserve(&finder, token_id, deposit)?;
 
             Reasons::<T>::insert(&reason_hash, &reason);
             let tip = OpenTip {
@@ -487,7 +487,7 @@ decl_module! {
                 closes: None,
                 tips: vec![],
                 finders_fee: true,
-                mission_token_id: token_id,
+                social_token_id: token_id,
             };
             Tips::<T>::insert(&hash, tip);
             Self::deposit_event(RawEvent::NewTip(hash));
@@ -521,7 +521,7 @@ decl_module! {
             Reasons::<T>::remove(&tip.reason);
             Tips::<T>::remove(&hash);
             if !tip.deposit.is_zero() {
-                let _ = <pallet_mission_tokens::Module<T>>::unreserve(&who, tip.mission_token_id, tip.deposit);
+                let _ = <pallet_social_tokens::Module<T>>::unreserve(&who, tip.social_token_id, tip.deposit);
             }
             Self::deposit_event(RawEvent::TipRetracted(hash));
         }
@@ -551,7 +551,7 @@ decl_module! {
         #[weight = <T as Trait>::WeightInfo::tip_new(reason.len() as u32, <T as Trait>::Tippers::max_len() as u32)]
         fn tip_new(origin, reason: Vec<u8>, who: T::AccountId, #[compact] token_id: TokenId<T>, #[compact] tip_value: BalanceOf<T>) {
             let tipper = ensure_signed(origin)?;
-            <pallet_mission_tokens::Module<T>>::validate_mission_token_id(token_id)?;
+            <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
             ensure!(<T as Trait>::Tippers::contains(&tipper), BadOrigin);
             let reason_hash = <T as frame_system::Trait>::Hashing::hash(&reason[..]);
             ensure!(!Reasons::<T>::contains_key(&reason_hash), Error::<T>::AlreadyKnown);
@@ -568,7 +568,7 @@ decl_module! {
                 closes: None,
                 tips,
                 finders_fee: false,
-                mission_token_id: token_id,
+                social_token_id: token_id,
             };
             Tips::<T>::insert(&hash, tip);
         }
@@ -660,7 +660,7 @@ decl_module! {
             token_id: TokenId<T>,
         ) {
             let proposer = ensure_signed(origin)?;
-            <pallet_mission_tokens::Module<T>>::validate_mission_token_id(token_id)?;
+            <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
             Self::create_bounty(proposer, description, token_id, value)?;
         }
 
@@ -756,10 +756,10 @@ decl_module! {
 
             Bounties::<T>::try_mutate_exists(bounty_id, |maybe_bounty| -> DispatchResult {
                 let mut bounty = maybe_bounty.as_mut().ok_or(Error::<T>::InvalidIndex)?;
-                let token_id = bounty.mission_token_id;
+                let token_id = bounty.social_token_id;
 
                 let slash_curator = |curator: &T::AccountId, curator_deposit: &mut BalanceOf<T>| {
-                    let imbalance = <pallet_mission_tokens::Module<T>>::slash_reserved(curator, token_id, *curator_deposit).0;
+                    let imbalance = <pallet_social_tokens::Module<T>>::slash_reserved(curator, token_id, *curator_deposit).0;
                     <T as Trait>::OnSlash::on_unbalanced(imbalance);
                     *curator_deposit = Zero::zero();
                 };
@@ -797,7 +797,7 @@ decl_module! {
                                 } else {
                                     // Else this is the curator, willingly giving up their role.
                                     // Give back their deposit.
-                                    let _ = <pallet_mission_tokens::Module<T>>::unreserve(&curator, bounty.mission_token_id, bounty.curator_deposit);
+                                    let _ = <pallet_social_tokens::Module<T>>::unreserve(&curator, bounty.social_token_id, bounty.curator_deposit);
                                     // Continue to change bounty status below...
                                 }
                             },
@@ -840,7 +840,7 @@ decl_module! {
                         ensure!(signer == *curator, Error::<T>::RequireCurator);
 
                         let deposit = <T as Trait>::BountyCuratorDeposit::get() * bounty.fee;
-                        <pallet_mission_tokens::Module<T>>::reserve(curator, bounty.mission_token_id, deposit)?;
+                        <pallet_social_tokens::Module<T>>::reserve(curator, bounty.social_token_id, deposit)?;
                         bounty.curator_deposit = deposit;
 
                         let update_due = system::Module::<T>::block_number() + <T as Trait>::BountyUpdatePeriod::get();
@@ -901,17 +901,17 @@ decl_module! {
                 if let BountyStatus::PendingPayout { curator, beneficiary, unlock_at } = bounty.status {
                     ensure!(system::Module::<T>::block_number() >= unlock_at, Error::<T>::Premature);
                     let bounty_account = Self::bounty_account_id(bounty_id);
-                    let balance = <pallet_mission_tokens::Module<T>>::free_balance(&bounty_account, bounty.mission_token_id);
+                    let balance = <pallet_social_tokens::Module<T>>::free_balance(&bounty_account, bounty.social_token_id);
                     let fee = bounty.fee.min(balance); // just to be safe
                     let payout = balance.saturating_sub(fee);
-                    let _ = <pallet_mission_tokens::Module<T>>::unreserve(&curator, bounty.mission_token_id, bounty.curator_deposit);
-                    let _ = <pallet_mission_tokens::Module<T>>::do_transfer(&bounty_account, &curator, bounty.mission_token_id, fee, AllowDeath); // should not fail
-                    let _ = <pallet_mission_tokens::Module<T>>::do_transfer(&bounty_account, &beneficiary, bounty.mission_token_id, payout, AllowDeath); // should not fail
+                    let _ = <pallet_social_tokens::Module<T>>::unreserve(&curator, bounty.social_token_id, bounty.curator_deposit);
+                    let _ = <pallet_social_tokens::Module<T>>::do_transfer(&bounty_account, &curator, bounty.social_token_id, fee, AllowDeath); // should not fail
+                    let _ = <pallet_social_tokens::Module<T>>::do_transfer(&bounty_account, &beneficiary, bounty.social_token_id, payout, AllowDeath); // should not fail
                     *maybe_bounty = None;
 
                     BountyDescriptions::remove(bounty_id);
 
-                    Self::deposit_event(Event::<T>::BountyClaimed(bounty_id, bounty.mission_token_id, payout, beneficiary));
+                    Self::deposit_event(Event::<T>::BountyClaimed(bounty_id, bounty.social_token_id, payout, beneficiary));
                     Ok(())
                 } else {
                     Err(Error::<T>::UnexpectedStatus.into())
@@ -931,14 +931,14 @@ decl_module! {
 
             Bounties::<T>::try_mutate_exists(bounty_id, |maybe_bounty| -> DispatchResultWithPostInfo {
                 let bounty = maybe_bounty.as_ref().ok_or(Error::<T>::InvalidIndex)?;
-                let token_id = bounty.mission_token_id;
+                let token_id = bounty.social_token_id;
 
                 match &bounty.status {
                     BountyStatus::Proposed => {
                         // The reject origin would like to cancel a proposed bounty.
                         BountyDescriptions::remove(bounty_id);
                         let value = bounty.bond;
-                        let imbalance = <pallet_mission_tokens::Module<T>>::slash_reserved(&bounty.proposer, token_id, value).0;
+                        let imbalance = <pallet_social_tokens::Module<T>>::slash_reserved(&bounty.proposer, token_id, value).0;
                         <T as Trait>::OnSlash::on_unbalanced(imbalance);
                         *maybe_bounty = None;
 
@@ -957,7 +957,7 @@ decl_module! {
                     },
                     BountyStatus::Active { curator, .. } => {
                         // Cancelled by council, refund deposit of the working curator.
-                        let _ = <pallet_mission_tokens::Module<T>>::unreserve(&curator, token_id, bounty.curator_deposit);
+                        let _ = <pallet_social_tokens::Module<T>>::unreserve(&curator, token_id, bounty.curator_deposit);
                         // Then execute removal of the bounty below.
                     },
                     BountyStatus::PendingPayout { .. } => {
@@ -973,11 +973,11 @@ decl_module! {
 
                 BountyDescriptions::remove(bounty_id);
 
-                let balance = <pallet_mission_tokens::Module<T>>::free_balance(&bounty_account, bounty.mission_token_id);
-                let _ = <pallet_mission_tokens::Module<T>>::do_transfer(
+                let balance = <pallet_social_tokens::Module<T>>::free_balance(&bounty_account, bounty.social_token_id);
+                let _ = <pallet_social_tokens::Module<T>>::do_transfer(
                     &bounty_account,
                     &Self::account_id(),
-                    bounty.mission_token_id,
+                    bounty.social_token_id,
                     balance,
                     AllowDeath
                 ); // should not fail
@@ -1039,15 +1039,15 @@ decl_module! {
                     if era < current_era {
                         let reward_points = <pallet_staking::Module<T>>::eras_reward_points(era);
                         let treasury_account_id = Self::account_id();
-                        let (min_token_id, max_token_id) = <pallet_mission_tokens::Module<T>>::mission_token_ids();
+                        let (min_token_id, max_token_id) = <pallet_social_tokens::Module<T>>::social_token_ids();
 
                         for (account_id, points) in reward_points.individual {
                             if let Some(controller) = <pallet_staking::Module<T>>::bonded(account_id) {
-                                let mission_token_id = <pallet_validator_registry::Module<T>>::mission_of(controller);
-                                if mission_token_id >= min_token_id && mission_token_id <= max_token_id {
-                                    <pallet_mission_tokens::Module<T>>::mint(
+                                let social_token_id = <pallet_validator_registry::Module<T>>::social_of(controller);
+                                if social_token_id >= min_token_id && social_token_id <= max_token_id {
+                                    <pallet_social_tokens::Module<T>>::mint(
                                         treasury_account_id.clone(),
-                                        mission_token_id,
+                                        social_token_id,
                                         points.into()
                                     );
                                 }
@@ -1141,12 +1141,12 @@ impl<T: Trait> Module<T> {
         Self::retain_active_tips(&mut tips);
         tips.sort_by_key(|i| i.1);
         let treasury = Self::account_id();
-        let max_payout = Self::pot(tip.mission_token_id);
+        let max_payout = Self::pot(tip.social_token_id);
         let mut payout = tips[tips.len() / 2].1.min(max_payout);
         if !tip.deposit.is_zero() {
-            let _ = <pallet_mission_tokens::Module<T>>::unreserve(
+            let _ = <pallet_social_tokens::Module<T>>::unreserve(
                 &tip.finder,
-                tip.mission_token_id,
+                tip.social_token_id,
                 tip.deposit,
             );
         }
@@ -1157,27 +1157,27 @@ impl<T: Trait> Module<T> {
                 payout -= finders_fee;
                 // this should go through given we checked it's at most the free balance, but still
                 // we only make a best-effort.
-                let _ = <pallet_mission_tokens::Module<T>>::do_transfer(
+                let _ = <pallet_social_tokens::Module<T>>::do_transfer(
                     &treasury,
                     &tip.finder,
-                    tip.mission_token_id,
+                    tip.social_token_id,
                     finders_fee,
                     KeepAlive,
                 );
             }
         }
         // same as above: best-effort only.
-        let _ = <pallet_mission_tokens::Module<T>>::do_transfer(
+        let _ = <pallet_social_tokens::Module<T>>::do_transfer(
             &treasury,
             &tip.who,
-            tip.mission_token_id,
+            tip.social_token_id,
             payout,
             KeepAlive,
         );
         Self::deposit_event(RawEvent::TipClosed(
             hash,
             tip.who,
-            tip.mission_token_id,
+            tip.social_token_id,
             payout,
         ));
     }
@@ -1187,7 +1187,7 @@ impl<T: Trait> Module<T> {
         let mut total_weight: Weight = Zero::zero();
 
         let mut budgets_remaining = vec![];
-        let (min_token_id, max_token_id) = <pallet_mission_tokens::Module<T>>::mission_token_ids();
+        let (min_token_id, max_token_id) = <pallet_social_tokens::Module<T>>::social_token_ids();
         let mut token_id: TokenId<T> = 0u32.into();
         while token_id < min_token_id {
             budgets_remaining.push(0u32.into());
@@ -1215,30 +1215,30 @@ impl<T: Trait> Module<T> {
             v.retain(|&index| {
                 // Should always be true, but shouldn't panic if false or we're screwed.
                 if let Some(p) = Self::proposals(index) {
-                    let id: usize = p.mission_token_id.unique_saturated_into();
+                    let id: usize = p.social_token_id.unique_saturated_into();
                     if p.value <= budgets_remaining[id] {
                         budgets_remaining[id] -= p.value;
                         <Proposals<T>>::remove(index);
 
                         // return their deposit.
-                        let _ = <pallet_mission_tokens::Module<T>>::unreserve(
+                        let _ = <pallet_social_tokens::Module<T>>::unreserve(
                             &p.proposer,
-                            p.mission_token_id,
+                            p.social_token_id,
                             p.bond,
                         );
 
                         // provide the allocation.
                         imbalances[id].subsume(
-                            <pallet_mission_tokens::Module<T>>::deposit_creating(
+                            <pallet_social_tokens::Module<T>>::deposit_creating(
                                 &p.beneficiary,
-                                p.mission_token_id,
+                                p.social_token_id,
                                 p.value,
                             ),
                         );
 
                         Self::deposit_event(RawEvent::Awarded(
                             index,
-                            p.mission_token_id,
+                            p.social_token_id,
                             p.value,
                             p.beneficiary,
                         ));
@@ -1262,24 +1262,24 @@ impl<T: Trait> Module<T> {
                 Bounties::<T>::mutate(index, |bounty| {
                     // Should always be true, but shouldn't panic if false or we're screwed.
                     if let Some(bounty) = bounty {
-                        let id: usize = bounty.mission_token_id.unique_saturated_into();
+                        let id: usize = bounty.social_token_id.unique_saturated_into();
                         if bounty.value <= budgets_remaining[id] {
                             budgets_remaining[id] -= bounty.value;
 
                             bounty.status = BountyStatus::Funded;
 
                             // return their deposit.
-                            let _ = <pallet_mission_tokens::Module<T>>::unreserve(
+                            let _ = <pallet_social_tokens::Module<T>>::unreserve(
                                 &bounty.proposer,
-                                bounty.mission_token_id,
+                                bounty.social_token_id,
                                 bounty.bond,
                             );
 
                             // fund the bounty account
                             imbalances[id].subsume(
-                                <pallet_mission_tokens::Module<T>>::deposit_creating(
+                                <pallet_social_tokens::Module<T>>::deposit_creating(
                                     &Self::bounty_account_id(index),
-                                    bounty.mission_token_id,
+                                    bounty.social_token_id,
                                     bounty.value,
                                 ),
                             );
@@ -1309,7 +1309,7 @@ impl<T: Trait> Module<T> {
                 let burn = (<T as Trait>::Burn::get() * budget_remaining).min(budget_remaining);
                 budgets_remaining[id] -= burn;
 
-                let (debit, credit) = <pallet_mission_tokens::Module<T>>::pair(token_id, burn);
+                let (debit, credit) = <pallet_social_tokens::Module<T>>::pair(token_id, burn);
                 imbalances[id].subsume(debit);
                 <T as Trait>::BurnDestination::on_unbalanced(credit);
                 Self::deposit_event(RawEvent::Burnt(token_id, burn))
@@ -1319,7 +1319,7 @@ impl<T: Trait> Module<T> {
             // proof: budget_remaining is account free balance minus ED;
             // Thus we can't spend more than account free balance minus ED;
             // Thus account is kept alive; qed;
-            if let Err(problem) = <pallet_mission_tokens::Module<T>>::settle(
+            if let Err(problem) = <pallet_social_tokens::Module<T>>::settle(
                 &account_id,
                 token_id,
                 imbalances[id].clone(),
@@ -1342,8 +1342,8 @@ impl<T: Trait> Module<T> {
     /// Return the amount of money in the pot.
     // The existential deposit is not part of the pot so treasury account never gets deleted.
     fn pot(token_id: TokenId<T>) -> BalanceOf<T> {
-        <pallet_mission_tokens::Module<T>>::free_balance(&Self::account_id(), token_id)
-            .saturating_sub(<pallet_mission_tokens::Module<T>>::minimum_balance())
+        <pallet_social_tokens::Module<T>>::free_balance(&Self::account_id(), token_id)
+            .saturating_sub(<pallet_social_tokens::Module<T>>::minimum_balance())
     }
 
     fn create_bounty(
@@ -1366,7 +1366,7 @@ impl<T: Trait> Module<T> {
         // reserve deposit for new bounty
         let bond = <T as Trait>::BountyDepositBase::get()
             + <T as Trait>::DataDepositPerByte::get() * (description.len() as u32).into();
-        <pallet_mission_tokens::Module<T>>::reserve(&proposer, token_id, bond)
+        <pallet_social_tokens::Module<T>>::reserve(&proposer, token_id, bond)
             .map_err(|_| Error::<T>::InsufficientProposersBalance)?;
 
         BountyCount::put(index + 1);
@@ -1378,7 +1378,7 @@ impl<T: Trait> Module<T> {
             curator_deposit: 0u32.into(),
             bond,
             status: BountyStatus::Proposed,
-            mission_token_id: token_id,
+            social_token_id: token_id,
         };
 
         Bounties::<T>::insert(index, &bounty);
