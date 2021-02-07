@@ -920,18 +920,18 @@ impl pallet_did::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDepositOfMissionTokens: u128 = 1;
-	pub const MaxMissionTokensSupply: u128 = 7_777_777_777 * DOLLARS;
+	pub const ExistentialDepositOfSocialTokens: u128 = 1;
+	pub const MaxSocialTokensSupply: u128 = 7_777_777_777 * DOLLARS;
 }
 
-impl pallet_mission_tokens::Trait for Runtime {
+impl pallet_social_tokens::Trait for Runtime {
 	type Event = Event;
 	type Balance = u128;
-	type MissionTokenId = u32;
-	type ExistentialDeposit = ExistentialDepositOfMissionTokens;
+	type SocialTokenId = u32;
+	type ExistentialDeposit = ExistentialDepositOfSocialTokens;
 	type OnNewAccount = ();
-	type MaxMissionTokensSupply = MaxMissionTokensSupply;
-	type MissionCreatorOrigin = EnsureOneOf<
+	type MaxSocialTokensSupply = MaxSocialTokensSupply;
+	type SocialCreatorOrigin = EnsureOneOf<
 		AccountId,
 		EnsureRoot<AccountId>,
 		pallet_collective::EnsureMembers<_4, AccountId, CouncilCollective>
@@ -1002,6 +1002,26 @@ impl pallet_chainbridge::Trait for Runtime {
     type ProposalLifetime = ProposalLifetime;
 }
 
+parameter_types! {
+	pub HashId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_HASH");
+	pub NativeTokenId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET");
+	pub Erc721Id: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_NFT");
+}
+
+impl pallet_social_bridge::Trait for Runtime {
+	type Event = Event;
+	type BridgeOrigin = pallet_chainbridge::EnsureBridge<Self>;
+	type Currency = Balances;
+	type HashId = HashId;
+	type NativeTokenId = NativeTokenId;
+	type Erc721Id = Erc721Id;
+}
+
+impl pallet_social_nft::Trait for Runtime {
+	type Event = Event;
+	type Identifier = Erc721Id;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1042,11 +1062,13 @@ construct_runtime!(
 		Multisig: pallet_multisig::{Module, Call, Storage, Event<T>},
 		Evm: pallet_evm::{Module, Call, Storage, Event<T>},
 		Did: pallet_did::{Module, Call, Storage, Event<T>},
-		MissionTokens: pallet_mission_tokens::{Module, Call, Storage, Event<T>},
+		SocialTokens: pallet_social_tokens::{Module, Call, Storage, Event<T>},
 		SocialTreasury: pallet_social_treasury::{Module, Call, Storage, Event<T>},
 		ValidatorRegistry: pallet_validator_registry::{Module, Call, Storage, Event<T>},
 		UsernameRegistry: pallet_username_registry::{Module, Call, Storage, Event<T>},
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
+		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},
+		SocialNFT: pallet_social_nft::{Module, Call, Event<T>},
 	}
 );
 

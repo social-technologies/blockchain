@@ -52,17 +52,17 @@ impl system::Trait for Test {
 }
 
 parameter_types! {
-    pub const ExistentialDepositOfMissionTokens: u128 = 1_000;
-    pub const MaxMissionTokensSupply: u128 = 7_777_777_777;
+    pub const ExistentialDepositOfSocialTokens: u128 = 1_000;
+    pub const MaxSocialTokensSupply: u128 = 7_777_777_777;
 }
 
-impl pallet_mission_tokens::Trait for Test {
+impl pallet_social_tokens::Trait for Test {
     type Event = ();
     type Balance = u128;
-    type MissionTokenId = u32;
-    type ExistentialDeposit = ExistentialDepositOfMissionTokens;
+    type SocialTokenId = u32;
+    type ExistentialDeposit = ExistentialDepositOfSocialTokens;
     type OnNewAccount = ();
-    type MaxMissionTokensSupply = MaxMissionTokensSupply;
+    type MaxSocialTokensSupply = MaxSocialTokensSupply;
 }
 
 impl Trait for Test {

@@ -54,10 +54,10 @@ impl system::Trait for Test {
 impl Trait for Test {
     type Event = ();
     type Balance = u64;
-    type MissionTokenId = u32;
+    type SocialTokenId = u32;
 }
 
-pub type MissionTokens = Module<Test>;
+pub type SocialTokens = Module<Test>;
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {

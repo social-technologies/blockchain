@@ -3890,7 +3890,6 @@ dependencies = [
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",
- "pallet-mission-tokens",
  "pallet-multisig",
  "pallet-offences",
  "pallet-offences-benchmarking",
@@ -3900,6 +3899,9 @@ dependencies = [
  "pallet-scheduler",
  "pallet-session",
  "pallet-session-benchmarking",
+ "pallet-social-bridge",
+ "pallet-social-nft",
+ "pallet-social-tokens",
  "pallet-social-treasury",
  "pallet-society",
  "pallet-staking",
@@ -4663,21 +4665,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-mission-tokens"
-version = "0.1.0"
-dependencies = [
- "chainbridge",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-multisig"
 version = "2.0.1"
 dependencies = [
@@ -4885,15 +4872,66 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-social-bridge"
+version = "0.1.0"
+dependencies = [
+ "chainbridge",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-social-nft",
+ "pallet-social-tokens",
+ "parity-scale-codec",
+ "serde",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-wasm-builder-runner 2.0.0",
+]
+
+[[package]]
+name = "pallet-social-nft"
+version = "0.0.1"
+dependencies = [
+ "chainbridge",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "substrate-wasm-builder-runner 2.0.0",
+]
+
+[[package]]
+name = "pallet-social-tokens"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-social-treasury"
 version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
- "pallet-mission-tokens",
  "pallet-offences",
  "pallet-session",
+ "pallet-social-tokens",
  "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-timestamp",
@@ -5130,7 +5168,7 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
- "pallet-mission-tokens",
+ "pallet-social-tokens",
  "parity-scale-codec",
  "sp-core",
  "sp-io",

@@ -12,14 +12,14 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait Trait: frame_system::Trait + pallet_mission_tokens::Trait {
+pub trait Trait: frame_system::Trait + pallet_social_tokens::Trait {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
 decl_storage! {
     trait Store for Module<T: Trait> as ValidatorRegistry {
-        MissionOf get(fn mission_of): map hasher(blake2_128_concat) T::AccountId => T::MissionTokenId;
-        Validators get(fn validators): map hasher(blake2_128_concat) T::MissionTokenId => Vec<T::AccountId>;
+        SocialOf get(fn social_of): map hasher(blake2_128_concat) T::AccountId => T::SocialTokenId;
+        Validators get(fn validators): map hasher(blake2_128_concat) T::SocialTokenId => Vec<T::AccountId>;
     }
 }
 
@@ -27,10 +27,10 @@ decl_event!(
     pub enum Event<T>
     where
         AccountId = <T as frame_system::Trait>::AccountId,
-        MissionTokenId = <T as pallet_mission_tokens::Trait>::MissionTokenId,
+        SocialTokenId = <T as pallet_social_tokens::Trait>::SocialTokenId,
     {
-        Registered(AccountId, MissionTokenId),
-        Unregistered(AccountId, MissionTokenId),
+        Registered(AccountId, SocialTokenId),
+        Unregistered(AccountId, SocialTokenId),
     }
 );
 
@@ -48,18 +48,18 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 10_000 + T::DbWeight::get().writes(1)]
-        pub fn register(origin, mission_token_id: T::MissionTokenId) -> dispatch::DispatchResult {
+        pub fn register(origin, social_token_id: T::SocialTokenId) -> dispatch::DispatchResult {
             let validator = ensure_signed(origin)?;
 
-            <pallet_mission_tokens::Module<T>>::validate_mission_token_id(mission_token_id)?;
-            ensure!(!<MissionOf<T>>::contains_key(&validator), Error::<T>::AlreadyRegistered);
+            <pallet_social_tokens::Module<T>>::validate_social_token_id(social_token_id)?;
+            ensure!(!<SocialOf<T>>::contains_key(&validator), Error::<T>::AlreadyRegistered);
 
-            <MissionOf<T>>::insert(&validator, mission_token_id);
-            <Validators<T>>::mutate(mission_token_id, |validators| {
+            <SocialOf<T>>::insert(&validator, social_token_id);
+            <Validators<T>>::mutate(social_token_id, |validators| {
                 validators.push(validator.clone())
             });
 
-            Self::deposit_event(RawEvent::Registered(validator, mission_token_id));
+            Self::deposit_event(RawEvent::Registered(validator, social_token_id));
             Ok(())
         }
 
@@ -67,15 +67,15 @@ decl_module! {
         pub fn unregister(origin) -> dispatch::DispatchResult {
             let validator = ensure_signed(origin)?;
 
-            ensure!(<MissionOf<T>>::contains_key(&validator), Error::<T>::NotFound);
+            ensure!(<SocialOf<T>>::contains_key(&validator), Error::<T>::NotFound);
 
-            let mission_token_id = <MissionOf<T>>::get(&validator);
-            <MissionOf<T>>::remove(&validator);
-            <Validators<T>>::mutate(mission_token_id, |validators| {
+            let social_token_id = <SocialOf<T>>::get(&validator);
+            <SocialOf<T>>::remove(&validator);
+            <Validators<T>>::mutate(social_token_id, |validators| {
                 validators.retain(|account_id| account_id != &validator)
             });
 
-            Self::deposit_event(RawEvent::Unregistered(validator, mission_token_id));
+            Self::deposit_event(RawEvent::Unregistered(validator, social_token_id));
             Ok(())
         }
     }
