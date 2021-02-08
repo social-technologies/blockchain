@@ -4,15 +4,15 @@ The Social Network is a next-generation governance, economic, and social system 
 
 ![Substrate Builders Program](/docs/SBP_M2.png)
 
-## Join the network of Guardians
+## Earn NET by running a Server
 
-The Social Network is powered by a decentralized, permissionless blockchain which anyone can participate in by running a Guardian node. This allows anyone to verify transactions, replicate data, and remove the ability for any central party or middleman to extract rent or censor the network for personal gain, control, or power.
+The Social Network is powered by a decentralized backend which allows anyone in the world to participate by running the server software in this repository. This removes the need for a central party or middleman to extract rent or censor the network for personal gain, control, or power.
 
-Guardians are responsible for securing the integrity of the network by running the software in this repo, this secures the ledger, and enables front end social networking platforms and interfaces to connect to a decentralized source of truth. Guardians are rewarded with NET tokens for keeping their node online and available, and incentivized with higher rewards the more reliable their servers are for platforms.
+The network is capable of securing and maintaining a single source of truth, globally, with 6 second finality using a byzantine fault tolerant, nominated Proof-of-Stake consensus algorithm. In addition, servers can run dedicated real time applications off-chain, and use the network consensus for discovery and access control of their services from from end social network users.
 
-Individuals and Societies on The Social Network can stake NET tokens to guardians they wish to support, determined by their reputation on the open markets and which global mission the validator chooses to support. A mission could be something like renewable energy.
+Server operators are incentivized with NET tokens for keeping the software running, and earn greater rewards the more reliable their servers are over time. Fees generated on the chain, are distributed to Server operators proportional to how much staked NET they have on their server. Server operators can specify which Social token they wish to support, such that when NET token holders stake their tokens to a server, they will receive a bonus amount of that Social token in their wallet. These social tokens can then be used for governance or voting on global social networking applications.
 
-## Running a Guardian
+## Running a Network Server
 
 To get started, you can follow the steps depending on your operating system:
 
@@ -62,8 +62,9 @@ Install rust with the following:
 curl https://sh.rustup.rs -sSf | sh
 # Configure
 source ~/.cargo/env
-# Configure Rust toolchain to the one we use for The Social Network
+# Configure Rust toolchain to the one needed for The Social Network
 rustup install nightly-2021-01-25
+rustup default nightly-2021-01-25
 # Install WebAssembly (WASM)
 rustup target add wasm32-unknown-unknown --toolchain nightly-2021-01-25
 ```
@@ -73,17 +74,17 @@ rustup target add wasm32-unknown-unknown --toolchain nightly-2021-01-25
 To get a copy of The Social Network software on your machine:
 
 ```
-git clone https://github.com/social-network/substrate.git
+git clone https://github.com/social-network/network.git
 ```
 
 The runtime of the blockchain is compiled down to [Web Assembly (WASM)](https://webassembly.org/) so it can be ran in embedded devices, or even the browser. To compile it run:
 
 ```
-cd substrate
+cd network
 WASM_BUILD_TOOLCHAIN=nightly-2021-01-25 cargo build --release
 ```
 
-Note if you are doing other substrate development work, you will need to update your toolchain to match our version for the compilation to work. Feel free to join the #support circle in the [Social Technologies Society](https://social.network/join/tech) if you need help getting setup.
+Note if you are doing other network development work, you will need to update your toolchain to match our version for the compilation to work. Feel free to join the #support circle in the [Social Technologies Society](https://social.network/join/tech) if you need help getting setup.
 
 ## Help Build The Social Network
 
