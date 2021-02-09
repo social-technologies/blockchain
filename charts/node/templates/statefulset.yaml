@@ -92,6 +92,7 @@ spec:
           - -c
           - exec /usr/local/bin/substrate
             --base-path {{ .Values.image.basepath }}
+            --chain {{ .Values.nodes.network_name }}
             {{- if .Values.validator.keys }}
             --validator
             --name $(cat {{ .Values.image.basepath }}/name)
