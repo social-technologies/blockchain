@@ -23,7 +23,7 @@
 use frame_support::weights::{Weight, constants::RocksDbWeight as DbWeight};
 
 pub struct WeightInfo;
-impl pallet_username_registry::WeightInfo for WeightInfo {
+impl pallet_social_usernames::WeightInfo for WeightInfo {
 	fn add_registrar(r: u32, ) -> Weight {
 		(39_603_000 as Weight)
 			.saturating_add((418_000 as Weight).saturating_mul(r as Weight))

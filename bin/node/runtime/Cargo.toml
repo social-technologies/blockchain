@@ -82,11 +82,11 @@ pallet-society = { version = "2.0.0", default-features = false, path = "../../..
 pallet-sudo = { version = "2.0.0", default-features = false, path = "../../../frame/sudo" }
 pallet-timestamp = { version = "2.0.0", default-features = false, path = "../../../frame/timestamp" }
 pallet-treasury = { version = "2.0.0", default-features = false, path = "../../../frame/treasury" }
-pallet-username-registry = { version = "0.1.0", default-features = false, path = "../../../frame/username-registry" }
+pallet-social-usernames = { version = "0.1.0", default-features = false, path = "../../../frame/social-usernames" }
 pallet-utility = { version = "2.0.0", default-features = false, path = "../../../frame/utility" }
 pallet-transaction-payment = { version = "2.0.0", default-features = false, path = "../../../frame/transaction-payment" }
 pallet-transaction-payment-rpc-runtime-api = { version = "2.0.0", default-features = false, path = "../../../frame/transaction-payment/rpc/runtime-api/" }
-pallet-validator-registry = { version = "0.1.0", default-features = false, path = "../../../frame/validator-registry" }
+pallet-social-champions = { version = "0.1.0", default-features = false, path = "../../../frame/social-champions" }
 pallet-vesting = { version = "2.0.0", default-features = false, path = "../../../frame/vesting" }
 
 [build-dependencies]
@@ -157,8 +157,8 @@ std = [
     "pallet-evm/std",
     "pallet-social-tokens/std",
     "pallet-social-treasury/std",
-    "pallet-validator-registry/std",
-    "pallet-username-registry/std",
+    "pallet-social-champions/std",
+    "pallet-social-usernames/std",
     "pallet-chainbridge/std",
     "pallet-social-bridge/std",
     "pallet-social-nft/std",

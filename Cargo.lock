@@ -3900,9 +3900,11 @@ dependencies = [
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-social-bridge",
+ "pallet-social-champions",
  "pallet-social-nft",
  "pallet-social-tokens",
  "pallet-social-treasury",
+ "pallet-social-usernames",
  "pallet-society",
  "pallet-staking",
  "pallet-staking-reward-curve",
@@ -3911,9 +3913,7 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
- "pallet-username-registry",
  "pallet-utility",
- "pallet-validator-registry",
  "pallet-vesting",
  "parity-scale-codec",
  "serde",
@@ -4821,6 +4821,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-social-champions"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-social-tokens",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-social-nft"
 version = "0.0.1"
 dependencies = [
@@ -4860,18 +4874,31 @@ dependencies = [
  "pallet-balances",
  "pallet-offences",
  "pallet-session",
+ "pallet-social-champions",
  "pallet-social-tokens",
  "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-timestamp",
  "pallet-treasury",
- "pallet-validator-registry",
  "parity-scale-codec",
  "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-social-usernames"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -5051,19 +5078,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-username-registry"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-utility"
 version = "2.0.1"
 dependencies = [
@@ -5073,20 +5087,6 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-validator-registry"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-social-tokens",
- "parity-scale-codec",
  "sp-core",
  "sp-io",
  "sp-runtime",

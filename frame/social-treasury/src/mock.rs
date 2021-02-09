@@ -371,7 +371,7 @@ impl pallet_social_tokens::Trait for Test {
     type SocialTokenId = u32;
 }
 
-impl pallet_validator_registry::Trait for Test {
+impl pallet_social_champions::Trait for Test {
     type Event = ();
     type SocialId = u32;
 }

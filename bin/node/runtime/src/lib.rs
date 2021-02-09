@@ -970,7 +970,7 @@ impl pallet_social_treasury::Trait for Runtime {
 	type WeightInfo = weights::pallet_social_treasury::WeightInfo;
 }
 
-impl pallet_validator_registry::Trait for Runtime {
+impl pallet_social_champions::Trait for Runtime {
 	type Event = Event;
 }
 
@@ -979,14 +979,14 @@ parameter_types! {
 	pub const MaxUsernameLength: u32 = 21;
 }
 
-impl pallet_username_registry::Trait for Runtime {
+impl pallet_social_usernames::Trait for Runtime {
 	type Event = Event;
 	type MaxRegistrars = MaxRegistrars;
 	type MinUsernameLength = MinUsernameLength;
 	type MaxUsernameLength = MaxUsernameLength;
 	type ForceOrigin = EnsureRootOrHalfCouncil;
 	type RegistrarOrigin = EnsureRootOrHalfCouncil;
-	type WeightInfo = weights::pallet_username_registry::WeightInfo;
+	type WeightInfo = weights::pallet_social_usernames::WeightInfo;
 }
 
 parameter_types! {
@@ -1064,8 +1064,8 @@ construct_runtime!(
 		Did: pallet_did::{Module, Call, Storage, Event<T>},
 		SocialTokens: pallet_social_tokens::{Module, Call, Storage, Event<T>},
 		SocialTreasury: pallet_social_treasury::{Module, Call, Storage, Event<T>},
-		ValidatorRegistry: pallet_validator_registry::{Module, Call, Storage, Event<T>},
-		UsernameRegistry: pallet_username_registry::{Module, Call, Storage, Event<T>},
+		ValidatorRegistry: pallet_social_champions::{Module, Call, Storage, Event<T>},
+		UsernameRegistry: pallet_social_usernames::{Module, Call, Storage, Event<T>},
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
 		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},
 		SocialNFT: pallet_social_nft::{Module, Call, Event<T>},

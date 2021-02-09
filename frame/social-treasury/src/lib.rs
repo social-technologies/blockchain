@@ -61,7 +61,7 @@ pub trait Trait:
     + pallet_treasury::Trait
     + pallet_staking::Trait
     + pallet_social_tokens::Trait
-    + pallet_validator_registry::Trait
+    + pallet_social_champions::Trait
 {
     /// Origin from which approvals must come.
     type ApproveOrigin: EnsureOrigin<Self::Origin>;
@@ -1043,7 +1043,7 @@ decl_module! {
 
                         for (account_id, points) in reward_points.individual {
                             if let Some(controller) = <pallet_staking::Module<T>>::bonded(account_id) {
-                                let social_token_id = <pallet_validator_registry::Module<T>>::social_of(controller);
+                                let social_token_id = <pallet_social_champions::Module<T>>::social_of(controller);
                                 if social_token_id >= min_token_id && social_token_id <= max_token_id {
                                     <pallet_social_tokens::Module<T>>::mint(
                                         treasury_account_id.clone(),

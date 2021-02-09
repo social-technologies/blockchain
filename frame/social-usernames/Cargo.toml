@@ -4,8 +4,8 @@ description = 'FRAME pallet to manage username registry.'
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Apache-2.0'
-name = 'pallet-username-registry'
-repository = 'https://github.com/aristosplatos/the-social-network/'
+name = 'pallet-social-usernames'
+repository = 'https://github.com/social-network/network/'
 version = '0.1.0'
 
 [package.metadata.docs.rs]
