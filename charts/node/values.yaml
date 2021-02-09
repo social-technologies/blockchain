@@ -39,7 +39,7 @@ nodes:
     # name and data directory are set by the chart itself
     # key and node-key may be provided on commandline invocation
     #
-    - --chain tnet
+    - --chain net
     # - krummelanke
     # serve rpc within the local network
     # - fenced off the world via firewall
