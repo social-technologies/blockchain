@@ -13,9 +13,9 @@ pub fn compute_total_payout<N>(
 ) -> (N, N) where N: AtLeast32BitUnsigned + Clone {
     if era_index < 360_000 {
         // If era < 360,000 mint according to inflation formula
-        // Hourly Inflation rate is 0.00311%
+        // Hourly Inflation rate is 0.00351%
         let inflation_rate = Perbill::from_rational_approximation(3_151u128, 1_000_000_000u128);
-        // Hourly Decay rate is 0.00055%
+        // Hourly Decay rate is 0.000555%
         let inflation_decay = Perbill::from_rational_approximation(555u128, 1_000_000_000u128)
             .saturating_pow(era_index.saturated_into());
 
