@@ -1039,7 +1039,7 @@ impl Convert<Balance, u128> for BalanceHandler {
 		a
 	}
 }
-impl pallet_uniswap_exchanges::Trait for Runtime {
+impl pallet_social_swap::Trait for Runtime {
 	type Currency = Balances;
 	type ModuleId = ExchangeModuleId;
 	type Event = Event;
@@ -1095,7 +1095,7 @@ construct_runtime!(
 		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},
 		SocialNFT: pallet_social_nft::{Module, Call, Event<T>},
 		FungibleAssets: pallet_fungible_assets::{Module, Call, Storage, Event<T>},
-		UniswapExchanges: pallet_uniswap_exchanges::{Module, Call, Storage, Event<T>},
+		SocialSwap: pallet_social_swap::{Module, Call, Storage, Event<T>},
 	}
 );
 

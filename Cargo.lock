@@ -3903,6 +3903,7 @@ dependencies = [
  "pallet-social-bridge",
  "pallet-social-champions",
  "pallet-social-nft",
+ "pallet-social-swap",
  "pallet-social-tokens",
  "pallet-social-treasury",
  "pallet-social-usernames",
@@ -3914,7 +3915,6 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-treasury",
- "pallet-uniswap-exchanges",
  "pallet-utility",
  "pallet-vesting",
  "parity-scale-codec",
@@ -4868,6 +4868,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-social-swap"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-fungible-assets",
+ "parity-scale-codec",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-social-tokens"
 version = "0.1.0"
 dependencies = [
@@ -5091,21 +5106,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-storage",
-]
-
-[[package]]
-name = "pallet-uniswap-exchanges"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-fungible-assets",
- "parity-scale-codec",
- "sp-application-crypto",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
