@@ -10,10 +10,10 @@ kubectl create namespace cert-manager
 
 helm repo add jetstack https://charts.jetstack.io
 
-helm install cert-manager \
+helm install \
+  cert-manager jetstack/cert-manager \
   --namespace cert-manager \
-  --version v1.0.2 \
-  jetstack/cert-manager \
+  --version v1.1.0 \
   --set installCRDs=true
 ```
 (see https://cert-manager.io/docs/installation/kubernetes for details)
