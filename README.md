@@ -193,6 +193,8 @@ In order to be compatible with polkadot.js the following type definitions will n
   },
   "Id": "AuthorityId",
   "ChainId": "u8",
-  "ResourceId": "Vec<u8>"
+  "ResourceId": "Vec<u8>",
+  "ExchangeId": "u64",
+  "CurrencyOf": "Balance"
 }
 ```

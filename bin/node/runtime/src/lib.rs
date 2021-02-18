@@ -47,7 +47,7 @@ use sp_api::impl_runtime_apis;
 use sp_runtime::{
 	Permill, Perbill, Perquintill, Percent, ApplyExtrinsicResult,
 	impl_opaque_keys, generic, create_runtime_str, ModuleId, FixedPointNumber,
-	MultiSigner
+	MultiSigner, traits::Convert
 };
 use sp_runtime::curve::PiecewiseLinear;
 use sp_runtime::transaction_validity::{TransactionValidity, TransactionSource, TransactionPriority};
@@ -1022,6 +1022,31 @@ impl pallet_social_nft::Trait for Runtime {
 	type Identifier = Erc721Id;
 }
 
+impl pallet_fungible_assets::Trait for Runtime {
+	type Event = Event;
+	type Balance = u128;
+	type AssetId = u64;
+	type ExchangeId = u64;
+}
+
+parameter_types! {
+	pub const ExchangeModuleId: ModuleId = ModuleId(*b"exchange");
+}
+
+pub struct BalanceHandler;
+impl Convert<Balance, u128> for BalanceHandler {
+	fn convert(a: Balance) -> u128 {
+		a
+	}
+}
+impl pallet_uniswap_exchanges::Trait for Runtime {
+	type Currency = Balances;
+	type ModuleId = ExchangeModuleId;
+	type Event = Event;
+	type FungibleToken = FungibleAssets;
+	type Handler = BalanceHandler;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1069,6 +1094,8 @@ construct_runtime!(
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
 		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},
 		SocialNFT: pallet_social_nft::{Module, Call, Event<T>},
+		FungibleAssets: pallet_fungible_assets::{Module, Call, Storage, Event<T>},
+		UniswapExchanges: pallet_uniswap_exchanges::{Module, Call, Storage, Event<T>},
 	}
 );
 
