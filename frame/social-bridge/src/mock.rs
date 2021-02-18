@@ -98,7 +98,7 @@ impl pallet_social_tokens::Trait for Test {
 
 parameter_types! {
     pub HashId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"hash"));
-    pub NativeTokenId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NET"));
+    pub NativeTokenId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"CHI"));
     pub Erc721Id: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NFT"));
 }
 

@@ -22,12 +22,12 @@ pub mod currency {
 	use node_primitives::Balance;
 
 	pub const SANGHAS: Balance = 10_000_000_000;
-	pub const MICRONET: Balance = 1_000 * SANGHAS;
-	pub const MILLINET: Balance = 1_000 * MICRONET;    // assume this is worth about a cent.
-	pub const NET: Balance = 100 * MILLINET;
+	pub const MICROCHI: Balance = 1_000 * SANGHAS;
+	pub const MILLICHI: Balance = 1_000 * MICROCHI;    // assume this is worth about a cent.
+	pub const CHI: Balance = 100 * MILLICHI;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 15 * MILLINET + (bytes as Balance) * 6 * MILLINET
+		items as Balance * 15 * MILLICHI + (bytes as Balance) * 6 * MILLICHI
 	}
 }
 

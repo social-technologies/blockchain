@@ -318,20 +318,20 @@
 		},
 		{
 			"prefix": 251,
-			"network": "social-testnet",
-			"displayName": "Social Network Testnet",
-			"symbols": ["TNET"],
+			"network": "social-network-chi",
+			"displayName": "Social Network Chi",
+			"symbols": ["CHI"],
 			"decimals": [18],
 			"standardAccount": "*25519",
-			"website": "https://dev.social.network"
+			"website": "https://chi.network"
 		},
 			"prefix": 252,
-			"network": "social-network",
-			"displayName": "Social Network",
-			"symbols": ["NET"],
+			"network": "social-network-prana",
+			"displayName": "Social Network Prana",
+			"symbols": ["PRA"],
 			"decimals": [18],
 			"standardAccount": "*25519",
-			"website": "https://social.network"
+			"website": "https://prana.network"
 		}
 	]
 }

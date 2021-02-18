@@ -18,7 +18,7 @@ pub trait Trait: frame_system::Trait + pallet_social_tokens::Trait {
 
 decl_storage! {
     trait Store for Module<T: Trait> as ValidatorRegistry {
-        SocialOf get(fn social_of): map hasher(blake2_128_concat) T::AccountId => T::SocialTokenId;
+        ChampionOf get(fn social_of): map hasher(blake2_128_concat) T::AccountId => T::SocialTokenId;
         Validators get(fn validators): map hasher(blake2_128_concat) T::SocialTokenId => Vec<T::AccountId>;
     }
 }
@@ -52,9 +52,9 @@ decl_module! {
             let validator = ensure_signed(origin)?;
 
             <pallet_social_tokens::Module<T>>::validate_social_token_id(social_token_id)?;
-            ensure!(!<SocialOf<T>>::contains_key(&validator), Error::<T>::AlreadyRegistered);
+            ensure!(!<ChampionOf<T>>::contains_key(&validator), Error::<T>::AlreadyRegistered);
 
-            <SocialOf<T>>::insert(&validator, social_token_id);
+            <ChampionOf<T>>::insert(&validator, social_token_id);
             <Validators<T>>::mutate(social_token_id, |validators| {
                 validators.push(validator.clone())
             });
@@ -67,10 +67,10 @@ decl_module! {
         pub fn unregister(origin) -> dispatch::DispatchResult {
             let validator = ensure_signed(origin)?;
 
-            ensure!(<SocialOf<T>>::contains_key(&validator), Error::<T>::NotFound);
+            ensure!(<ChampionOf<T>>::contains_key(&validator), Error::<T>::NotFound);
 
-            let social_token_id = <SocialOf<T>>::get(&validator);
-            <SocialOf<T>>::remove(&validator);
+            let social_token_id = <ChampionOf<T>>::get(&validator);
+            <ChampionOf<T>>::remove(&validator);
             <Validators<T>>::mutate(social_token_id, |validators| {
                 validators.retain(|account_id| account_id != &validator)
             });

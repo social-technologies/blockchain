@@ -35,12 +35,12 @@ k8s_v19_used: false
 
 nodes:
   replicas: 2
-  network_name: net
+  network_name: chi
   args:
     # name and data directory are set by the chart itself
     # key and node-key may be provided on commandline invocation
     #
-    # - --chain net
+    # - --chain chi
     # - krummelanke
     # serve rpc within the local network
     # - fenced off the world via firewall

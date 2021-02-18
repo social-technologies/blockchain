@@ -1,8 +1,8 @@
-namespace: polkadot-js-apps
+namespace: social-network-explorer
 
 # set tag manually --set image.tag=latest
 image:
-  repository: jacogr/polkadot-js-apps
+  repository: socialnetwork/explorer
   tag: 0.71.2
   pullPolicy: IfNotPresent
 
@@ -12,10 +12,10 @@ rbac:
   name: polkadot-js-apps
 
 # name of deployment
-app: polkadot-js-apps
+app: social-network-explorer
 
 # base domain
-domain: explorer.example.com
+domain: explorer.social.network
 
 replicas: 1
 
@@ -32,4 +32,4 @@ acme_registration_email: my-email@example.com
 
 k8s_v19_used: false
 
-node_ws_url: wss://testnet.social.network
+node_ws_url: wss://tnet.social.network

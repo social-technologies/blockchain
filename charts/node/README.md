@@ -26,7 +26,7 @@ helm upgrade --install node charts/node \
     --set "image.tag=0.1.0" \
     --set "nodes.replicas=2" \
     --set "acme_registration_email=my-email@example.com" \
-    --set "nodes.network_name=net" \
+    --set "nodes.network_name=chi" \
     --set "storage_class=do-block-storage" \
     --set "k8s_v19_used=true"
 ```

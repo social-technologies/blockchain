@@ -25,7 +25,7 @@ use crate::service::{new_partial, new_full_base, NewFullBase};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Social Network".into()
+		"Social Network Energy".into()
 	}
 
 	fn impl_version() -> String {
@@ -41,7 +41,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/social-network/substrate/issues/new".into()
+		"https://github.com/social-network/energy/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -50,7 +50,7 @@ impl SubstrateCli for Cli {
 
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		Ok(match id {
-			"" | "net" => Box::new(chain_spec::net_config()?),
+			"" | "chi" => Box::new(chain_spec::chi_config()?),
 			"dev" => Box::new(chain_spec::development_config()),
 			"local" => Box::new(chain_spec::local_testnet_config()),
 			"staging" => Box::new(chain_spec::staging_testnet_config()),
