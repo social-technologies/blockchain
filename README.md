@@ -74,7 +74,7 @@ rustup target add wasm32-unknown-unknown --toolchain nightly-2021-01-25
 To get a copy of The Social Network software on your machine:
 
 ```
-git clone https://github.com/social-network/network.git
+git clone https://github.com/social-network/energy.git
 ```
 
 The runtime of the blockchain is compiled down to [Web Assembly (WASM)](https://webassembly.org/) so it can be ran in embedded devices, or even the browser. To compile it run:
