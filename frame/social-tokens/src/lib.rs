@@ -139,6 +139,23 @@ impl<Balance: Saturating + Copy + Ord> AccountData<Balance> {
     }
 }
 
+type Symbol = [u8; 8];
+const NET_V1: Symbol = *b"NETSWAP1";
+
+/// TODO: consider if there need to be more fields
+#[derive(Encode, Decode)]
+pub struct TokenDossier {
+    pub symbol: Symbol
+}
+
+impl TokenDossier {
+    pub fn new_lp_token() -> Self {
+        TokenDossier {
+            symbol: NET_V1
+        }
+    }
+}
+
 decl_storage! {
     trait Store for Module<T: Trait> as SocialTokens {
         MaxSocialTokenId get(fn max_social_token_id): T::SocialTokenId = 17u32.into();
@@ -153,6 +170,11 @@ decl_storage! {
         /// Any liquidity locks on some account balances.
         /// NOTE: Should only be accessed when setting, changing and freeing a lock.
         pub Locks get(fn locks): map hasher(blake2_128_concat) (T::SocialTokenId, T::AccountId) => Vec<BalanceLock<T::Balance>>;
+
+        TokenInfo get(fn token_info): map hasher(twox_64_concat) T::SocialTokenId => Option<TokenDossier>;
+        /// Allowance
+        Allowances get(fn allowances):
+            double_map  hasher(twox_64_concat) T::SocialTokenId, hasher(blake2_128_concat) (T::AccountId, T::AccountId) => T::Balance;
     }
 }
 
@@ -165,7 +187,7 @@ decl_event!(
     {
         /// An account was created with some free balance. \[account, free_balance\]
         Endowed(AccountId, SocialTokenId, SocialTokenBalance),
-        /// Some assets were transferred. \[asset_id, from, to, amount\]
+        /// Some assets were transferred. \[token_id, from, to, amount\]
         Transfer(AccountId, AccountId, SocialTokenId, SocialTokenBalance),
         /// A balance was set by root. \[who, free, reserved\]
         SocialTokenBalanceSet(
@@ -183,6 +205,8 @@ decl_event!(
         /// A new \[account\] was created.
         NewAccount(AccountId, SocialTokenId),
         SocialCreated(SocialTokenId),
+        /// Some assets were issued. [token_id, owner, total_supply]
+        Issued(SocialTokenId, AccountId, SocialTokenBalance),
     }
 );
 
@@ -210,6 +234,8 @@ decl_error! {
         /// Beneficiary account must pre-exist
         DeadAccount,
         InvalidTransfer,
+        /// Have no permission to transfer someone's balance
+        NotAllowed,
     }
 }
 
@@ -236,10 +262,7 @@ decl_module! {
         #[weight = 1_000_000_000_000]
         pub fn create_social(origin) {
             T::SocialCreatorOrigin::ensure_origin(origin)?;
-
-            let new_social_id = <MaxSocialTokenId<T>>::get().checked_add(&1u32.into()).ok_or(Error::<T>::Overflow)?;
-            <MaxSocialTokenId<T>>::put(new_social_id);
-
+            let new_social_id = Self::create_new_social_token()?;
             Self::deposit_event(RawEvent::SocialCreated(new_social_id));
         }
     }
@@ -266,7 +289,7 @@ impl<T: Trait> Module<T> {
         Self::account(token_id, who.borrow()).reserved
     }
 
-    pub fn mint(target: T::AccountId, token_id: T::SocialTokenId, value: T::Balance) {
+    pub fn issue_social_token(target: T::AccountId, token_id: T::SocialTokenId, value: T::Balance) {
         if value.is_zero() {
             return;
         }
@@ -283,6 +306,26 @@ impl<T: Trait> Module<T> {
                 .free
                 .checked_add(&allowed_value)
                 .unwrap_or_else(|| T::MaxSocialTokensSupply::get().saturated_into())
+        });
+    }
+
+    pub fn burn_social_token(target: T::AccountId, token_id: T::SocialTokenId, value: T::Balance) {
+        if value.is_zero() {
+            return;
+        }
+        let current_balance = Self::free_balance(&target, token_id);
+        let ed = T::ExistentialDeposit::get();
+        let allowed_value = if current_balance - value < ed {
+            current_balance - ed
+        } else {
+            value
+        };
+
+        Self::mutate(&(token_id, target.clone()), |account_data| {
+            account_data.free = account_data
+                .free
+                .checked_sub(&allowed_value)
+                .unwrap_or_else(|| ed)
         });
     }
 
@@ -357,6 +400,12 @@ impl<T: Trait> Module<T> {
         ));
 
         Ok(())
+    }
+
+    fn create_new_social_token() -> Result<T::SocialTokenId, DispatchError> {
+        let new_social_id = <MaxSocialTokenId<T>>::get().checked_add(&1u32.into()).ok_or(Error::<T>::Overflow)?;
+        <MaxSocialTokenId<T>>::put(new_social_id);
+        Ok(new_social_id)
     }
 
     /// Move `value` from the free balance from `who` to their reserved balance.
@@ -906,4 +955,88 @@ impl<T: Trait> StoredMap<(T::SocialTokenId, T::AccountId), AccountData<T::Balanc
             v
         })
     }
+}
+
+pub trait Fungible<SocialTokenId, AccountId> {
+    type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy;
+
+    fn total_supply(token_id: &SocialTokenId) -> Self::Balance;
+    fn balances(token_id: &SocialTokenId, who: &AccountId) -> Self::Balance;
+    fn allowances(token_id: &SocialTokenId, owner: &AccountId, spender: &AccountId) -> Self::Balance;
+    fn transfer(token_id: &SocialTokenId, from: &AccountId, to: &AccountId, value: Self::Balance) -> DispatchResult;
+    fn transfer_from(token_id: &SocialTokenId, from: &AccountId, operator: &AccountId, to: &AccountId, value: Self::Balance) -> DispatchResult;
+}
+
+pub trait IssueAndBurn<SocialTokenId, AccountId>: Fungible<SocialTokenId, AccountId> {
+    fn exists(asset_id: &SocialTokenId) -> bool;
+    fn create_new_asset(dossier: TokenDossier) -> Result<SocialTokenId, DispatchError>;
+    fn issue(asset_id: &SocialTokenId, who: &AccountId, value: Self::Balance) -> DispatchResult;
+    fn burn(asset_id: &SocialTokenId, who: &AccountId, value: Self::Balance) -> DispatchResult;
+}
+
+impl<T: Trait> Fungible<T::SocialTokenId, T::AccountId> for Module<T> {
+    type Balance = T::Balance;
+
+    fn total_supply(token_id: &T::SocialTokenId) -> Self::Balance {
+        <TotalIssuance<T>>::get(token_id)
+    }
+
+    fn balances(token_id: &T::SocialTokenId, who: &T::AccountId) -> Self::Balance {
+        Self::balance(who.clone(), *token_id)
+    }
+
+    fn allowances(token_id: &T::SocialTokenId, owner: &T::AccountId, spender: &T::AccountId) -> Self::Balance {
+        Self::allowances(token_id, (owner, spender))
+    }
+
+    fn transfer(token_id: &T::SocialTokenId, from: &T::AccountId, to: &T::AccountId, value: Self::Balance) -> DispatchResult {
+        Self::do_transfer(&from, &to, *token_id, value, ExistenceRequirement::AllowDeath)
+    }
+
+	fn transfer_from(token_id: &T::SocialTokenId, from: &T::AccountId, operator: &T::AccountId, to: &T::AccountId, value: Self::Balance) -> DispatchResult {
+		let new_allowance = Self::allowances(token_id, (from, operator))
+			.checked_sub(&value)
+			.ok_or(Error::<T>::NotAllowed)?;
+
+		if from != to {
+            Self::do_transfer(&from, &to, *token_id, value, ExistenceRequirement::AllowDeath)?;
+		}
+
+		<Allowances<T>>::mutate(token_id, (from, operator), |approved_balance| {
+			*approved_balance = new_allowance;
+		});
+
+		Ok(())
+	}
+}
+
+impl<T: Trait> IssueAndBurn<T::SocialTokenId, T::AccountId> for Module<T> {
+	fn exists(asset_id: &T::SocialTokenId) -> bool {
+		Self::token_info(asset_id).is_some()
+	}
+
+	fn create_new_asset(dossier: TokenDossier) -> Result<T::SocialTokenId, DispatchError> {
+        let id = Self::create_new_social_token()?;
+		<TokenInfo<T>>::insert(id, dossier);
+		Ok(id)
+	}
+
+	fn issue(token_id: &T::SocialTokenId, who: &T::AccountId, value: Self::Balance) -> DispatchResult {
+		ensure!(Self::exists(token_id), Error::<T>::InvalidSocialTokenId);
+
+        Self::issue_social_token(who.clone(), *token_id, value);
+        let _ = Self::issue(*token_id, value);
+		Self::deposit_event(RawEvent::Issued(*token_id, who.clone(), value));
+
+		Ok(())
+	}
+
+	fn burn(token_id: &T::SocialTokenId, who: &T::AccountId, value: Self::Balance) -> DispatchResult {
+		ensure!(Self::exists(token_id), Error::<T>::InvalidSocialTokenId);
+
+        Self::burn_social_token(who.clone(), *token_id, value);
+        let _ = Self::burn(*token_id, value);
+
+		Ok(())
+	}
 }

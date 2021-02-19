@@ -1022,13 +1022,6 @@ impl pallet_social_nft::Trait for Runtime {
 	type Identifier = Erc721Id;
 }
 
-impl pallet_fungible_assets::Trait for Runtime {
-	type Event = Event;
-	type Balance = u128;
-	type AssetId = u64;
-	type ExchangeId = u64;
-}
-
 parameter_types! {
 	pub const ExchangeModuleId: ModuleId = ModuleId(*b"exchange");
 }
@@ -1043,8 +1036,9 @@ impl pallet_social_swap::Trait for Runtime {
 	type Currency = Balances;
 	type ModuleId = ExchangeModuleId;
 	type Event = Event;
-	type FungibleToken = FungibleAssets;
+	type FungibleToken = SocialTokens;
 	type Handler = BalanceHandler;
+	type ExchangeId = u64;
 }
 
 construct_runtime!(
@@ -1094,7 +1088,6 @@ construct_runtime!(
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
 		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},
 		SocialNFT: pallet_social_nft::{Module, Call, Event<T>},
-		FungibleAssets: pallet_fungible_assets::{Module, Call, Storage, Event<T>},
 		SocialSwap: pallet_social_swap::{Module, Call, Storage, Event<T>},
 	}
 );

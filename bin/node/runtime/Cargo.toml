@@ -58,7 +58,6 @@ pallet-did = { version = "2.0.0", default-features = false, path = "../../../fra
 pallet-elections-phragmen = { version = "2.0.0", default-features = false, path = "../../../frame/elections-phragmen" }
 pallet-evm = { version = "2.0.0", default-features = false, path = "../../../frame/evm" }
 pallet-finality-tracker = { version = "2.0.0", default-features = false, path = "../../../frame/finality-tracker" }
-pallet-fungible-assets = { version = "0.1.0", default-features = false, path = "../../../frame/fungible-assets" }
 pallet-grandpa = { version = "2.0.0", default-features = false, path = "../../../frame/grandpa" }
 pallet-im-online = { version = "2.0.0", default-features = false, path = "../../../frame/im-online" }
 pallet-indices = { version = "2.0.0", default-features = false, path = "../../../frame/indices" }
@@ -164,7 +163,6 @@ std = [
     "pallet-chainbridge/std",
     "pallet-social-bridge/std",
     "pallet-social-nft/std",
-    "pallet-fungible-assets/std",
     "pallet-social-swap/std",
 ]
 runtime-benchmarks = [
