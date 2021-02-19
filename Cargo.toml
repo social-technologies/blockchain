@@ -57,7 +57,6 @@ members = [
 	"utils/wasm-builder-runner",
 	"frame/assets",
 	"frame/aura",
-	"frame/atomic-swap",
 	"frame/authority-discovery",
 	"frame/authorship",
 	"frame/babe",
