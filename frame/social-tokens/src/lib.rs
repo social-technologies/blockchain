@@ -145,14 +145,12 @@ const NET_V1: Symbol = *b"NETSWAP1";
 /// TODO: consider if there need to be more fields
 #[derive(Encode, Decode)]
 pub struct TokenDossier {
-    pub symbol: Symbol
+    pub symbol: Symbol,
 }
 
 impl TokenDossier {
     pub fn new_lp_token() -> Self {
-        TokenDossier {
-            symbol: NET_V1
-        }
+        TokenDossier { symbol: NET_V1 }
     }
 }
 
@@ -403,7 +401,9 @@ impl<T: Trait> Module<T> {
     }
 
     fn create_new_social_token() -> Result<T::SocialTokenId, DispatchError> {
-        let new_social_id = <MaxSocialTokenId<T>>::get().checked_add(&1u32.into()).ok_or(Error::<T>::Overflow)?;
+        let new_social_id = <MaxSocialTokenId<T>>::get()
+            .checked_add(&1u32.into())
+            .ok_or(Error::<T>::Overflow)?;
         <MaxSocialTokenId<T>>::put(new_social_id);
         Ok(new_social_id)
     }
@@ -961,16 +961,38 @@ pub trait Fungible<SocialTokenId, AccountId> {
     type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy;
 
     fn total_supply(token_id: &SocialTokenId) -> Self::Balance;
+
     fn balances(token_id: &SocialTokenId, who: &AccountId) -> Self::Balance;
-    fn allowances(token_id: &SocialTokenId, owner: &AccountId, spender: &AccountId) -> Self::Balance;
-    fn transfer(token_id: &SocialTokenId, from: &AccountId, to: &AccountId, value: Self::Balance) -> DispatchResult;
-    fn transfer_from(token_id: &SocialTokenId, from: &AccountId, operator: &AccountId, to: &AccountId, value: Self::Balance) -> DispatchResult;
+
+    fn allowances(
+        token_id: &SocialTokenId,
+        owner: &AccountId,
+        spender: &AccountId,
+    ) -> Self::Balance;
+
+    fn transfer(
+        token_id: &SocialTokenId,
+        from: &AccountId,
+        to: &AccountId,
+        value: Self::Balance,
+    ) -> DispatchResult;
+
+    fn transfer_from(
+        token_id: &SocialTokenId,
+        from: &AccountId,
+        operator: &AccountId,
+        to: &AccountId,
+        value: Self::Balance,
+    ) -> DispatchResult;
 }
 
 pub trait IssueAndBurn<SocialTokenId, AccountId>: Fungible<SocialTokenId, AccountId> {
     fn exists(asset_id: &SocialTokenId) -> bool;
+
     fn create_new_asset(dossier: TokenDossier) -> Result<SocialTokenId, DispatchError>;
+
     fn issue(asset_id: &SocialTokenId, who: &AccountId, value: Self::Balance) -> DispatchResult;
+
     fn burn(asset_id: &SocialTokenId, who: &AccountId, value: Self::Balance) -> DispatchResult;
 }
 
@@ -985,58 +1007,93 @@ impl<T: Trait> Fungible<T::SocialTokenId, T::AccountId> for Module<T> {
         Self::balance(who.clone(), *token_id)
     }
 
-    fn allowances(token_id: &T::SocialTokenId, owner: &T::AccountId, spender: &T::AccountId) -> Self::Balance {
+    fn allowances(
+        token_id: &T::SocialTokenId,
+        owner: &T::AccountId,
+        spender: &T::AccountId,
+    ) -> Self::Balance {
         Self::allowances(token_id, (owner, spender))
     }
 
-    fn transfer(token_id: &T::SocialTokenId, from: &T::AccountId, to: &T::AccountId, value: Self::Balance) -> DispatchResult {
-        Self::do_transfer(&from, &to, *token_id, value, ExistenceRequirement::AllowDeath)
+    fn transfer(
+        token_id: &T::SocialTokenId,
+        from: &T::AccountId,
+        to: &T::AccountId,
+        value: Self::Balance,
+    ) -> DispatchResult {
+        Self::do_transfer(
+            &from,
+            &to,
+            *token_id,
+            value,
+            ExistenceRequirement::AllowDeath,
+        )
     }
 
-	fn transfer_from(token_id: &T::SocialTokenId, from: &T::AccountId, operator: &T::AccountId, to: &T::AccountId, value: Self::Balance) -> DispatchResult {
-		let new_allowance = Self::allowances(token_id, (from, operator))
-			.checked_sub(&value)
-			.ok_or(Error::<T>::NotAllowed)?;
+    fn transfer_from(
+        token_id: &T::SocialTokenId,
+        from: &T::AccountId,
+        operator: &T::AccountId,
+        to: &T::AccountId,
+        value: Self::Balance,
+    ) -> DispatchResult {
+        let new_allowance = Self::allowances(token_id, (from, operator))
+            .checked_sub(&value)
+            .ok_or(Error::<T>::NotAllowed)?;
 
-		if from != to {
-            Self::do_transfer(&from, &to, *token_id, value, ExistenceRequirement::AllowDeath)?;
-		}
+        if from != to {
+            Self::do_transfer(
+                &from,
+                &to,
+                *token_id,
+                value,
+                ExistenceRequirement::AllowDeath,
+            )?;
+        }
 
-		<Allowances<T>>::mutate(token_id, (from, operator), |approved_balance| {
-			*approved_balance = new_allowance;
-		});
+        <Allowances<T>>::mutate(token_id, (from, operator), |approved_balance| {
+            *approved_balance = new_allowance;
+        });
 
-		Ok(())
-	}
+        Ok(())
+    }
 }
 
 impl<T: Trait> IssueAndBurn<T::SocialTokenId, T::AccountId> for Module<T> {
-	fn exists(asset_id: &T::SocialTokenId) -> bool {
-		Self::token_info(asset_id).is_some()
-	}
+    fn exists(asset_id: &T::SocialTokenId) -> bool {
+        Self::token_info(asset_id).is_some()
+    }
 
-	fn create_new_asset(dossier: TokenDossier) -> Result<T::SocialTokenId, DispatchError> {
+    fn create_new_asset(dossier: TokenDossier) -> Result<T::SocialTokenId, DispatchError> {
         let id = Self::create_new_social_token()?;
-		<TokenInfo<T>>::insert(id, dossier);
-		Ok(id)
-	}
+        <TokenInfo<T>>::insert(id, dossier);
+        Ok(id)
+    }
 
-	fn issue(token_id: &T::SocialTokenId, who: &T::AccountId, value: Self::Balance) -> DispatchResult {
-		ensure!(Self::exists(token_id), Error::<T>::InvalidSocialTokenId);
+    fn issue(
+        token_id: &T::SocialTokenId,
+        who: &T::AccountId,
+        value: Self::Balance,
+    ) -> DispatchResult {
+        ensure!(Self::exists(token_id), Error::<T>::InvalidSocialTokenId);
 
         Self::issue_social_token(who.clone(), *token_id, value);
         let _ = Self::issue(*token_id, value);
-		Self::deposit_event(RawEvent::Issued(*token_id, who.clone(), value));
+        Self::deposit_event(RawEvent::Issued(*token_id, who.clone(), value));
 
-		Ok(())
-	}
+        Ok(())
+    }
 
-	fn burn(token_id: &T::SocialTokenId, who: &T::AccountId, value: Self::Balance) -> DispatchResult {
-		ensure!(Self::exists(token_id), Error::<T>::InvalidSocialTokenId);
+    fn burn(
+        token_id: &T::SocialTokenId,
+        who: &T::AccountId,
+        value: Self::Balance,
+    ) -> DispatchResult {
+        ensure!(Self::exists(token_id), Error::<T>::InvalidSocialTokenId);
 
         Self::burn_social_token(who.clone(), *token_id, value);
         let _ = Self::burn(*token_id, value);
 
-		Ok(())
-	}
+        Ok(())
+    }
 }
