@@ -286,12 +286,7 @@ decl_event!(
         /// We have ended a spend period and will now allocate funds. \[budget_remaining\]
         Spending(SocialTokenId, SocialTokenBalance),
         /// Some funds have been allocated. \[proposal_index, award, beneficiary\]
-        Awarded(
-            ProposalIndex,
-            SocialTokenId,
-            SocialTokenBalance,
-            AccountId,
-        ),
+        Awarded(ProposalIndex, SocialTokenId, SocialTokenBalance, AccountId),
         /// A proposal was rejected; funds were slashed. \[proposal_index, slashed\]
         Rejected(ProposalIndex, SocialTokenId, SocialTokenBalance),
         /// Some of our funds have been burnt. \[burn\]
@@ -1045,11 +1040,12 @@ decl_module! {
                             if let Some(controller) = <pallet_staking::Module<T>>::bonded(account_id) {
                                 let social_token_id = <pallet_social_champions::Module<T>>::social_of(controller);
                                 if social_token_id >= min_token_id && social_token_id <= max_token_id {
-                                    <pallet_social_tokens::Module<T>>::mint(
+                                    <pallet_social_tokens::Module<T>>::issue_social_token(
                                         treasury_account_id.clone(),
                                         social_token_id,
                                         points.into()
                                     );
+                                    let _ = <pallet_social_tokens::Module<T>>::issue(social_token_id, points.into());
                                 }
                             }
                         }

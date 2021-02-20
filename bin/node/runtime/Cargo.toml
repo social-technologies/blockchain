@@ -76,13 +76,14 @@ pallet-staking-reward-curve = { version = "2.0.0", default-features = false, pat
 pallet-scheduler = { version = "2.0.0", default-features = false, path = "../../../frame/scheduler" }
 pallet-social-bridge = { version = "0.1.0", default-features = false, path = "../../../frame/social-bridge" }
 pallet-social-nft = { version = "0.0.1", default-features = false, path = "../../../frame/social-nft" }
+pallet-social-swap = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap" }
 pallet-social-tokens = { version = "0.1.0", default-features = false, path = "../../../frame/social-tokens" }
 pallet-social-treasury = { version = "0.1.0", default-features = false, path = "../../../frame/social-treasury" }
+pallet-social-usernames = { version = "0.1.0", default-features = false, path = "../../../frame/social-usernames" }
 pallet-society = { version = "2.0.0", default-features = false, path = "../../../frame/society" }
 pallet-sudo = { version = "2.0.0", default-features = false, path = "../../../frame/sudo" }
 pallet-timestamp = { version = "2.0.0", default-features = false, path = "../../../frame/timestamp" }
 pallet-treasury = { version = "2.0.0", default-features = false, path = "../../../frame/treasury" }
-pallet-social-usernames = { version = "0.1.0", default-features = false, path = "../../../frame/social-usernames" }
 pallet-utility = { version = "2.0.0", default-features = false, path = "../../../frame/utility" }
 pallet-transaction-payment = { version = "2.0.0", default-features = false, path = "../../../frame/transaction-payment" }
 pallet-transaction-payment-rpc-runtime-api = { version = "2.0.0", default-features = false, path = "../../../frame/transaction-payment/rpc/runtime-api/" }
@@ -162,6 +163,7 @@ std = [
     "pallet-chainbridge/std",
     "pallet-social-bridge/std",
     "pallet-social-nft/std",
+    "pallet-social-swap/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",

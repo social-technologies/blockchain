@@ -3902,6 +3902,7 @@ dependencies = [
  "pallet-social-bridge",
  "pallet-social-champions",
  "pallet-social-nft",
+ "pallet-social-swap",
  "pallet-social-tokens",
  "pallet-social-treasury",
  "pallet-social-usernames",
@@ -4834,6 +4835,21 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "substrate-wasm-builder-runner 2.0.0",
+]
+
+[[package]]
+name = "pallet-social-swap"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-social-tokens",
+ "parity-scale-codec",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
