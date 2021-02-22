@@ -325,7 +325,7 @@ impl pallet_babe::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const IndexDeposit: Balance = 1 * CHI;
+	pub const IndexDeposit: Balance = 1 * ENERGY;
 }
 
 impl pallet_indices::Trait for Runtime {
@@ -337,7 +337,7 @@ impl pallet_indices::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 1 * CHI;
+	pub const ExistentialDeposit: Balance = 1 * ENERGY;
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 50;
@@ -354,7 +354,7 @@ impl pallet_balances::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 10 * MICROCHI;
+	pub const TransactionByteFee: Balance = 10 * MICROS;
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
 	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(1, 100_000);
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
@@ -479,11 +479,11 @@ parameter_types! {
 	pub const VotingPeriod: BlockNumber = 4 * 24 * 60 * MINUTES;
 	pub const FastTrackVotingPeriod: BlockNumber = 1 * 24 * 60 * MINUTES;
 	pub const InstantAllowed: bool = true;
-	pub const MinimumDeposit: Balance = 100 * CHI;
+	pub const MinimumDeposit: Balance = 100 * ENERGY;
 	pub const EnactmentPeriod: BlockNumber = 30 * 24 * 60 * MINUTES;
 	pub const CooloffPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
 	// One cent: $10,000 / MB
-	pub const PreimageByteDeposit: Balance = 1 * MILLICHI;
+	pub const PreimageByteDeposit: Balance = 1 * MILLIS;
 	pub const MaxVotes: u32 = 100;
 }
 
@@ -542,8 +542,8 @@ impl pallet_collective::Trait<CouncilCollective> for Runtime {
 }
 
 parameter_types! {
-	pub const CandidacyBond: Balance = 10 * CHI;
-	pub const VotingBond: Balance = 1 * CHI;
+	pub const CandidacyBond: Balance = 10 * ENERGY;
+	pub const VotingBond: Balance = 1 * ENERGY;
 	pub const TermDuration: BlockNumber = 7 * DAYS;
 	pub const DesiredMembers: u32 = 13;
 	pub const DesiredRunnersUp: u32 = 7;
@@ -609,20 +609,20 @@ impl pallet_membership::Trait<pallet_membership::Instance1> for Runtime {
 
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 1 * CHI;
+	pub const ProposalBondMinimum: Balance = 1 * ENERGY;
 	pub const SpendPeriod: BlockNumber = 1 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(50);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * CHI;
-	pub const DataDepositPerByte: Balance = 1 * MILLICHI;
-	pub const BountyDepositBase: Balance = 1 * CHI;
+	pub const TipReportDepositBase: Balance = 1 * ENERGY;
+	pub const DataDepositPerByte: Balance = 1 * MILLIS;
+	pub const BountyDepositBase: Balance = 1 * ENERGY;
 	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
 	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
 	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-	pub const BountyValueMinimum: Balance = 5 * CHI;
+	pub const BountyValueMinimum: Balance = 5 * ENERGY;
 }
 
 impl pallet_treasury::Trait for Runtime {
@@ -660,10 +660,10 @@ impl pallet_treasury::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const TombstoneDeposit: Balance = 16 * MICROCHI;
-	pub const RentByteFee: Balance = 4 * MICROCHI;
-	pub const RentDepositOffset: Balance = 1000 * MICROCHI;
-	pub const SurchargeReward: Balance = 150 * MICROCHI;
+	pub const TombstoneDeposit: Balance = 16 * MICROS;
+	pub const RentByteFee: Balance = 4 * MICROS;
+	pub const RentDepositOffset: Balance = 1000 * MICROS;
+	pub const SurchargeReward: Balance = 150 * MICROS;
 }
 
 impl pallet_contracts::Trait for Runtime {
@@ -809,9 +809,9 @@ impl pallet_finality_tracker::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const BasicDeposit: Balance = 10 * CHI;       // 258 bytes on-chain
-	pub const FieldDeposit: Balance = 250 * MILLICHI;        // 66 bytes on-chain
-	pub const SubAccountDeposit: Balance = 2 * CHI;   // 53 bytes on-chain
+	pub const BasicDeposit: Balance = 10 * ENERGY;       // 258 bytes on-chain
+	pub const FieldDeposit: Balance = 250 * MILLIS;        // 66 bytes on-chain
+	pub const SubAccountDeposit: Balance = 2 * ENERGY;   // 53 bytes on-chain
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -833,10 +833,10 @@ impl pallet_identity::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const ConfigDepositBase: Balance = 5 * CHI;
-	pub const FriendDepositFactor: Balance = 50 * MILLICHI;
+	pub const ConfigDepositBase: Balance = 5 * ENERGY;
+	pub const FriendDepositFactor: Balance = 50 * MILLIS;
 	pub const MaxFriends: u16 = 15;
-	pub const RecoveryDeposit: Balance = 5 * CHI;
+	pub const RecoveryDeposit: Balance = 5 * ENERGY;
 }
 
 impl pallet_recovery::Trait for Runtime {
@@ -850,11 +850,11 @@ impl pallet_recovery::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const CandidateDeposit: Balance = 10 * CHI;
-	pub const WrongSideDeduction: Balance = 2 * CHI;
+	pub const CandidateDeposit: Balance = 10 * ENERGY;
+	pub const WrongSideDeduction: Balance = 2 * ENERGY;
 	pub const MaxStrikes: u32 = 10;
 	pub const RotationPeriod: BlockNumber = 80 * HOURS;
-	pub const PeriodSpend: Balance = 500 * CHI;
+	pub const PeriodSpend: Balance = 500 * ENERGY;
 	pub const MaxLockDuration: BlockNumber = 36 * 30 * DAYS;
 	pub const ChallengePeriod: BlockNumber = 7 * DAYS;
 	pub const SocietyModuleId: ModuleId = ModuleId(*b"py/socie");
@@ -878,7 +878,7 @@ impl pallet_society::Trait for Runtime {
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * CHI;
+	pub const MinVestedTransfer: Balance = 100 * ENERGY;
 }
 
 impl pallet_vesting::Trait for Runtime {
@@ -921,7 +921,7 @@ impl pallet_did::Trait for Runtime {
 
 parameter_types! {
 	pub const ExistentialDepositOfSocialTokens: u128 = 1;
-	pub const MaxSocialTokensSupply: u128 = 7_777_777_777 * CHI;
+	pub const MaxSocialTokensSupply: u128 = 7_777_777_777 * ENERGY;
 }
 
 impl pallet_social_tokens::Trait for Runtime {
@@ -1004,7 +1004,7 @@ impl pallet_chainbridge::Trait for Runtime {
 
 parameter_types! {
 	pub HashId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_HASH");
-	pub NativeTokenId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"CHI");
+	pub NativeTokenId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"ENERGY");
 	pub Erc721Id: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_NFT");
 }
 

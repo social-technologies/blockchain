@@ -4,13 +4,13 @@ The Social Network is a next-generation governance, economic, and social system 
 
 ![Substrate Builders Program](/docs/SBP_M2.png)
 
-## Earn CHI by running a Server
+## Earn ENERGY by running a Server
 
 The Social Network is powered by a decentralized backend which allows anyone in the world to participate by running the server software in this repository. This removes the need for a central party or middleman to extract rent or censor the network for personal gain, control, or power.
 
 The network is capable of securing and maintaining a single source of truth, globally, with 6 second finality using a byzantine fault tolerant, nominated Proof-of-Stake consensus algorithm. In addition, servers can run dedicated real time applications off-chain, and use the network consensus for discovery and access control of their services from from end social network users.
 
-Server operators are incentivized with CHI tokens for keeping the software running, and earn greater rewards the more reliable their servers are over time. Fees generated on the chain, are distributed to Server operators proportional to how much staked CHI they have on their server. Server operators can specify which Social token they wish to support, such that when CHI token holders stake their tokens to a server, they will receive a bonus amount of that Social token in their wallet. These social tokens can then be used for governance or voting on global social networking applications.
+Server operators are incentivized with ENERGY tokens for keeping the software running, and earn greater rewards the more reliable their servers are over time. Fees generated on the chain, are distributed to Server operators proportional to how much staked ENERGY they have on their server. Server operators can specify which Social token they wish to support, such that when ENERGY token holders stake their tokens to a server, they will receive a bonus amount of that Social token in their wallet. These social tokens can then be used for governance or voting on global social networking applications.
 
 ## Running a Network Server
 
@@ -90,7 +90,7 @@ Note if you are doing other network development work, you will need to update yo
 
 As a decentralized project, we welcome all contributions that help us reach our mission faster, but ask that you follow our values. See our [welcome blog](https://blog.social.network/welcome-to-social) for more details.
 
-To jump right in, visit our [jobs](https://social.network/jobs) page to find a job or bounty that you think you can complete. Contributors will earn CHI tokens to participate in the platform governance and help steward the decentralized technical development.
+To jump right in, visit our [jobs](https://social.network/jobs) page to find a job or bounty that you think you can complete. Contributors will earn ENERGY tokens to participate in the platform governance and help steward the decentralized technical development.
 
 ## Security
 

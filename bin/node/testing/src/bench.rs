@@ -42,7 +42,7 @@ use codec::{Decode, Encode};
 use node_runtime::{
 	Call,
 	CheckedExtrinsic,
-	constants::currency::CHI,
+	constants::currency::ENERGY,
 	UncheckedExtrinsic,
 	MinimumPeriod,
 	SystemCall,
@@ -266,7 +266,7 @@ impl<'a> Iterator for BlockContentIterator<'a> {
 								pallet_indices::address::Address::Id(receiver),
 								// Transfer so that ending balance would be 1 less than existential deposit
 								// so that we kill the sender account.
-								100*CHI - (node_runtime::ExistentialDeposit::get() - 1),
+								100*ENERGY - (node_runtime::ExistentialDeposit::get() - 1),
 							)
 						)
 					},
