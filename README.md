@@ -1,18 +1,18 @@
-# The Social Network &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
+# The Social Blockchain &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
 
-The Social Network is a next-generation governance, economic, and social system for humanity built on Polkadot Substrate. To learn more [read the whitepaper](https://bit.ly/2Jheagq) 🚀🌎.
+The Social Blockchain is a next-generation governance, economic, and social system for humanity built on Polkadot Substrate. To learn more [read the whitepaper](https://bit.ly/2Jheagq) 🚀🌎.
 
 ![Substrate Builders Program](/docs/SBP_M2.png)
 
-## Earn ENERGY by running a Server
+## Earn NET by running a Node
 
-The Social Network is powered by a decentralized backend which allows anyone in the world to participate by running the server software in this repository. This removes the need for a central party or middleman to extract rent or censor the network for personal gain, control, or power.
+The Social Blockchain is powered by a decentralized backend which allows anyone in the world to participate by running the node software in this repository. This removes the need for a central party or middleman to extract rent or censor the network for personal gain, control, or power.
 
-The network is capable of securing and maintaining a single source of truth, globally, with 6 second finality using a byzantine fault tolerant, nominated Proof-of-Stake consensus algorithm. In addition, servers can run dedicated real time applications off-chain, and use the network consensus for discovery and access control of their services from from end social network users.
+The network is capable of securing and maintaining a single source of truth, globally, with 6 second finality using a byzantine fault tolerant, nominated Proof-of-Stake consensus algorithm. In addition, nodes can run dedicated real time applications off-chain, and use the network consensus for discovery and access control of their services from from end social network users.
 
-Server operators are incentivized with ENERGY tokens for keeping the software running, and earn greater rewards the more reliable their servers are over time. Fees generated on the chain, are distributed to Server operators proportional to how much staked ENERGY they have on their server. Server operators can specify which Social token they wish to support, such that when ENERGY token holders stake their tokens to a server, they will receive a bonus amount of that Social token in their wallet. These social tokens can then be used for governance or voting on global social networking applications.
+Node operators are incentivized with NET tokens for keeping the software running, and earn greater rewards the more reliable their nodes are over time. Fees generated on the chain, are distributed to Node operators proportional to how much staked NET they have on their node. Node operators can specify which Social token they wish to support, such that when NET token holders stake their tokens to a node, they will receive a bonus amount of that Social token in their wallet. These social tokens can then be used for governance or voting on global social networking applications.
 
-## Running a Network Server
+## Running a NET Node
 
 To get started, you can follow the steps depending on your operating system:
 
@@ -62,35 +62,35 @@ Install rust with the following:
 curl https://sh.rustup.rs -sSf | sh
 # Configure
 source ~/.cargo/env
-# Configure Rust toolchain to the one needed for The Social Network
+# Configure Rust toolchain to the one needed for The Social Blockchain
 rustup install nightly-2021-01-25
 rustup default nightly-2021-01-25
 # Install WebAssembly (WASM)
 rustup target add wasm32-unknown-unknown --toolchain nightly-2021-01-25
 ```
 
-## Download The Social Network
+## Download The Social Blockchain
 
-To get a copy of The Social Network software on your machine:
+To get a copy of The Social Blockchain software on your machine:
 
 ```
-git clone https://github.com/social-network/energy.git
+git clone https://github.com/social-network/blockchain.git
 ```
 
 The runtime of the blockchain is compiled down to [Web Assembly (WASM)](https://webassembly.org/) so it can be ran in embedded devices, or even the browser. To compile it run:
 
 ```
-cd network
+cd blockchain
 WASM_BUILD_TOOLCHAIN=nightly-2021-01-25 cargo build --release
 ```
 
-Note if you are doing other network development work, you will need to update your toolchain to match our version for the compilation to work. Feel free to join the #support circle in the [Social Technologies Society](https://social.network/join/tech) if you need help getting setup.
+Note if you are doing other blockchain development work, you will need to update your toolchain to match our version for the compilation to work. Feel free to join the #support circle in the [Social Technologies Society](https://social.network/join/tech) if you need help getting setup.
 
-## Help Build The Social Network
+## Help Build The Social Blockchain
 
 As a decentralized project, we welcome all contributions that help us reach our mission faster, but ask that you follow our values. See our [welcome blog](https://blog.social.network/welcome-to-social) for more details.
 
-To jump right in, visit our [jobs](https://social.network/jobs) page to find a job or bounty that you think you can complete. Contributors will earn ENERGY tokens to participate in the platform governance and help steward the decentralized technical development.
+To jump right in, visit our [jobs](https://social.network/jobs) page to find a job or bounty that you think you can complete. Contributors will earn NET tokens to participate in the platform governance and help steward the decentralized technical development.
 
 ## Security
 
