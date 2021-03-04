@@ -467,7 +467,7 @@ mod tests {
 	};
 	use node_primitives::{Block, DigestItem, Signature};
 	use node_runtime::{BalancesCall, Call, UncheckedExtrinsic, Address};
-	use node_runtime::constants::{currency::MILLIS, time::SLOT_DURATION};
+	use node_runtime::constants::{currency::MILLINET, time::SLOT_DURATION};
 	use codec::Encode;
 	use sp_core::{crypto::Pair as CryptoPair, H256};
 	use sp_runtime::{
@@ -619,7 +619,7 @@ mod tests {
 					.expect("error importing test block");
 			},
 			|service, _| {
-				let amount = 5 * MILLIS;
+				let amount = 5 * MILLINET;
 				let to: Address = AccountPublic::from(bob.public()).into_account().into();
 				let from: Address = AccountPublic::from(charlie.public()).into_account().into();
 				let genesis_hash = service.client().block_hash(0).unwrap().unwrap();

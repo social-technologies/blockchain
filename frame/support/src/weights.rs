@@ -152,13 +152,13 @@ pub mod constants {
 	use crate::parameter_types;
 
 	pub const WEIGHT_PER_SECOND: Weight = 1_000_000_000_000;
-	pub const WEIGHT_PER_MILLIS: Weight = WEIGHT_PER_SECOND / 1000; // 1_000_000_000
-	pub const WEIGHT_PER_MICROS: Weight = WEIGHT_PER_MILLIS / 1000; // 1_000_000
+	pub const WEIGHT_PER_MILLINET: Weight = WEIGHT_PER_SECOND / 1000; // 1_000_000_000
+	pub const WEIGHT_PER_MICROS: Weight = WEIGHT_PER_MILLINET / 1000; // 1_000_000
 	pub const WEIGHT_PER_NANOS:  Weight = WEIGHT_PER_MICROS / 1000; // 1_000
 
 	parameter_types! {
 		/// Importing a block with 0 txs takes ~5 ms
-		pub const BlockExecutionWeight: Weight = 5 * WEIGHT_PER_MILLIS;
+		pub const BlockExecutionWeight: Weight = 5 * WEIGHT_PER_MILLINET;
 		/// Executing 10,000 System remarks (no-op) txs takes ~1.26 seconds -> ~125 µs per tx
 		pub const ExtrinsicBaseWeight: Weight = 125 * WEIGHT_PER_MICROS;
 		/// By default, Substrate uses RocksDB, so this will be the weight used throughout

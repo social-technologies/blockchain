@@ -87,8 +87,8 @@ fn colored_fmt(
 			.map_or_else(Default::default, |x| {
 				format!("{}", Colour::Blue.bold().paint(x))
 			});
-		let millis = (now.tm_nsec as f32 / 1000000.0).floor() as usize;
-		let timestamp = format!("{}.{:03}", timestamp, millis);
+		let MILLINET = (now.tm_nsec as f32 / 1000000.0).floor() as usize;
+		let timestamp = format!("{}.{:03}", timestamp, MILLINET);
 		format!(
 			"{} {} {} {}  {}",
 			Colour::Black.bold().paint(timestamp),
@@ -118,8 +118,8 @@ fn file_fmt(
 		let name = std::thread::current()
 			.name()
 			.map_or_else(Default::default, |x| format!("{}", x));
-		let millis = (now.tm_nsec as f32 / 1000000.0).floor() as usize;
-		let timestamp = format!("{}.{:03}", timestamp, millis);
+		let MILLINET = (now.tm_nsec as f32 / 1000000.0).floor() as usize;
+		let timestamp = format!("{}.{:03}", timestamp, MILLINET);
 		format!(
 			"{} {} {} {}  {}",
 			timestamp,

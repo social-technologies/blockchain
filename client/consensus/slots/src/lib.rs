@@ -444,7 +444,7 @@ impl<T> Deref for SlotDuration<T> {
 }
 
 impl<T: SlotData + Clone> SlotData for SlotDuration<T> {
-	/// Get the slot duration in milliseconds.
+	/// Get the slot duration in MILLINETeconds.
 	fn slot_duration(&self) -> u64
 		where T: SlotData,
 	{
@@ -481,7 +481,7 @@ impl<T: Clone> SlotDuration<T> {
 					cb(client.runtime_api(), &BlockId::number(Zero::zero()))?;
 
 				info!(
-					"⏱  Loaded block-time = {:?} milliseconds from genesis on first-launch",
+					"⏱  Loaded block-time = {:?} MILLINETeconds from genesis on first-launch",
 					genesis_slot_duration.slot_duration()
 				);
 

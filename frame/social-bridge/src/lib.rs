@@ -148,7 +148,7 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     fn social_token_acronym(token_id: T::SocialTokenId) -> Vec<u8> {
-        let mut acronym = b"ENERGY".to_vec();
+        let mut acronym = b"NET".to_vec();
         let postfix = U256::from(token_id.saturated_into::<u128>());
         let mut buf = vec![];
         postfix.to_big_endian(&mut buf);

@@ -50,9 +50,9 @@ pub type Index = u32;
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
 
-/// A timestamp: milliseconds since the unix epoch.
+/// A timestamp: MILLINETeconds since the unix epoch.
 /// `u64` is enough to represent a duration of half a billion years, when the
-/// time scale is milliseconds.
+/// time scale is MILLINETeconds.
 pub type Timestamp = u64;
 
 /// Digest item type.

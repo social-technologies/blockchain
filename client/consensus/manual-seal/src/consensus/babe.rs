@@ -159,7 +159,7 @@ impl<B, C> ConsensusDataProvider<B> for BabeConsensusDataProvider<B, C>
 	}
 }
 
-/// Provide duration since unix epoch in millisecond for timestamp inherent.
+/// Provide duration since unix epoch in MILLINETecond for timestamp inherent.
 /// Mocks the timestamp inherent to always produce the timestamp for the next babe slot.
 struct SlotTimestampProvider {
 	time: atomic::AtomicU64,

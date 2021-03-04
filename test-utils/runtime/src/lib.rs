@@ -461,7 +461,7 @@ impl frame_system::Trait for Runtime {
 }
 
 impl pallet_timestamp::Trait for Runtime {
-	/// A timestamp: milliseconds since the unix epoch.
+	/// A timestamp: MILLINETeconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;

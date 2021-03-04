@@ -1,10 +1,10 @@
 const logger = require('./logger')
 /**
- * Wait n milliseconds
+ * Wait n MILLINETeconds
  *
- * @param n - In milliseconds
+ * @param n - In MILLINETeconds
  */
-function waitNMilliseconds (n) {
+function waitNMILLINETeconds (n) {
   return new Promise((resolve) => {
     setTimeout(resolve, n)
   })
@@ -23,10 +23,10 @@ async function pollUntil (fn) {
   } catch (_error) {
     logger.error('Error polling', _error)
     logger.debug('awaiting...')
-    await waitNMilliseconds(5000) // FIXME We can add exponential delay here
+    await waitNMILLINETeconds(5000) // FIXME We can add exponential delay here
 
     return pollUntil(fn)
   }
 }
 
-module.exports = { pollUntil, waitNMilliseconds }
+module.exports = { pollUntil, waitNMILLINETeconds }

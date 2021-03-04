@@ -318,21 +318,21 @@
 		},
 		{
 			"prefix": 251,
-			"network": "social-network",
-			"displayName": "Social Network Energy",
-			"symbols": ["SOLAR"],
+			"network": "chi",
+			"displayName": "Chi Testnet",
+			"symbols": ["CHI"],
+			"decimals": [18],
+			"standardAccount": "*25519",
+			"website": "https://chi.network"
+		},
+		{
+			"prefix": 252,
+			"network": "social",
+			"displayName": "Social Network",
+			"symbols": ["NET"],
 			"decimals": [18],
 			"standardAccount": "*25519",
 			"website": "https://social.network"
 		},
-		{
-			"prefix": 252,
-			"network": "solar-network",
-			"displayName": "Social Network Testnet",
-			"symbols": ["CHI"],
-			"decimals": [18],
-			"standardAccount": "*25519",
-			"website": "https://social.network"
-		}
 	]
 }

@@ -222,7 +222,7 @@ impl Duration {
 }
 
 impl Timestamp {
-	/// Creates new `Timestamp` given unix timestamp in milliseconds.
+	/// Creates new `Timestamp` given unix timestamp in MILLINETeconds.
 	pub fn from_unix_millis(millis: u64) -> Self {
 		Timestamp(millis)
 	}
@@ -242,7 +242,7 @@ impl Timestamp {
 		Duration(self.0.saturating_sub(other.0))
 	}
 
-	/// Return number of milliseconds since UNIX epoch.
+	/// Return number of MILLINETeconds since UNIX epoch.
 	pub fn unix_millis(&self) -> u64 {
 		self.0
 	}
@@ -325,7 +325,7 @@ pub trait Externalities: Send {
 	/// Returns information about the local node's network state.
 	fn network_state(&self) -> Result<OpaqueNetworkState, ()>;
 
-	/// Returns current UNIX timestamp (in millis)
+	/// Returns current UNIX timestamp (in milliseconds)
 	fn timestamp(&mut self) -> Timestamp;
 
 	/// Pause the execution until `deadline` is reached.

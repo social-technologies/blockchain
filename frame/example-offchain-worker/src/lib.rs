@@ -408,7 +408,7 @@ impl<T: Trait> Module<T> {
 
 		for (acc, res) in &results {
 			match res {
-				Ok(()) => debug::info!("[{:?}] Submitted price of {} MILLIS", acc.id, price),
+				Ok(()) => debug::info!("[{:?}] Submitted price of {} MILLINET", acc.id, price),
 				Err(e) => debug::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
 			}
 		}
@@ -511,7 +511,7 @@ impl<T: Trait> Module<T> {
 		Ok(())
 	}
 
-	/// Fetch current price and return the result in MILLIS.
+	/// Fetch current price and return the result in MILLINET.
 	fn fetch_price() -> Result<u32, http::Error> {
 		// We want to keep the offchain worker execution time reasonable, so we set a hard-coded
 		// deadline to 2s to complete the external call.
@@ -567,14 +567,14 @@ impl<T: Trait> Module<T> {
 			}
 		}?;
 
-		debug::warn!("Got price: {} MILLIS", price);
+		debug::warn!("Got price: {} MILLINET", price);
 
 		Ok(price)
 	}
 
 	/// Parse the price from the given JSON string using `lite-json`.
 	///
-	/// Returns `None` when parsing failed or `Some(price in MILLIS)` when parsing is successful.
+	/// Returns `None` when parsing failed or `Some(price in MILLINET)` when parsing is successful.
 	fn parse_price(price_str: &str) -> Option<u32> {
 		let val = lite_json::parse_json(price_str);
 		let price = val.ok().and_then(|v| match v {

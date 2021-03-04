@@ -66,13 +66,13 @@ use codec::{Codec, Decode, Encode};
 use sp_core::offchain::{Duration, Timestamp};
 use sp_io::offchain;
 
-/// Default expiry duration for time based locks in milliseconds.
+/// Default expiry duration for time based locks in MILLINETeconds.
 const STORAGE_LOCK_DEFAULT_EXPIRY_DURATION: Duration = Duration::from_millis(20_000);
 
 /// Default expiry duration for block based locks in blocks.
 const STORAGE_LOCK_DEFAULT_EXPIRY_BLOCKS: u32 = 4;
 
-/// Time between checks if the lock is still being held in milliseconds.
+/// Time between checks if the lock is still being held in MILLINETeconds.
 const STORAGE_LOCK_PER_CHECK_ITERATION_SNOOZE_MIN: Duration = Duration::from_millis(100);
 const STORAGE_LOCK_PER_CHECK_ITERATION_SNOOZE_MAX: Duration = Duration::from_millis(10);
 

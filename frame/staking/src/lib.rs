@@ -397,7 +397,7 @@ type NegativeImbalanceOf<T> =
 pub struct ActiveEraInfo {
 	/// Index of era.
 	pub index: EraIndex,
-	/// Moment of start expressed as millisecond from `$UNIX_EPOCH`.
+	/// Moment of start expressed as MILLINETecond from `$UNIX_EPOCH`.
 	///
 	/// Start can be none if start hasn't been set for the era yet,
 	/// Start is set on the first on_finalize of the era to guarantee usage of `Time`.

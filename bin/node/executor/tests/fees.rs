@@ -127,21 +127,21 @@ fn transaction_fee_is_correct() {
 	//
 	// weight of transfer call as of now: 1_000_000
 	// if weight of the cheapest weight would be 10^7, this would be 10^9, which is:
-	//   - 1 MICROS in substrate node.
+	//   - 1 MICRONET in substrate node.
 	//   - 1 milli-dot based on current polkadot runtime.
 	// (this baed on assigning 0.1 CENT to the cheapest tx with `weight = 100`)
 	let mut t = new_test_ext(compact_code_unwrap(), false);
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(alice()),
-		(0u32, 0u32, 100 * ENERGY, 0 * ENERGY, 0 * ENERGY, 0 * ENERGY).encode()
+		(0u32, 0u32, 100 * NET, 0 * NET, 0 * NET, 0 * NET).encode()
 	);
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(bob()),
-		(0u32, 0u32, 10 * ENERGY, 0 * ENERGY, 0 * ENERGY, 0 * ENERGY).encode()
+		(0u32, 0u32, 10 * NET, 0 * NET, 0 * NET, 0 * NET).encode()
 	);
 	t.insert(
 		<pallet_balances::TotalIssuance<Runtime>>::hashed_key().to_vec(),
-		(110 * ENERGY).encode()
+		(110 * NET).encode()
 	);
 	t.insert(<frame_system::BlockHash<Runtime>>::hashed_key_for(0), vec![0u8; 32]);
 
@@ -170,14 +170,14 @@ fn transaction_fee_is_correct() {
 	assert!(r.is_ok());
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&bob()), (10 + 69) * ENERGY);
+		assert_eq!(Balances::total_balance(&bob()), (10 + 69) * NET);
 		// Components deducted from alice's balances:
 		// - Base fee
 		// - Weight fee
 		// - Length fee
 		// - Tip
 		// - Creation-fee of bob's account.
-		let mut balance_alice = (100 - 69) * ENERGY;
+		let mut balance_alice = (100 - 69) * NET;
 
 		let base_weight = ExtrinsicBaseWeight::get();
 		let base_fee = IdentityFee::<Balance>::calc(&base_weight);

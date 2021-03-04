@@ -25,7 +25,7 @@ use crate::service::{new_partial, new_full_base, NewFullBase};
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Social Network Energy".into()
+		"The Social Blockchain".into()
 	}
 
 	fn impl_version() -> String {
@@ -41,7 +41,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"https://github.com/social-network/energy/issues/new".into()
+		"https://github.com/social-network/blockchain/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {

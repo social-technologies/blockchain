@@ -798,7 +798,7 @@ pub trait Offchain {
 			.network_state()
 	}
 
-	/// Returns current UNIX timestamp (in millis)
+	/// Returns current UNIX timestamp (in milliseconds)
 	fn timestamp(&mut self) -> Timestamp {
 		self.extension::<OffchainExt>()
 			.expect("timestamp can be called only in the offchain worker context")

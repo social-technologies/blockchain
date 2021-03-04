@@ -33,7 +33,7 @@ pub fn now() -> Timestamp {
 			let duration = d.as_millis();
 			// Assuming overflow won't happen for a few hundred years.
 			Timestamp::from_unix_millis(duration.try_into()
-				.expect("epoch milliseconds won't overflow u64 for hundreds of years; qed"))
+				.expect("epoch MILLINETeconds won't overflow u64 for hundreds of years; qed"))
 		}
 	}
 }

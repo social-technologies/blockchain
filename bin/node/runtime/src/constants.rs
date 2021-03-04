@@ -22,12 +22,12 @@ pub mod currency {
 	use node_primitives::Balance;
 
 	pub const SANGHAS: Balance = 10_000_000_000;
-	pub const MICROS: Balance = 1_000 * SANGHAS;
-	pub const MILLIS: Balance = 1_000 * MICROS;
-	pub const ENERGY: Balance = 100 * MILLIS;
+	pub const MICRONET: Balance = 1_000 * SANGHAS;
+	pub const MILLINET: Balance = 1_000 * MICRONET;
+	pub const NET: Balance = 100 * MILLINET;
 
 	pub const fn deposit(items: u32, bytes: u32) -> Balance {
-		items as Balance * 15 * MILLIS + (bytes as Balance) * 6 * MILLIS
+		items as Balance * 15 * MILLINET + (bytes as Balance) * 6 * MILLINET
 	}
 }
 
@@ -48,21 +48,21 @@ pub mod time {
 	/// minimum period).
 	///
 	/// If using BABE with secondary slots (default) then all of the slots will
-	/// always be assigned, in which case `MILLISECS_PER_BLOCK` and
+	/// always be assigned, in which case `MILLINETECS_PER_BLOCK` and
 	/// `SLOT_DURATION` should have the same value.
 	///
 	/// <https://research.web3.foundation/en/latest/polkadot/BABE/Babe/#6-practical-results>
-	pub const MILLISECS_PER_BLOCK: Moment = 6000;
-	pub const SECS_PER_BLOCK: Moment = MILLISECS_PER_BLOCK / 1000;
+	pub const MILLINETECS_PER_BLOCK: Moment = 6000;
+	pub const SECS_PER_BLOCK: Moment = MILLINETECS_PER_BLOCK / 1000;
 
-	pub const SLOT_DURATION: Moment = MILLISECS_PER_BLOCK;
+	pub const SLOT_DURATION: Moment = MILLINETECS_PER_BLOCK;
 
 	// 1 in 4 blocks (on average, not counting collisions) will be primary BABE blocks.
 	pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
 
 	pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 10 * MINUTES;
 	pub const EPOCH_DURATION_IN_SLOTS: u64 = {
-		const SLOT_FILL_RATE: f64 = MILLISECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
+		const SLOT_FILL_RATE: f64 = MILLINETECS_PER_BLOCK as f64 / SLOT_DURATION as f64;
 
 		(EPOCH_DURATION_IN_BLOCKS as f64 * SLOT_FILL_RATE) as u64
 	};
