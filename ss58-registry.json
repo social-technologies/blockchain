@@ -317,18 +317,9 @@
 			"website": null
 		},
 		{
-			"prefix": 251,
-			"network": "chi",
-			"displayName": "Chi Testnet",
-			"symbols": ["CHI"],
-			"decimals": [18],
-			"standardAccount": "*25519",
-			"website": "https://chi.network"
-		},
-		{
 			"prefix": 252,
 			"network": "social",
-			"displayName": "Social Network",
+			"displayName": "Social",
 			"symbols": ["NET"],
 			"decimals": [18],
 			"standardAccount": "*25519",
