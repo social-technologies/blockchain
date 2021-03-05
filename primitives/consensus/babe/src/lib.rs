@@ -140,7 +140,7 @@ pub enum ConsensusLog {
 /// Configuration data used by the BABE consensus engine.
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 pub struct BabeGenesisConfigurationV1 {
-	/// The slot duration in MILLINETeconds for BABE. Currently, only
+	/// The slot duration in millis for BABE. Currently, only
 	/// the value provided by this type at genesis will be used.
 	///
 	/// Dynamic slot duration may be supported in the future.
@@ -188,7 +188,7 @@ impl From<BabeGenesisConfigurationV1> for BabeGenesisConfiguration {
 /// Configuration data used by the BABE consensus engine.
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 pub struct BabeGenesisConfiguration {
-	/// The slot duration in MILLINETeconds for BABE. Currently, only
+	/// The slot duration in millis for BABE. Currently, only
 	/// the value provided by this type at genesis will be used.
 	///
 	/// Dynamic slot duration may be supported in the future.

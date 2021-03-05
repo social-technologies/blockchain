@@ -35,7 +35,7 @@ pub fn compute_total_payout<N>(
 	total_tokens: N,
 	era_duration: u64
 ) -> (N, N) where N: AtLeast32BitUnsigned + Clone {
-	// MILLINETeconds per year for the Julian year (365.25 days).
+	// millis per year for the Julian year (365.25 days).
 	const MILLINETECONDS_PER_YEAR: u64 = 1000 * 3600 * 24 * 36525 / 100;
 
 	let portion = Perbill::from_rational_approximation(era_duration as u64, MILLINETECONDS_PER_YEAR);

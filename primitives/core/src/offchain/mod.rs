@@ -222,7 +222,7 @@ impl Duration {
 }
 
 impl Timestamp {
-	/// Creates new `Timestamp` given unix timestamp in MILLINETeconds.
+	/// Creates new `Timestamp` given unix timestamp in millis.
 	pub fn from_unix_millis(millis: u64) -> Self {
 		Timestamp(millis)
 	}
@@ -242,7 +242,7 @@ impl Timestamp {
 		Duration(self.0.saturating_sub(other.0))
 	}
 
-	/// Return number of MILLINETeconds since UNIX epoch.
+	/// Return number of millis since UNIX epoch.
 	pub fn unix_millis(&self) -> u64 {
 		self.0
 	}
