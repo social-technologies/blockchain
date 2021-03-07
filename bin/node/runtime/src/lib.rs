@@ -1041,6 +1041,17 @@ impl pallet_social_swap::Trait for Runtime {
 	type ExchangeId = u64;
 }
 
+parameter_types! {
+    pub const MinimumLiquidity: u64 = 1000;
+}
+
+impl pallet_social_swap2::Trait for Runtime {
+	type Currency = Balances;
+	type Event = Event;
+	type FungibleToken = SocialTokens;
+	type MinimumLiquidity = MinimumLiquidity;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1089,6 +1100,7 @@ construct_runtime!(
 		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},
 		SocialNFT: pallet_social_nft::{Module, Call, Event<T>},
 		SocialSwap: pallet_social_swap::{Module, Call, Storage, Event<T>},
+		SocialSwap2: pallet_social_swap2::{Module, Call, Storage, Event<T>},
 	}
 );
 
