@@ -127,7 +127,6 @@ In order to be compatible with polkadot.js the following type definitions will n
     "nonce": "u64"
   },
   "SwapId": "u64",
-  "TokenBalance": "u64",
   "Swap": {
     "token_id": "TokenId",
     "swap_token": "TokenId",
