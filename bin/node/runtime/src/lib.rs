@@ -1087,7 +1087,7 @@ construct_runtime!(
 		SocialUsernames: pallet_social_usernames::{Module, Call, Storage, Event<T>},
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
 		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},
-		SocialNFT: pallet_social_nft::{Module, Call, Event<T>},
+		SocialNFT: pallet_social_nft::{Module, Call, Storage, Event<T>},
 		SocialSwap: pallet_social_swap::{Module, Call, Storage, Event<T>},
 	}
 );

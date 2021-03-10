@@ -126,7 +126,6 @@ In order to be compatible with polkadot.js the following type definitions will n
     "creation": "Moment",
     "nonce": "u64"
   },
-  "TokenId": "u64",
   "SwapId": "u64",
   "TokenBalance": "u64",
   "Swap": {
@@ -195,6 +194,11 @@ In order to be compatible with polkadot.js the following type definitions will n
   "ChainId": "u8",
   "ResourceId": "Vec<u8>",
   "ExchangeId": "u64",
-  "CurrencyOf": "Balance"
+  "CurrencyOf": "Balance",
+  "NftId": "U256",
+  "Erc721Token": {
+    "id": "NftId",
+    "metadata": "Vec<u8>"
+  }
 }
 ```
