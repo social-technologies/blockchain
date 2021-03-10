@@ -14,11 +14,11 @@ use sp_std::prelude::*;
 mod mock;
 mod tests;
 
-type TokenId = U256;
+type NftId = U256;
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
 pub struct Erc721Token {
-    pub id: TokenId,
+    pub id: NftId,
     pub metadata: Vec<u8>,
 }
 
@@ -36,18 +36,18 @@ decl_event! {
         <T as system::Trait>::AccountId,
     {
         /// New token created
-        Minted(AccountId, TokenId),
+        Minted(AccountId, NftId),
         /// Token transfer between two parties
-        Transferred(AccountId, AccountId, TokenId),
+        Transferred(AccountId, AccountId, NftId),
         /// Token removed from the system
-        Burned(TokenId),
+        Burned(NftId),
     }
 }
 
 decl_error! {
     pub enum Error for Module<T: Trait> {
         /// ID not recognized
-        TokenIdDoesNotExist,
+        NftIdDoesNotExist,
         /// Already exists with an owner
         TokenAlreadyExists,
         /// Origin is not owner
@@ -56,13 +56,13 @@ decl_error! {
 }
 
 decl_storage! {
-    trait Store for Module<T: Trait> as TokenStorage {
+    trait Store for Module<T: Trait> as SocialNFT {
         /// Maps tokenId to Erc721 object
-        Tokens get(fn tokens): map hasher(opaque_blake2_256) TokenId => Option<Erc721Token>;
+        pub Tokens get(fn tokens): map hasher(opaque_blake2_256) NftId => Option<Erc721Token>;
         /// Maps tokenId to owner
-        TokenOwner get(fn owner_of): map hasher(opaque_blake2_256) TokenId => Option<T::AccountId>;
+        pub TokenOwner get(fn owner_of): map hasher(opaque_blake2_256) NftId => Option<T::AccountId>;
         /// Total number of tokens in existence
-        TokenCount get(fn token_count): U256 = U256::zero();
+        pub TokenCount get(fn token_count): U256 = U256::zero();
     }
 }
 
@@ -73,8 +73,8 @@ decl_module! {
 
         /// Creates a new token with the given token ID and metadata, and gives ownership to owner
         #[weight = 195_000_000]
-        pub fn mint(origin, owner: T::AccountId, id: TokenId, metadata: Vec<u8>) -> DispatchResult {
-            ensure_root(origin)?;
+        pub fn mint(origin, owner: T::AccountId, id: NftId, metadata: Vec<u8>) -> DispatchResult {
+            let _sender = ensure_signed(origin)?;
 
             Self::mint_token(owner, id, metadata)?;
 
@@ -83,7 +83,7 @@ decl_module! {
 
         /// Changes ownership of a token sender owns
         #[weight = 195_000_000]
-        pub fn transfer(origin, to: T::AccountId, id: TokenId) -> DispatchResult {
+        pub fn transfer(origin, to: T::AccountId, id: NftId) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
             Self::transfer_from(sender, to, id)?;
@@ -93,10 +93,10 @@ decl_module! {
 
         /// Remove token from the system
         #[weight = 195_000_000]
-        pub fn burn(origin, id: TokenId) -> DispatchResult {
-            ensure_root(origin)?;
+        pub fn burn(origin, id: NftId) -> DispatchResult {
+            let _sender = ensure_signed(origin)?;
 
-            let owner = Self::owner_of(id).ok_or(Error::<T>::TokenIdDoesNotExist)?;
+            let owner = Self::owner_of(id).ok_or(Error::<T>::NftIdDoesNotExist)?;
 
             Self::burn_token(owner, id)?;
 
@@ -107,7 +107,7 @@ decl_module! {
 
 impl<T: Trait> Module<T> {
     /// Creates a new token in the system.
-    pub fn mint_token(owner: T::AccountId, id: TokenId, metadata: Vec<u8>) -> DispatchResult {
+    pub fn mint_token(owner: T::AccountId, id: NftId, metadata: Vec<u8>) -> DispatchResult {
         ensure!(!Tokens::contains_key(id), Error::<T>::TokenAlreadyExists);
 
         let new_token = Erc721Token { id, metadata };
@@ -123,9 +123,9 @@ impl<T: Trait> Module<T> {
     }
 
     /// Modifies ownership of a token
-    pub fn transfer_from(from: T::AccountId, to: T::AccountId, id: TokenId) -> DispatchResult {
+    pub fn transfer_from(from: T::AccountId, to: T::AccountId, id: NftId) -> DispatchResult {
         // Check from is owner and token exists
-        let owner = Self::owner_of(id).ok_or(Error::<T>::TokenIdDoesNotExist)?;
+        let owner = Self::owner_of(id).ok_or(Error::<T>::NftIdDoesNotExist)?;
         ensure!(owner == from, Error::<T>::NotOwner);
         // Update owner
         <TokenOwner<T>>::insert(&id, to.clone());
@@ -136,8 +136,8 @@ impl<T: Trait> Module<T> {
     }
 
     /// Deletes a token from the system.
-    pub fn burn_token(from: T::AccountId, id: TokenId) -> DispatchResult {
-        let owner = Self::owner_of(id).ok_or(Error::<T>::TokenIdDoesNotExist)?;
+    pub fn burn_token(from: T::AccountId, id: NftId) -> DispatchResult {
+        let owner = Self::owner_of(id).ok_or(Error::<T>::NftIdDoesNotExist)?;
         ensure!(owner == from, Error::<T>::NotOwner);
 
         <Tokens>::remove(&id);
