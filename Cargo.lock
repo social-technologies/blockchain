@@ -3903,6 +3903,7 @@ dependencies = [
  "pallet-social-champions",
  "pallet-social-nft",
  "pallet-social-swap",
+ "pallet-social-swap2",
  "pallet-social-tokens",
  "pallet-social-treasury",
  "pallet-social-usernames",
@@ -4844,6 +4845,22 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-social-tokens",
+ "parity-scale-codec",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-social-swap2"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-social-tokens",
+ "pallet-timestamp",
  "parity-scale-codec",
  "sp-application-crypto",
  "sp-core",
