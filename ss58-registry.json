@@ -318,8 +318,8 @@
 		},
 		{
 			"prefix": 252,
-			"network": "social",
-			"displayName": "Social",
+			"network": "social-network",
+			"displayName": "Social Network",
 			"symbols": ["NET"],
 			"decimals": [18],
 			"standardAccount": "*25519",

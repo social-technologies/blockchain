@@ -104,7 +104,7 @@ pub fn wasm_binary_unwrap() -> &'static [u8] {
 
 /// Runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("social"),
+	spec_name: create_runtime_str!("social-network"),
 	impl_name: create_runtime_str!("chi"),
 	authoring_version: 1,
 	// Per convention: if the runtime behavior changes, increment spec_version

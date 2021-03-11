@@ -504,9 +504,7 @@ ss58_address_format!(
 		(46, "reserved46", "Reserved for future use (46).")
 	Reserved47 =>
 		(47, "reserved47", "Reserved for future use (47).")
-	SocialTestAccount =>
-		(251, "social-testnet", "Social Test Network, standard account (*25519).")
-	SocialAccount =>
+	SocialNetworkAccount =>
 		(252, "social-network", "Social Network, standard account (*25519).")
 );
 
