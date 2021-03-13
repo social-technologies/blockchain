@@ -38,14 +38,14 @@ RUN mv /usr/share/ca* /tmp && \
 	chown -R substrate:substrate /substrate/.local && \
 	ln -s /substrate/.local/share/substrate /data
 
-COPY --from=builder /substrate/target/$PROFILE/social /usr/local/bin
+COPY --from=builder /substrate/target/$PROFILE/social-network /usr/local/bin
 COPY --from=builder /substrate/target/$PROFILE/subkey /usr/local/bin
 COPY --from=builder /substrate/target/$PROFILE/node-rpc-client /usr/local/bin
 COPY --from=builder /substrate/target/$PROFILE/chain-spec-builder /usr/local/bin
 
 # checks
-RUN ldd /usr/local/bin/social && \
-	/usr/local/bin/social --version
+RUN ldd /usr/local/bin/social-network && \
+	/usr/local/bin/social-network --version
 
 # Shrinking
 RUN rm -rf /usr/lib/python* && \
@@ -55,4 +55,4 @@ USER substrate
 EXPOSE 30333 9933 9944 9615
 VOLUME ["/data"]
 
-ENTRYPOINT ["/usr/local/bin/social"]
+ENTRYPOINT ["/usr/local/bin/social-network"]

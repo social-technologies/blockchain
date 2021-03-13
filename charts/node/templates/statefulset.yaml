@@ -90,7 +90,7 @@ spec:
         command: ["/bin/sh"]
         args:
           - -c
-          - exec /usr/local/bin/social
+          - exec /usr/local/bin/social-network
             --base-path {{ .Values.image.basepath }}
             --chain {{ .Values.nodes.network_name }}
             {{- if .Values.validator.keys }}
