@@ -8,7 +8,7 @@ use frame_support::{
     ensure,
     traits::{
         EnsureOrigin, ExistenceRequirement, ExistenceRequirement::AllowDeath, Get, Imbalance,
-        LockIdentifier, OnNewAccount, StoredMap, TryDrop, WithdrawReason, WithdrawReasons,
+        LockIdentifier, OnNewAccount, StoredMap, TryDrop, WithdrawReasons,
     },
     Parameter,
 };
@@ -16,7 +16,7 @@ use frame_system::{ensure_signed, split_inner, RefCount};
 use sp_runtime::{
     traits::{
         AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedSub, Member, Saturating, StaticLookup,
-        Zero,
+        StoredMapError, Zero,
     },
     DispatchError, RuntimeDebug, SaturatedConversion,
 };
@@ -29,8 +29,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait Trait: frame_system::Trait {
-    type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+pub trait Config: frame_system::Config {
+    type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
     /// The balance of an account.
     type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy;
@@ -61,15 +61,15 @@ pub enum Reasons {
 }
 
 impl From<WithdrawReasons> for Reasons {
-    fn from(r: WithdrawReasons) -> Reasons {
-        if r == WithdrawReasons::from(WithdrawReason::TransactionPayment) {
-            Reasons::Fee
-        } else if r.contains(WithdrawReason::TransactionPayment) {
-            Reasons::All
-        } else {
-            Reasons::Misc
-        }
-    }
+	fn from(r: WithdrawReasons) -> Reasons {
+		if r == WithdrawReasons::from(WithdrawReasons::TRANSACTION_PAYMENT) {
+			Reasons::Fee
+		} else if r.contains(WithdrawReasons::TRANSACTION_PAYMENT) {
+			Reasons::All
+		} else {
+			Reasons::Misc
+		}
+	}
 }
 
 impl BitOr for Reasons {
@@ -155,7 +155,7 @@ impl TokenDossier {
 }
 
 decl_storage! {
-    trait Store for Module<T: Trait> as SocialTokens {
+    trait Store for Module<T: Config> as SocialTokens {
         MaxSocialTokenId get(fn max_social_token_id): T::SocialTokenId = 17u32.into();
         MinSocialTokenId get(fn min_social_token_id): T::SocialTokenId = 1u32.into();
 
@@ -179,9 +179,9 @@ decl_storage! {
 decl_event!(
     pub enum Event<T>
     where
-        AccountId = <T as frame_system::Trait>::AccountId,
-        SocialTokenId = <T as Trait>::SocialTokenId,
-        SocialTokenBalance = <T as Trait>::Balance,
+        AccountId = <T as frame_system::Config>::AccountId,
+        SocialTokenId = <T as Config>::SocialTokenId,
+        SocialTokenBalance = <T as Config>::Balance,
     {
         /// An account was created with some free balance. \[account, free_balance\]
         Endowed(AccountId, SocialTokenId, SocialTokenBalance),
@@ -209,7 +209,7 @@ decl_event!(
 );
 
 decl_error! {
-    pub enum Error for Module<T: Trait> {
+    pub enum Error for Module<T: Config> {
         InvalidSocialTokenId,
         /// Transfer amount should be non-zero
         AmountZero,
@@ -238,7 +238,7 @@ decl_error! {
 }
 
 decl_module! {
-    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+    pub struct Module<T: Config> for enum Call where origin: T::Origin {
         const MaxSocialTokensSupply: u128 = T::MaxSocialTokensSupply::get();
 
         type Error = Error<T>;
@@ -266,7 +266,11 @@ decl_module! {
     }
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
+	fn total_balance(who: &T::AccountId, token_id: T::SocialTokenId) -> T::Balance {
+		Self::account(token_id, who).total()
+	}
+
     pub fn balance(who: T::AccountId, token_id: T::SocialTokenId) -> T::Balance {
         Self::free_balance(who, token_id)
     }
@@ -374,7 +378,7 @@ impl<T: Trait> Module<T> {
                     transactor,
                     token_id,
                     value,
-                    WithdrawReason::Transfer.into(),
+                    WithdrawReasons::TRANSFER,
                     from_account.free,
                 )?;
 
@@ -433,7 +437,7 @@ impl<T: Trait> Module<T> {
                 &who,
                 token_id,
                 value.clone(),
-                WithdrawReason::Reserve.into(),
+                WithdrawReasons::RESERVE,
                 account.free,
             )
         })?;
@@ -450,21 +454,28 @@ impl<T: Trait> Module<T> {
         token_id: T::SocialTokenId,
         value: T::Balance,
     ) -> T::Balance {
-        if value.is_zero() {
-            return Zero::zero();
-        }
+		if value.is_zero() { return Zero::zero() }
+		if Self::total_balance(&who, token_id).is_zero() { return value }
 
-        let actual = Self::mutate_account(who, token_id, |account| {
-            let actual = cmp::min(account.reserved, value);
-            account.reserved -= actual;
-            // defensive only: this can never fail since total issuance which is at least free+reserved
-            // fits into the same data type.
-            account.free = account.free.saturating_add(actual);
-            actual
-        });
+		let actual = match Self::mutate_account(who, token_id, |account| {
+			let actual = cmp::min(account.reserved, value);
+			account.reserved -= actual;
+			// defensive only: this can never fail since total issuance which is at least free+reserved
+			// fits into the same data type.
+			account.free = account.free.saturating_add(actual);
+			actual
+		}) {
+			Ok(x) => x,
+			Err(_) => {
+				// This should never happen since we don't alter the total amount in the account.
+				// If it ever does, then we should fail gracefully though, indicating that nothing
+				// could be done.
+				return value
+			}
+		};
 
         Self::deposit_event(RawEvent::Unreserved(who.clone(), token_id, actual.clone()));
-        value - actual
+		value - actual
     }
 
     /// Slash from reserved balance, returning the negative imbalance created,
@@ -480,12 +491,31 @@ impl<T: Trait> Module<T> {
             return (NegativeImbalance::zero(), Zero::zero());
         }
 
-        Self::mutate_account(who, token_id, |account| {
-            // underflow should never happen, but it if does, there's nothing to be done here.
-            let actual = cmp::min(account.reserved, value);
-            account.reserved -= actual;
-            (NegativeImbalance::new(actual), value - actual)
-        })
+        // NOTE: `mutate_account` may fail if it attempts to reduce the balance to the point that an
+		//   account is attempted to be illegally destroyed.
+
+		for attempt in 0..2 {
+			match Self::mutate_account(who, token_id, |account| {
+				let best_value = match attempt {
+					0 => value,
+					// If acting as a critical provider (i.e. first attempt failed), then ensure
+					// slash leaves at least the ED.
+					_ => value.min((account.free + account.reserved).saturating_sub(T::ExistentialDeposit::get())),
+				};
+
+				let actual = cmp::min(account.reserved, best_value);
+				account.reserved -= actual;
+
+				// underflow should never happen, but it if does, there's nothing to be done here.
+				(NegativeImbalance::new(actual), value - actual)
+			}) {
+				Ok(r) => return r,
+				Err(_) => (),
+			}
+		}
+		// Should never get here as we ensure that ED is left in the second attempt.
+		// In case we do, though, then we fail gracefully.
+		(NegativeImbalance::zero(), value)
     }
 
     /// Similar to withdraw, only accepts a `PositiveImbalance` and returns nothing on success.
@@ -556,25 +586,25 @@ impl<T: Trait> Module<T> {
             return PositiveImbalance::zero();
         }
 
-        Self::try_mutate_account(
+        let r = Self::try_mutate_account(
             who,
             token_id,
-            |account, is_new| -> Result<PositiveImbalance<T>, PositiveImbalance<T>> {
-                // bail if not yet created and this operation wouldn't be enough to create it.
+            |account, is_new| -> Result<PositiveImbalance<T>, DispatchError> {
+
                 let ed = T::ExistentialDeposit::get();
-                ensure!(value >= ed || !is_new, PositiveImbalance::zero());
+                ensure!(value >= ed || !is_new, Error::<T>::ExistentialDeposit);
 
                 // defensive only: overflow should never happen, however in case it does, then this
                 // operation is a no-op.
-                account.free = account
-                    .free
-                    .checked_add(&value)
-                    .ok_or_else(|| PositiveImbalance::zero())?;
+                account.free = match account.free.checked_add(&value) {
+                    Some(x) => x,
+                    None => return Ok(PositiveImbalance::zero()),
+                };
 
                 Ok(PositiveImbalance::new(value))
-            },
-        )
-        .unwrap_or_else(|x| x)
+		}).unwrap_or_else(|_| PositiveImbalance::zero());
+
+		r
     }
 
     // Burn funds from the total issuance, returning a positive imbalance for the amount burned.
@@ -601,8 +631,8 @@ impl<T: Trait> Module<T> {
         }
         <TotalIssuance<T>>::mutate(token_id, |issued| {
             *issued = issued.checked_add(&amount).unwrap_or_else(|| {
-                amount = <T as Trait>::Balance::max_value() - *issued;
-                <T as Trait>::Balance::max_value()
+                amount = <T as Config>::Balance::max_value() - *issued;
+                <T as Config>::Balance::max_value()
             })
         });
         NegativeImbalance::new(amount)
@@ -631,7 +661,7 @@ impl<T: Trait> Module<T> {
     ///
     /// NOTE: LOW-LEVEL: This will not attempt to maintain total issuance. It is expected that
     /// the caller will do this.
-    fn try_mutate_account<R, E>(
+    fn try_mutate_account<R, E: From<StoredMapError>>(
         who: &T::AccountId,
         token_id: T::SocialTokenId,
         f: impl FnOnce(&mut AccountData<T::Balance>, bool) -> Result<R, E>,
@@ -665,9 +695,8 @@ impl<T: Trait> Module<T> {
         who: &T::AccountId,
         token_id: T::SocialTokenId,
         f: impl FnOnce(&mut AccountData<T::Balance>) -> R,
-    ) -> R {
-        Self::try_mutate_account(who, token_id, |a, _| -> Result<R, Infallible> { Ok(f(a)) })
-            .expect("Error is infallible; qed")
+    ) -> Result<R, StoredMapError> {
+		Self::try_mutate_account(who, token_id, |a, _| -> Result<R, StoredMapError> { Ok(f(a)) })
     }
 
     /// Places the `free` and `reserved` parts of `new` into `account`. Also does any steps needed
@@ -732,7 +761,7 @@ impl<T: Trait> Module<T> {
 
     /// An account is being created.
     pub fn on_created_account(who: (T::SocialTokenId, T::AccountId)) {
-        <T as Trait>::OnNewAccount::on_new_account(&who);
+        <T as Config>::OnNewAccount::on_new_account(&who);
         Self::deposit_event(RawEvent::NewAccount(who.1, who.0));
     }
 }
@@ -740,16 +769,16 @@ impl<T: Trait> Module<T> {
 // wrapping these imbalances in a private module is necessary to ensure absolute privacy
 // of the inner member.
 mod imbalances {
-    use super::{result, Imbalance, Saturating, Trait, TryDrop, Zero};
+    use super::{result, Imbalance, Saturating, Config, TryDrop, Zero};
     use sp_std::mem;
 
     /// Opaque, move-only struct with private fields that serves as a token denoting that
     /// funds have been created without any equal and opposite accounting.
     #[must_use]
     #[derive(Clone)]
-    pub struct PositiveImbalance<T: Trait>(T::Balance);
+    pub struct PositiveImbalance<T: Config>(T::Balance);
 
-    impl<T: Trait> PositiveImbalance<T> {
+    impl<T: Config> PositiveImbalance<T> {
         /// Create a new positive imbalance from a balance.
         pub fn new(amount: T::Balance) -> Self {
             PositiveImbalance(amount)
@@ -760,22 +789,22 @@ mod imbalances {
     /// funds have been destroyed without any equal and opposite accounting.
     #[must_use]
     #[derive(Clone)]
-    pub struct NegativeImbalance<T: Trait>(T::Balance);
+    pub struct NegativeImbalance<T: Config>(T::Balance);
 
-    impl<T: Trait> NegativeImbalance<T> {
+    impl<T: Config> NegativeImbalance<T> {
         /// Create a new negative imbalance from a balance.
         pub fn new(amount: T::Balance) -> Self {
             NegativeImbalance(amount)
         }
     }
 
-    impl<T: Trait> TryDrop for PositiveImbalance<T> {
+    impl<T: Config> TryDrop for PositiveImbalance<T> {
         fn try_drop(self) -> result::Result<(), Self> {
             self.drop_zero()
         }
     }
 
-    impl<T: Trait> Imbalance<T::Balance> for PositiveImbalance<T> {
+    impl<T: Config> Imbalance<T::Balance> for PositiveImbalance<T> {
         type Opposite = NegativeImbalance<T>;
 
         fn zero() -> Self {
@@ -820,13 +849,13 @@ mod imbalances {
         }
     }
 
-    impl<T: Trait> TryDrop for NegativeImbalance<T> {
+    impl<T: Config> TryDrop for NegativeImbalance<T> {
         fn try_drop(self) -> result::Result<(), Self> {
             self.drop_zero()
         }
     }
 
-    impl<T: Trait> Imbalance<T::Balance> for NegativeImbalance<T> {
+    impl<T: Config> Imbalance<T::Balance> for NegativeImbalance<T> {
         type Opposite = PositiveImbalance<T>;
 
         fn zero() -> Self {
@@ -888,43 +917,44 @@ pub struct AccountInfo<Index, AccountData> {
 // Implement StoredMap for a simple single-item, kill-account-on-remove system. This works fine for
 // storing a single item which is required to not be empty/default for the account to exist.
 // Anything more complex will need more sophisticated logic.
-impl<T: Trait> StoredMap<(T::SocialTokenId, T::AccountId), AccountData<T::Balance>> for Module<T> {
+impl<T: Config> StoredMap<(T::SocialTokenId, T::AccountId), AccountData<T::Balance>> for Module<T> {
     fn get(k: &(T::SocialTokenId, T::AccountId)) -> AccountData<T::Balance> {
         SystemAccount::<T>::get(k).data
     }
-    fn is_explicit(k: &(T::SocialTokenId, T::AccountId)) -> bool {
-        SystemAccount::<T>::contains_key(k)
-    }
-    fn insert(k: &(T::SocialTokenId, T::AccountId), data: AccountData<T::Balance>) {
+    fn insert(
+        k: &(T::SocialTokenId, T::AccountId),
+        data: AccountData<T::Balance>
+    ) -> Result<(), StoredMapError> {
         let existed = SystemAccount::<T>::contains_key(k);
-        SystemAccount::<T>::mutate(k, |a| a.data = data);
+        let r = SystemAccount::<T>::mutate(k, |a| a.data = data);
         if !existed {
             Self::on_created_account(k.clone());
         }
+        Ok(r)
     }
-    fn remove(_k: &(T::SocialTokenId, T::AccountId)) {
+    fn remove(_k: &(T::SocialTokenId, T::AccountId)) -> Result<(), StoredMapError> {
         // TODO:
         //Self::kill_account(k)
+        Ok(())
     }
     fn mutate<R>(
         k: &(T::SocialTokenId, T::AccountId),
         f: impl FnOnce(&mut AccountData<T::Balance>) -> R,
-    ) -> R {
+    ) -> Result<R, StoredMapError> {
         let existed = SystemAccount::<T>::contains_key(k);
         let r = SystemAccount::<T>::mutate(k, |a| f(&mut a.data));
         if !existed {
             Self::on_created_account(k.clone());
         }
-        r
+        Ok(r)
     }
     fn mutate_exists<R>(
         k: &(T::SocialTokenId, T::AccountId),
         f: impl FnOnce(&mut Option<AccountData<T::Balance>>) -> R,
-    ) -> R {
-        Self::try_mutate_exists(k, |x| -> Result<R, Infallible> { Ok(f(x)) })
-            .expect("Infallible; qed")
+    ) -> Result<R, StoredMapError> {
+        Self::try_mutate_exists(k, |x| -> Result<R, StoredMapError> { Ok(f(x)) })
     }
-    fn try_mutate_exists<R, E>(
+    fn try_mutate_exists<R, E: From<StoredMapError>>(
         k: &(T::SocialTokenId, T::AccountId),
         f: impl FnOnce(&mut Option<AccountData<T::Balance>>) -> Result<R, E>,
     ) -> Result<R, E> {
@@ -996,7 +1026,7 @@ pub trait IssueAndBurn<SocialTokenId, AccountId>: Fungible<SocialTokenId, Accoun
     fn burn(asset_id: &SocialTokenId, who: &AccountId, value: Self::Balance) -> DispatchResult;
 }
 
-impl<T: Trait> Fungible<T::SocialTokenId, T::AccountId> for Module<T> {
+impl<T: Config> Fungible<T::SocialTokenId, T::AccountId> for Module<T> {
     type Balance = T::Balance;
 
     fn total_supply(token_id: &T::SocialTokenId) -> Self::Balance {
@@ -1059,7 +1089,7 @@ impl<T: Trait> Fungible<T::SocialTokenId, T::AccountId> for Module<T> {
     }
 }
 
-impl<T: Trait> IssueAndBurn<T::SocialTokenId, T::AccountId> for Module<T> {
+impl<T: Config> IssueAndBurn<T::SocialTokenId, T::AccountId> for Module<T> {
     fn exists(asset_id: &T::SocialTokenId) -> bool {
         Self::token_info(asset_id).is_some()
     }

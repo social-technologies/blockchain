@@ -12,12 +12,12 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait Trait: frame_system::Trait + pallet_social_tokens::Trait {
-    type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+pub trait Config: frame_system::Config + pallet_social_tokens::Config {
+    type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 }
 
 decl_storage! {
-    trait Store for Module<T: Trait> as ValidatorRegistry {
+    trait Store for Module<T: Config> as ValidatorRegistry {
         ChampionOf get(fn social_of): map hasher(blake2_128_concat) T::AccountId => T::SocialTokenId;
         Validators get(fn validators): map hasher(blake2_128_concat) T::SocialTokenId => Vec<T::AccountId>;
     }
@@ -26,8 +26,8 @@ decl_storage! {
 decl_event!(
     pub enum Event<T>
     where
-        AccountId = <T as frame_system::Trait>::AccountId,
-        SocialTokenId = <T as pallet_social_tokens::Trait>::SocialTokenId,
+        AccountId = <T as frame_system::Config>::AccountId,
+        SocialTokenId = <T as pallet_social_tokens::Config>::SocialTokenId,
     {
         Registered(AccountId, SocialTokenId),
         Unregistered(AccountId, SocialTokenId),
@@ -35,14 +35,14 @@ decl_event!(
 );
 
 decl_error! {
-    pub enum Error for Module<T: Trait> {
+    pub enum Error for Module<T: Config> {
         AlreadyRegistered,
         NotFound,
     }
 }
 
 decl_module! {
-    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+    pub struct Module<T: Config> for enum Call where origin: T::Origin {
         type Error = Error<T>;
 
         fn deposit_event() = default;

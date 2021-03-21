@@ -90,7 +90,7 @@ fn transfer_erc721() {
 
         // Create a token
         assert_ok!(Erc721::mint(
-            Origin::root(),
+            Origin::signed(1), // Origin::root(),
             RELAYER_A,
             token_id,
             metadata.clone()

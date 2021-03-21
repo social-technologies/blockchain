@@ -1,7 +1,5 @@
 #![cfg(test)]
 
-use super::*;
-
 use frame_support::{ord_parameter_types, parameter_types, weights::Weight};
 use frame_system::{self as system, EnsureRoot};
 use sp_core::{hashing::blake2_128, H256};
@@ -11,110 +9,9 @@ use sp_runtime::{
     ModuleId, Perbill,
 };
 
-use crate::{self as social_bridge, Trait};
+use crate::{self as social_bridge, Config};
 use chainbridge as bridge;
 pub use pallet_balances as balances;
-
-parameter_types! {
-    pub const BlockHashCount: u64 = 250;
-    pub const MaximumBlockWeight: Weight = 1024;
-    pub const MaximumBlockLength: u32 = 2 * 1024;
-    pub const AvailableBlockRatio: Perbill = Perbill::one();
-    pub const MaxLocks: u32 = 100;
-}
-
-impl frame_system::Trait for Test {
-    type BaseCallFilter = ();
-    type Origin = Origin;
-    type Call = Call;
-    type Index = u64;
-    type BlockNumber = u64;
-    type Hash = H256;
-    type Hashing = BlakeTwo256;
-    type AccountId = u64;
-    type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
-    type Event = Event;
-    type BlockHashCount = BlockHashCount;
-    type MaximumBlockWeight = MaximumBlockWeight;
-    type DbWeight = ();
-    type BlockExecutionWeight = ();
-    type ExtrinsicBaseWeight = ();
-    type MaximumExtrinsicWeight = ();
-    type MaximumBlockLength = MaximumBlockLength;
-    type AvailableBlockRatio = AvailableBlockRatio;
-    type Version = ();
-    type AccountData = pallet_balances::AccountData<u64>;
-    type OnNewAccount = ();
-    type OnKilledAccount = ();
-    type SystemWeightInfo = ();
-    type PalletInfo = ();
-}
-
-parameter_types! {
-    pub const ExistentialDeposit: u64 = 1;
-}
-
-ord_parameter_types! {
-    pub const One: u64 = 1;
-}
-
-impl pallet_balances::Trait for Test {
-    type Balance = u64;
-    type DustRemoval = ();
-    type Event = Event;
-    type ExistentialDeposit = ExistentialDeposit;
-    type AccountStore = System;
-    type MaxLocks = MaxLocks;
-    type WeightInfo = ();
-}
-
-parameter_types! {
-    pub const TestChainId: u8 = 5;
-    pub const ProposalLifetime: u64 = 100;
-}
-
-impl bridge::Trait for Test {
-    type Event = Event;
-    type AdminOrigin = frame_system::EnsureRoot<Self::AccountId>;
-    type Proposal = Call;
-    type ChainId = TestChainId;
-    type ProposalLifetime = ProposalLifetime;
-}
-
-parameter_types! {
-    pub const MaxSocialTokensSupply: u128 = 77_777_777;
-}
-
-impl pallet_social_tokens::Trait for Test {
-    type Event = Event;
-    type Balance = u64;
-    type SocialTokenId = u32;
-    type ExistentialDeposit = ExistentialDeposit;
-    type OnNewAccount = ();
-    type MaxSocialTokensSupply = MaxSocialTokensSupply;
-    type SocialCreatorOrigin = EnsureRoot<u64>;
-}
-
-parameter_types! {
-    pub HashId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"hash"));
-    pub NativeTokenId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NET"));
-    pub Erc721Id: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NFT"));
-}
-
-impl erc721::Trait for Test {
-    type Event = Event;
-    type Identifier = Erc721Id;
-}
-
-impl Trait for Test {
-    type Event = Event;
-    type BridgeOrigin = bridge::EnsureBridge<Test>;
-    type Currency = Balances;
-    type HashId = HashId;
-    type NativeTokenId = NativeTokenId;
-    type Erc721Id = Erc721Id;
-}
 
 pub type Block = sp_runtime::generic::Block<Header, UncheckedExtrinsic>;
 pub type UncheckedExtrinsic = sp_runtime::generic::UncheckedExtrinsic<u32, u64, Call, ()>;
@@ -130,7 +27,7 @@ frame_support::construct_runtime!(
         Bridge: bridge::{Module, Call, Storage, Event<T>},
         SocialToken: pallet_social_tokens::{Module, Call, Storage, Event<T>},
         SocialBridge: social_bridge::{Module, Call, Event<T>},
-        Erc721: erc721::{Module, Call, Storage, Event<T>},
+        Erc721: pallet_social_nft::{Module, Call, Storage, Event<T>},
     }
 );
 
@@ -138,6 +35,104 @@ pub const RELAYER_A: u64 = 0x2;
 pub const RELAYER_B: u64 = 0x3;
 pub const RELAYER_C: u64 = 0x4;
 pub const ENDOWED_BALANCE: u64 = 100_000_000;
+
+parameter_types! {
+    pub const BlockHashCount: u64 = 250;
+    pub const MaximumBlockWeight: Weight = 1024;
+    pub const MaximumBlockLength: u32 = 2 * 1024;
+    pub const AvailableBlockRatio: Perbill = Perbill::one();
+    pub const MaxLocks: u32 = 100;
+}
+
+impl frame_system::Config for Test {
+    type BaseCallFilter = ();
+    type BlockWeights = ();
+    type BlockLength = ();
+    type DbWeight = ();
+    type Origin = Origin;
+    type Call = Call;
+    type Index = u64;
+    type BlockNumber = u64;
+    type Hash = H256;
+    type Hashing = BlakeTwo256;
+    type AccountId = u64;
+    type Lookup = IdentityLookup<Self::AccountId>;
+    type Header = Header;
+    type Event = Event;
+    type BlockHashCount = BlockHashCount;
+    type Version = ();
+    type PalletInfo = PalletInfo;
+    type AccountData = pallet_balances::AccountData<u64>;
+    type OnNewAccount = ();
+    type OnKilledAccount = ();
+    type SystemWeightInfo = ();
+    type SS58Prefix = ();
+}
+
+parameter_types! {
+    pub const ExistentialDeposit: u64 = 1;
+}
+
+ord_parameter_types! {
+    pub const One: u64 = 1;
+}
+
+impl pallet_balances::Config for Test {
+    type Balance = u64;
+    type DustRemoval = ();
+    type Event = Event;
+    type ExistentialDeposit = ExistentialDeposit;
+    type AccountStore = System;
+    type MaxLocks = MaxLocks;
+    type WeightInfo = ();
+}
+
+parameter_types! {
+    pub const TestChainId: u8 = 5;
+    pub const ProposalLifetime: u64 = 100;
+}
+
+impl bridge::Config for Test {
+    type Event = Event;
+    type AdminOrigin = frame_system::EnsureRoot<Self::AccountId>;
+    type Proposal = Call;
+    type ChainId = TestChainId;
+    type ProposalLifetime = ProposalLifetime;
+}
+
+parameter_types! {
+    pub const MaxSocialTokensSupply: u128 = 77_777_777;
+}
+
+impl pallet_social_tokens::Config for Test {
+    type Event = Event;
+    type Balance = u64;
+    type SocialTokenId = u32;
+    type ExistentialDeposit = ExistentialDeposit;
+    type OnNewAccount = ();
+    type MaxSocialTokensSupply = MaxSocialTokensSupply;
+    type SocialCreatorOrigin = EnsureRoot<u64>;
+}
+
+parameter_types! {
+    pub HashId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"hash"));
+    pub NativeTokenId: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NET"));
+    pub Erc721Id: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NFT"));
+}
+
+impl pallet_social_nft::Config for Test {
+    type Event = Event;
+    type Identifier = Erc721Id;
+}
+
+impl Config for Test {
+    type Event = Event;
+    type BridgeOrigin = bridge::EnsureBridge<Test>;
+    type Currency = Balances;
+    type HashId = HashId;
+    type NativeTokenId = NativeTokenId;
+    type Erc721Id = Erc721Id;
+}
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let bridge_id = ModuleId(*b"cb/bridg").into_account();

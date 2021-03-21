@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2018-2020 Parity Technologies (UK) Ltd.
+// Copyright (C) 2018-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -86,7 +86,7 @@ pub fn sign(xt: CheckedExtrinsic) -> UncheckedExtrinsic {
 }
 
 pub fn default_transfer_call() -> pallet_balances::Call<Runtime> {
-	pallet_balances::Call::transfer::<Runtime>(bob().into(), 69 * NET)
+	pallet_balances::Call::transfer::<Runtime>(bob().into(), 69 * DOLLARS)
 }
 
 pub fn from_block_number(n: u32) -> Header {

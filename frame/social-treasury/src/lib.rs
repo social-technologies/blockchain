@@ -5,7 +5,7 @@ use frame_support::dispatch::DispatchResultWithPostInfo;
 use frame_support::traits::{Contains, ContainsLengthBound, EnsureOrigin};
 use frame_support::traits::{
     ExistenceRequirement::{AllowDeath, KeepAlive},
-    Get, Imbalance, OnUnbalanced, WithdrawReason,
+    Get, Imbalance, OnUnbalanced, WithdrawReasons,
 };
 use frame_support::weights::{DispatchClass, Weight};
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, ensure, print, Parameter};
@@ -19,6 +19,7 @@ use sp_runtime::{
     DispatchResult, Percent, Permill, RuntimeDebug,
 };
 use sp_std::prelude::*;
+pub use weights::WeightInfo;
 
 #[cfg(test)]
 mod mock;
@@ -27,41 +28,20 @@ mod mock;
 mod tests;
 
 mod default_weights;
+pub mod weights;
 
-type BalanceOf<T> = <T as pallet_social_tokens::Trait>::Balance;
+type BalanceOf<T> = <T as pallet_social_tokens::Config>::Balance;
 type PositiveImbalanceOf<T> = pallet_social_tokens::PositiveImbalance<T>;
 type NegativeImbalanceOf<T> = pallet_social_tokens::NegativeImbalance<T>;
-type TokenId<T> = <T as pallet_social_tokens::Trait>::SocialTokenId;
+type TokenId<T> = <T as pallet_social_tokens::Config>::SocialTokenId;
 
-pub trait WeightInfo {
-    fn propose_spend() -> Weight;
-    fn reject_proposal() -> Weight;
-    fn approve_proposal() -> Weight;
-    fn report_awesome(r: u32) -> Weight;
-    fn retract_tip() -> Weight;
-    fn tip_new(r: u32, t: u32) -> Weight;
-    fn tip(t: u32) -> Weight;
-    fn close_tip(t: u32) -> Weight;
-    fn propose_bounty(r: u32) -> Weight;
-    fn approve_bounty() -> Weight;
-    fn propose_curator() -> Weight;
-    fn unassign_curator() -> Weight;
-    fn accept_curator() -> Weight;
-    fn award_bounty() -> Weight;
-    fn claim_bounty() -> Weight;
-    fn close_bounty_proposed() -> Weight;
-    fn close_bounty_active() -> Weight;
-    fn extend_bounty_expiry() -> Weight;
-    fn on_initialize_proposals(p: u32) -> Weight;
-    fn on_initialize_bounties(b: u32) -> Weight;
-}
 
-pub trait Trait:
-    frame_system::Trait
-    + pallet_treasury::Trait
-    + pallet_staking::Trait
-    + pallet_social_tokens::Trait
-    + pallet_social_champions::Trait
+pub trait Config:
+    frame_system::Config
+    + pallet_treasury::Config
+    + pallet_staking::Config
+    + pallet_social_tokens::Config
+    + pallet_social_champions::Config
 {
     /// Origin from which approvals must come.
     type ApproveOrigin: EnsureOrigin<Self::Origin>;
@@ -87,7 +67,7 @@ pub trait Trait:
     type DataDepositPerByte: Get<BalanceOf<Self>>;
 
     /// The overarching event type.
-    type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+    type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
     /// Handler for the unbalanced decrease when slashing for a rejected proposal or bounty.
     type OnSlash: OnUnbalanced<NegativeImbalanceOf<Self>>;
@@ -231,7 +211,7 @@ pub enum BountyStatus<AccountId, BlockNumber> {
 }
 
 decl_storage! {
-    trait Store for Module<T: Trait> as SocialTreasury {
+    trait Store for Module<T: Config> as SocialTreasury {
         Something get(fn something): Option<u32>;
         NextEraForProcessing get(fn next_era_for_processing): Option<EraIndex>;
 
@@ -276,10 +256,10 @@ decl_storage! {
 decl_event!(
     pub enum Event<T>
     where
-        AccountId = <T as frame_system::Trait>::AccountId,
-        Hash = <T as frame_system::Trait>::Hash,
-        SocialTokenBalance = <T as pallet_social_tokens::Trait>::Balance,
-        SocialTokenId = <T as pallet_social_tokens::Trait>::SocialTokenId,
+        AccountId = <T as frame_system::Config>::AccountId,
+        Hash = <T as frame_system::Config>::Hash,
+        SocialTokenBalance = <T as pallet_social_tokens::Config>::Balance,
+        SocialTokenId = <T as pallet_social_tokens::Config>::SocialTokenId,
     {
         /// New proposal. \[proposal_index\]
         Proposed(ProposalIndex),
@@ -322,7 +302,7 @@ decl_event!(
 );
 
 decl_error! {
-    pub enum Error for Module<T: Trait> {
+    pub enum Error for Module<T: Config> {
         /// Error names should be descriptive.
         NoneValue,
         /// Errors should have helpful documentation associated with them.
@@ -359,7 +339,7 @@ decl_error! {
 }
 
 decl_module! {
-    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+    pub struct Module<T: Config> for enum Call where origin: T::Origin {
         type Error = Error<T>;
 
         fn deposit_event() = default;
@@ -373,7 +353,7 @@ decl_module! {
         /// - DbReads: `ProposalCount`, `origin account`
         /// - DbWrites: `ProposalCount`, `Proposals`, `origin account`
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::propose_spend()]
+        #[weight = <T as Config>::WeightInfo::propose_spend()]
         fn propose_spend(
             origin,
             #[compact] value: BalanceOf<T>,
@@ -404,9 +384,9 @@ decl_module! {
         /// - DbReads: `Proposals`, `rejected proposer account`
         /// - DbWrites: `Proposals`, `rejected proposer account`
         /// # </weight>
-        #[weight = (<T as Trait>::WeightInfo::reject_proposal(), DispatchClass::Operational)]
+        #[weight = (<T as Config>::WeightInfo::reject_proposal(), DispatchClass::Operational)]
         fn reject_proposal(origin, #[compact] proposal_id: ProposalIndex) {
-            <T as Trait>::RejectOrigin::ensure_origin(origin)?;
+            <T as Config>::RejectOrigin::ensure_origin(origin)?;
 
             let proposal = <Proposals<T>>::take(&proposal_id).ok_or(Error::<T>::InvalidIndex)?;
             let value = proposal.bond;
@@ -415,7 +395,7 @@ decl_module! {
                 proposal.social_token_id,
                 value
             ).0;
-            <T as Trait>::OnSlash::on_unbalanced(imbalance);
+            <T as Config>::OnSlash::on_unbalanced(imbalance);
 
             Self::deposit_event(Event::<T>::Rejected(proposal_id, proposal.social_token_id, value));
         }
@@ -430,9 +410,9 @@ decl_module! {
         /// - DbReads: `Proposals`, `Approvals`
         /// - DbWrite: `Approvals`
         /// # </weight>
-        #[weight = (<T as Trait>::WeightInfo::approve_proposal(), DispatchClass::Operational)]
+        #[weight = (<T as Config>::WeightInfo::approve_proposal(), DispatchClass::Operational)]
         fn approve_proposal(origin, #[compact] proposal_id: ProposalIndex) {
-            <T as Trait>::ApproveOrigin::ensure_origin(origin)?;
+            <T as Config>::ApproveOrigin::ensure_origin(origin)?;
 
             ensure!(<Proposals<T>>::contains_key(proposal_id), Error::<T>::InvalidIndex);
             Approvals::append(proposal_id);
@@ -457,20 +437,20 @@ decl_module! {
         /// - DbReads: `Reasons`, `Tips`
         /// - DbWrites: `Reasons`, `Tips`
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::report_awesome(reason.len() as u32)]
+        #[weight = <T as Config>::WeightInfo::report_awesome(reason.len() as u32)]
         fn report_awesome(origin, reason: Vec<u8>, who: T::AccountId, token_id: TokenId<T>) {
             let finder = ensure_signed(origin)?;
 
-            ensure!(reason.len() <= <T as Trait>::MaximumReasonLength::get() as usize, Error::<T>::ReasonTooBig);
+            ensure!(reason.len() <= <T as Config>::MaximumReasonLength::get() as usize, Error::<T>::ReasonTooBig);
             <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
 
-            let reason_hash = <T as frame_system::Trait>::Hashing::hash(&reason[..]);
+            let reason_hash = <T as frame_system::Config>::Hashing::hash(&reason[..]);
             ensure!(!Reasons::<T>::contains_key(&reason_hash), Error::<T>::AlreadyKnown);
-            let hash = <T as frame_system::Trait>::Hashing::hash_of(&(&reason_hash, &who));
+            let hash = <T as frame_system::Config>::Hashing::hash_of(&(&reason_hash, &who));
             ensure!(!Tips::<T>::contains_key(&hash), Error::<T>::AlreadyKnown);
 
-            let deposit = <T as Trait>::TipReportDepositBase::get()
-                + <T as Trait>::DataDepositPerByte::get() * (reason.len() as u32).into();
+            let deposit = <T as Config>::TipReportDepositBase::get()
+                + <T as Config>::DataDepositPerByte::get() * (reason.len() as u32).into();
             <pallet_social_tokens::Module<T>>::reserve(&finder, token_id, deposit)?;
 
             Reasons::<T>::insert(&reason_hash, &reason);
@@ -507,7 +487,7 @@ decl_module! {
         /// - DbReads: `Tips`, `origin account`
         /// - DbWrites: `Reasons`, `Tips`, `origin account`
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::retract_tip()]
+        #[weight = <T as Config>::WeightInfo::retract_tip()]
         fn retract_tip(origin, hash: T::Hash) {
             let who = ensure_signed(origin)?;
             let tip = Tips::<T>::get(&hash).ok_or(Error::<T>::UnknownTip)?;
@@ -543,14 +523,14 @@ decl_module! {
         /// - DbReads: `Tippers`, `Reasons`
         /// - DbWrites: `Reasons`, `Tips`
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::tip_new(reason.len() as u32, <T as Trait>::Tippers::max_len() as u32)]
+        #[weight = <T as Config>::WeightInfo::tip_new(reason.len() as u32, <T as Config>::Tippers::max_len() as u32)]
         fn tip_new(origin, reason: Vec<u8>, who: T::AccountId, #[compact] token_id: TokenId<T>, #[compact] tip_value: BalanceOf<T>) {
             let tipper = ensure_signed(origin)?;
             <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
-            ensure!(<T as Trait>::Tippers::contains(&tipper), BadOrigin);
-            let reason_hash = <T as frame_system::Trait>::Hashing::hash(&reason[..]);
+            ensure!(<T as Config>::Tippers::contains(&tipper), BadOrigin);
+            let reason_hash = <T as frame_system::Config>::Hashing::hash(&reason[..]);
             ensure!(!Reasons::<T>::contains_key(&reason_hash), Error::<T>::AlreadyKnown);
-            let hash = <T as frame_system::Trait>::Hashing::hash_of(&(&reason_hash, &who));
+            let hash = <T as frame_system::Config>::Hashing::hash_of(&(&reason_hash, &who));
 
             Reasons::<T>::insert(&reason_hash, &reason);
             Self::deposit_event(RawEvent::NewTip(hash.clone()));
@@ -593,10 +573,10 @@ decl_module! {
         /// - DbReads: `Tippers`, `Tips`
         /// - DbWrites: `Tips`
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::tip(<T as Trait>::Tippers::max_len() as u32)]
+        #[weight = <T as Config>::WeightInfo::tip(<T as Config>::Tippers::max_len() as u32)]
         fn tip(origin, hash: T::Hash, #[compact] tip_value: BalanceOf<T>) {
             let tipper = ensure_signed(origin)?;
-            ensure!(<T as Trait>::Tippers::contains(&tipper), BadOrigin);
+            ensure!(<T as Config>::Tippers::contains(&tipper), BadOrigin);
 
             let mut tip = Tips::<T>::get(hash).ok_or(Error::<T>::UnknownTip)?;
             if Self::insert_tip_and_check_closing(&mut tip, tipper, tip_value) {
@@ -622,7 +602,7 @@ decl_module! {
         /// - DbReads: `Tips`, `Tippers`, `tip finder`
         /// - DbWrites: `Reasons`, `Tips`, `Tippers`, `tip finder`
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::close_tip(<T as Trait>::Tippers::max_len() as u32)]
+        #[weight = <T as Config>::WeightInfo::close_tip(<T as Config>::Tippers::max_len() as u32)]
         fn close_tip(origin, hash: T::Hash) {
             ensure_signed(origin)?;
 
@@ -647,7 +627,7 @@ decl_module! {
         /// - `fee`: The curator fee.
         /// - `value`: The total payment amount of this bounty, curator fee included.
         /// - `description`: The description of this bounty.
-        #[weight = <T as Trait>::WeightInfo::propose_bounty(description.len() as u32)]
+        #[weight = <T as Config>::WeightInfo::propose_bounty(description.len() as u32)]
         fn propose_bounty(
             origin,
             #[compact] value: BalanceOf<T>,
@@ -669,9 +649,9 @@ decl_module! {
         /// - Limited storage reads.
         /// - One DB change.
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::approve_bounty()]
+        #[weight = <T as Config>::WeightInfo::approve_bounty()]
         fn approve_bounty(origin, #[compact] bounty_id: ProposalIndex) {
-            <T as Trait>::ApproveOrigin::ensure_origin(origin)?;
+            <T as Config>::ApproveOrigin::ensure_origin(origin)?;
 
             Bounties::<T>::try_mutate_exists(bounty_id, |maybe_bounty| -> DispatchResult {
                 let mut bounty = maybe_bounty.as_mut().ok_or(Error::<T>::InvalidIndex)?;
@@ -694,14 +674,14 @@ decl_module! {
         /// - Limited storage reads.
         /// - One DB change.
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::propose_curator()]
+        #[weight = <T as Config>::WeightInfo::propose_curator()]
         fn propose_curator(
             origin,
             #[compact] bounty_id: ProposalIndex,
             curator: <T::Lookup as StaticLookup>::Source,
             #[compact] fee: BalanceOf<T>,
         ) {
-            <T as Trait>::ApproveOrigin::ensure_origin(origin)?;
+            <T as Config>::ApproveOrigin::ensure_origin(origin)?;
 
             let curator = T::Lookup::lookup(curator)?;
             Bounties::<T>::try_mutate_exists(bounty_id, |maybe_bounty| -> DispatchResult {
@@ -740,14 +720,14 @@ decl_module! {
         /// - Limited storage reads.
         /// - One DB change.
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::unassign_curator()]
+        #[weight = <T as Config>::WeightInfo::unassign_curator()]
         fn unassign_curator(
             origin,
             #[compact] bounty_id: ProposalIndex,
         ) {
             let maybe_sender = ensure_signed(origin.clone())
                 .map(Some)
-                .or_else(|_| <T as Trait>::RejectOrigin::ensure_origin(origin).map(|_| None))?;
+                .or_else(|_| <T as Config>::RejectOrigin::ensure_origin(origin).map(|_| None))?;
 
             Bounties::<T>::try_mutate_exists(bounty_id, |maybe_bounty| -> DispatchResult {
                 let mut bounty = maybe_bounty.as_mut().ok_or(Error::<T>::InvalidIndex)?;
@@ -755,7 +735,7 @@ decl_module! {
 
                 let slash_curator = |curator: &T::AccountId, curator_deposit: &mut BalanceOf<T>| {
                     let imbalance = <pallet_social_tokens::Module<T>>::slash_reserved(curator, token_id, *curator_deposit).0;
-                    <T as Trait>::OnSlash::on_unbalanced(imbalance);
+                    <T as Config>::OnSlash::on_unbalanced(imbalance);
                     *curator_deposit = Zero::zero();
                 };
 
@@ -823,7 +803,7 @@ decl_module! {
         /// - Limited storage reads.
         /// - One DB change.
         /// # </weight>
-        #[weight = <T as Trait>::WeightInfo::accept_curator()]
+        #[weight = <T as Config>::WeightInfo::accept_curator()]
         fn accept_curator(origin, #[compact] bounty_id: ProposalIndex) {
             let signer = ensure_signed(origin)?;
 
@@ -834,11 +814,11 @@ decl_module! {
                     BountyStatus::CuratorProposed { ref curator } => {
                         ensure!(signer == *curator, Error::<T>::RequireCurator);
 
-                        let deposit = <T as Trait>::BountyCuratorDeposit::get() * bounty.fee;
+                        let deposit = <T as Config>::BountyCuratorDeposit::get() * bounty.fee;
                         <pallet_social_tokens::Module<T>>::reserve(curator, bounty.social_token_id, deposit)?;
                         bounty.curator_deposit = deposit;
 
-                        let update_due = system::Module::<T>::block_number() + <T as Trait>::BountyUpdatePeriod::get();
+                        let update_due = system::Module::<T>::block_number() + <T as Config>::BountyUpdatePeriod::get();
                         bounty.status = BountyStatus::Active { curator: curator.clone(), update_due };
 
                         Ok(())
@@ -854,7 +834,7 @@ decl_module! {
         ///
         /// - `bounty_id`: Bounty ID to award.
         /// - `beneficiary`: The beneficiary account whom will receive the payout.
-        #[weight = <T as Trait>::WeightInfo::award_bounty()]
+        #[weight = <T as Config>::WeightInfo::award_bounty()]
         fn award_bounty(origin, #[compact] bounty_id: ProposalIndex, beneficiary: <T::Lookup as StaticLookup>::Source) {
             let signer = ensure_signed(origin)?;
             let beneficiary = T::Lookup::lookup(beneficiary)?;
@@ -873,7 +853,7 @@ decl_module! {
                 bounty.status = BountyStatus::PendingPayout {
                     curator: signer,
                     beneficiary: beneficiary.clone(),
-                    unlock_at: system::Module::<T>::block_number() + <T as Trait>::BountyDepositPayoutDelay::get(),
+                    unlock_at: system::Module::<T>::block_number() + <T as Config>::BountyDepositPayoutDelay::get(),
                 };
 
                 Ok(())
@@ -887,7 +867,7 @@ decl_module! {
         /// The dispatch origin for this call must be the beneficiary of this bounty.
         ///
         /// - `bounty_id`: Bounty ID to claim.
-        #[weight = <T as Trait>::WeightInfo::claim_bounty()]
+        #[weight = <T as Config>::WeightInfo::claim_bounty()]
         fn claim_bounty(origin, #[compact] bounty_id: BountyIndex) {
             let _ = ensure_signed(origin)?; // anyone can trigger claim
 
@@ -920,9 +900,9 @@ decl_module! {
         /// Only `T::RejectOrigin` is able to cancel a bounty.
         ///
         /// - `bounty_id`: Bounty ID to cancel.
-        #[weight = <T as Trait>::WeightInfo::close_bounty_proposed().max(<T as Trait>::WeightInfo::close_bounty_active())]
+        #[weight = <T as Config>::WeightInfo::close_bounty_proposed().max(<T as Config>::WeightInfo::close_bounty_active())]
         fn close_bounty(origin, #[compact] bounty_id: BountyIndex) -> DispatchResultWithPostInfo {
-            <T as Trait>::RejectOrigin::ensure_origin(origin)?;
+            <T as Config>::RejectOrigin::ensure_origin(origin)?;
 
             Bounties::<T>::try_mutate_exists(bounty_id, |maybe_bounty| -> DispatchResultWithPostInfo {
                 let bounty = maybe_bounty.as_ref().ok_or(Error::<T>::InvalidIndex)?;
@@ -934,12 +914,12 @@ decl_module! {
                         BountyDescriptions::remove(bounty_id);
                         let value = bounty.bond;
                         let imbalance = <pallet_social_tokens::Module<T>>::slash_reserved(&bounty.proposer, token_id, value).0;
-                        <T as Trait>::OnSlash::on_unbalanced(imbalance);
+                        <T as Config>::OnSlash::on_unbalanced(imbalance);
                         *maybe_bounty = None;
 
                         Self::deposit_event(Event::<T>::BountyRejected(bounty_id, token_id, value));
                         // Return early, nothing else to do.
-                        return Ok(Some(<T as Trait>::WeightInfo::close_bounty_proposed()).into())
+                        return Ok(Some(<T as Config>::WeightInfo::close_bounty_proposed()).into())
                     },
                     BountyStatus::Approved => {
                         // For weight reasons, we don't allow a council to cancel in this phase.
@@ -979,7 +959,7 @@ decl_module! {
                 *maybe_bounty = None;
 
                 Self::deposit_event(Event::<T>::BountyCanceled(bounty_id));
-                Ok(Some(<T as Trait>::WeightInfo::close_bounty_active()).into())
+                Ok(Some(<T as Config>::WeightInfo::close_bounty_active()).into())
             })
         }
 
@@ -989,7 +969,7 @@ decl_module! {
         ///
         /// - `bounty_id`: Bounty ID to extend.
         /// - `remark`: additional information.
-        #[weight = <T as Trait>::WeightInfo::extend_bounty_expiry()]
+        #[weight = <T as Config>::WeightInfo::extend_bounty_expiry()]
         fn extend_bounty_expiry(origin, #[compact] bounty_id: BountyIndex, _remark: Vec<u8>) {
             let signer = ensure_signed(origin)?;
 
@@ -999,7 +979,7 @@ decl_module! {
                 match bounty.status {
                     BountyStatus::Active { ref curator, ref mut update_due } => {
                         ensure!(*curator == signer, Error::<T>::RequireCurator);
-                        *update_due = (system::Module::<T>::block_number() + <T as Trait>::BountyUpdatePeriod::get()).max(*update_due);
+                        *update_due = (system::Module::<T>::block_number() + <T as Config>::BountyUpdatePeriod::get()).max(*update_due);
                     },
                     _ => return Err(Error::<T>::UnexpectedStatus.into()),
                 }
@@ -1019,7 +999,7 @@ decl_module! {
         /// # </weight>
         fn on_initialize(n: T::BlockNumber) -> Weight {
             // Check to see if we should spend some funds!
-            if (n % <T as Trait>::SpendPeriod::get()).is_zero() {
+            if (n % <T as Config>::SpendPeriod::get()).is_zero() {
                 Self::spend_funds()
             } else {
                 0
@@ -1059,7 +1039,7 @@ decl_module! {
     }
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
     // Add public immutables and private mutables.
 
     /// The account ID of the treasury pot.
@@ -1077,7 +1057,7 @@ impl<T: Trait> Module<T> {
 
     /// The needed bond for a proposal whose spend is `value`.
     fn calculate_bond(value: BalanceOf<T>) -> BalanceOf<T> {
-        <T as Trait>::ProposalBondMinimum::get().max(<T as Trait>::ProposalBond::get() * value)
+        <T as Config>::ProposalBondMinimum::get().max(<T as Config>::ProposalBond::get() * value)
     }
 
     /// Given a mutable reference to an `OpenTip`, insert the tip into it and check whether it
@@ -1094,10 +1074,10 @@ impl<T: Trait> Module<T> {
             Err(pos) => tip.tips.insert(pos, (tipper, tip_value)),
         }
         Self::retain_active_tips(&mut tip.tips);
-        let threshold = (<T as Trait>::Tippers::count() + 1) / 2;
+        let threshold = (<T as Config>::Tippers::count() + 1) / 2;
         if tip.tips.len() >= threshold && tip.closes.is_none() {
             tip.closes =
-                Some(system::Module::<T>::block_number() + <T as Trait>::TipCountdown::get());
+                Some(system::Module::<T>::block_number() + <T as Config>::TipCountdown::get());
             true
         } else {
             false
@@ -1106,7 +1086,7 @@ impl<T: Trait> Module<T> {
 
     /// Remove any non-members of `Tippers` from a `tips` vector. `O(T)`.
     fn retain_active_tips(tips: &mut Vec<(T::AccountId, BalanceOf<T>)>) {
-        let members = <T as Trait>::Tippers::sorted_members();
+        let members = <T as Config>::Tippers::sorted_members();
         let mut members_iter = members.iter();
         let mut member = members_iter.next();
         tips.retain(|(ref a, _)| loop {
@@ -1149,7 +1129,7 @@ impl<T: Trait> Module<T> {
         if tip.finders_fee {
             if tip.finder != tip.who {
                 // pay out the finder's fee.
-                let finders_fee = <T as Trait>::TipFindersFee::get() * payout;
+                let finders_fee = <T as Config>::TipFindersFee::get() * payout;
                 payout -= finders_fee;
                 // this should go through given we checked it's at most the free balance, but still
                 // we only make a best-effort.
@@ -1250,7 +1230,7 @@ impl<T: Trait> Module<T> {
             proposals_approvals_len
         });
 
-        total_weight += <T as Trait>::WeightInfo::on_initialize_proposals(proposals_len);
+        total_weight += <T as Config>::WeightInfo::on_initialize_proposals(proposals_len);
 
         let bounties_len = BountyApprovals::mutate(|v| {
             let bounties_approval_len = v.len() as u32;
@@ -1294,7 +1274,7 @@ impl<T: Trait> Module<T> {
             bounties_approval_len
         });
 
-        total_weight += <T as Trait>::WeightInfo::on_initialize_bounties(bounties_len);
+        total_weight += <T as Config>::WeightInfo::on_initialize_bounties(bounties_len);
 
         token_id = min_token_id;
         while token_id <= max_token_id {
@@ -1302,12 +1282,12 @@ impl<T: Trait> Module<T> {
             if !missed_any[id] {
                 // burn some proportion of the remaining budget if we run a surplus.
                 let budget_remaining: BalanceOf<T> = budgets_remaining[id];
-                let burn = (<T as Trait>::Burn::get() * budget_remaining).min(budget_remaining);
+                let burn = (<T as Config>::Burn::get() * budget_remaining).min(budget_remaining);
                 budgets_remaining[id] -= burn;
 
                 let (debit, credit) = <pallet_social_tokens::Module<T>>::pair(token_id, burn);
                 imbalances[id].subsume(debit);
-                <T as Trait>::BurnDestination::on_unbalanced(credit);
+                <T as Config>::BurnDestination::on_unbalanced(credit);
                 Self::deposit_event(RawEvent::Burnt(token_id, burn))
             }
 
@@ -1319,7 +1299,7 @@ impl<T: Trait> Module<T> {
                 &account_id,
                 token_id,
                 imbalances[id].clone(),
-                WithdrawReason::Transfer.into(),
+                WithdrawReasons::TRANSFER,
                 KeepAlive,
             ) {
                 print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");
@@ -1349,19 +1329,19 @@ impl<T: Trait> Module<T> {
         value: BalanceOf<T>,
     ) -> DispatchResult {
         ensure!(
-            description.len() <= <T as Trait>::MaximumReasonLength::get() as usize,
+            description.len() <= <T as Config>::MaximumReasonLength::get() as usize,
             Error::<T>::ReasonTooBig
         );
         ensure!(
-            value >= <T as Trait>::BountyValueMinimum::get(),
+            value >= <T as Config>::BountyValueMinimum::get(),
             Error::<T>::InvalidValue
         );
 
         let index = Self::bounty_count();
 
         // reserve deposit for new bounty
-        let bond = <T as Trait>::BountyDepositBase::get()
-            + <T as Trait>::DataDepositPerByte::get() * (description.len() as u32).into();
+        let bond = <T as Config>::BountyDepositBase::get()
+            + <T as Config>::DataDepositPerByte::get() * (description.len() as u32).into();
         <pallet_social_tokens::Module<T>>::reserve(&proposer, token_id, bond)
             .map_err(|_| Error::<T>::InsufficientProposersBalance)?;
 

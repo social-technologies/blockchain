@@ -42,7 +42,7 @@ fn registration_with_invalid_social_id_should_not_work() {
             pallet_social_tokens::Error::<Test>::InvalidSocialTokenId
         );
         assert_noop!(
-            ValidatorRegistry::register(Origin::signed(1), 13),
+            ValidatorRegistry::register(Origin::signed(1), 100500),
             pallet_social_tokens::Error::<Test>::InvalidSocialTokenId
         );
     });

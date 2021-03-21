@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2018-2020 Parity Technologies (UK) Ltd.
+// Copyright (C) 2018-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -153,7 +153,7 @@ fn test_blocks(genesis_config: &GenesisConfig, executor: &NativeExecutor<Executo
 	block1_extrinsics.extend((0..20).map(|i| {
 		CheckedExtrinsic {
 			signed: Some((alice(), signed_extra(i, 0))),
-			function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 1 * NET)),
+			function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 1 * DOLLARS)),
 		}
 	}));
 	let block1 = construct_block(

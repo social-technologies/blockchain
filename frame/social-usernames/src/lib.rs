@@ -6,12 +6,12 @@ use frame_support::{
     dispatch::{DispatchResult, DispatchResultWithPostInfo},
     ensure,
     traits::{EnsureOrigin, Get},
-    weights::Weight,
 };
 use frame_system::ensure_signed;
 use sp_runtime::{DispatchError, RuntimeDebug};
 use sp_std::prelude::*;
 use sp_std::{fmt::Debug, vec::Vec};
+pub use weights::WeightInfo;
 
 #[cfg(test)]
 mod mock;
@@ -21,17 +21,10 @@ mod tests;
 
 #[cfg(test)]
 mod default_weights;
+pub mod weights;
 
 /// An identifier for a single name registrar/identity verification service.
 pub type RegistrarIndex = u32;
-
-pub trait WeightInfo {
-    fn add_registrar(r: u32) -> Weight;
-    fn register(r: u32) -> Weight;
-    fn unregister() -> Weight;
-    fn provide_judgement(r: u32) -> Weight;
-    fn kill_username() -> Weight;
-}
 
 #[derive(Copy, Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug)]
 pub enum Judgement {
@@ -53,9 +46,9 @@ pub struct Registration<AccountId: Encode + Decode + Clone + Debug + Eq + Partia
     pub account_id: AccountId,
 }
 
-pub trait Trait: frame_system::Trait {
+pub trait Config: frame_system::Config {
     /// The overarching event type.
-    type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+    type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
     /// Maxmimum number of registrars allowed in the system. Needed to bound the complexity
     /// of, e.g., updating judgements.
@@ -78,7 +71,7 @@ pub trait Trait: frame_system::Trait {
 }
 
 decl_storage! {
-    trait Store for Module<T: Trait> as ValidatorRegistry {
+    trait Store for Module<T: Config> as ValidatorRegistry {
         pub RegistrationOf get(fn registration_of): map hasher(twox_64_concat) Vec<u8> => Option<Registration<T::AccountId>>;
         pub Account get(fn account): map hasher(twox_64_concat) T::AccountId => Option<Vec<u8>>;
 
@@ -89,7 +82,7 @@ decl_storage! {
 decl_event!(
     pub enum Event<T>
     where
-        AccountId = <T as frame_system::Trait>::AccountId,
+        AccountId = <T as frame_system::Config>::AccountId,
     {
         UsernameRegistered(AccountId),
         UsernameUnregistered(AccountId),
@@ -101,7 +94,7 @@ decl_event!(
 );
 
 decl_error! {
-    pub enum Error for Module<T: Trait> {
+    pub enum Error for Module<T: Config> {
         TooManyRegistrars,
         EmptyIndex,
         InvalidIndex,
@@ -116,7 +109,7 @@ decl_error! {
 }
 
 decl_module! {
-    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+    pub struct Module<T: Config> for enum Call where origin: T::Origin {
         /// Maxmimum number of registrars allowed in the system. Needed to bound the complexity
         /// of, e.g., updating judgements.
         const MaxRegistrars: u32 = T::MaxRegistrars::get();
@@ -299,7 +292,7 @@ decl_module! {
     }
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
     fn validate_username(username: &[u8]) -> DispatchResult {
         ensure!(username.len() >= T::MinUsernameLength::get() as usize, Error::<T>::UsernameIsVeryShort);
         ensure!(username.len() <= T::MaxUsernameLength::get() as usize, Error::<T>::UsernameIsVeryLong);

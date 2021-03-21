@@ -30,7 +30,7 @@ use sp_npos_elections::{ElectionResult, VoteWeight};
 use std::collections::BTreeMap;
 use sp_runtime::{Perbill, PerThing, traits::Zero};
 use sp_npos_elections::{
-	balance_solution, assignment_ratio_to_staked, build_support_map, to_without_backing, VoteWeight,
+	balance_solution, assignment_ratio_to_staked, to_support_map, to_without_backing, VoteWeight,
 	ExtendedBalance, Assignment, StakedAssignment, IdentifierT, assignment_ratio_to_staked,
 	seq_phragmen,
 };
@@ -65,7 +65,6 @@ mod bench_closure_and_slice {
 	) -> Vec<StakedAssignment<A>>
 	where
 		T: sp_std::ops::Mul<ExtendedBalance, Output = ExtendedBalance>,
-		ExtendedBalance: From<<T as PerThing>::Inner>,
 	{
 		ratio
 			.into_iter()
@@ -149,7 +148,10 @@ fn do_phragmen(
 		if eq_iters > 0 {
 			let staked = assignment_ratio_to_staked(assignments, &stake_of);
 			let winners = to_without_backing(winners);
-			let mut support = build_support_map(winners.as_ref(), staked.as_ref()).0;
+			let mut support = to_support_map(
+				winners.as_ref(),
+				staked.as_ref(),
+			).unwrap();
 
 			balance_solution(
 				staked.into_iter().map(|a| (a.clone(), stake_of(&a.who))).collect(),

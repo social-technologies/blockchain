@@ -116,14 +116,14 @@ pub struct AttributeTransaction<Signature, AccountId> {
     pub identity: AccountId,
 }
 
-pub trait Trait: frame_system::Trait + pallet_timestamp::Trait {
-    type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+pub trait Config: frame_system::Config + pallet_timestamp::Config {
+    type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
     type Public: IdentifyAccount<AccountId = Self::AccountId>;
     type Signature: Verify<Signer = Self::Public> + Member + Decode + Encode;
 }
 
 decl_storage! {
-    trait Store for Module<T: Trait> as DID {
+    trait Store for Module<T: Config> as DID {
         /// Identity delegates stored by type.
         /// Delegates are only valid for a specific period defined as blocks number.
         pub DelegateOf get(fn delegate_of): map hasher(blake2_128_concat) (T::AccountId, Vec<u8>, T::AccountId) => Option<T::BlockNumber>;
@@ -140,7 +140,7 @@ decl_storage! {
 }
 
 decl_module! {
-  pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+  pub struct Module<T: Config> for enum Call where origin: T::Origin {
       type Error = Error<T>;
 
       fn deposit_event() = default;
@@ -311,9 +311,9 @@ decl_module! {
 decl_event!(
   pub enum Event<T>
   where
-  <T as frame_system::Trait>::AccountId,
-  <T as frame_system::Trait>::BlockNumber,
-  <T as Trait>::Signature
+  <T as frame_system::Config>::AccountId,
+  <T as frame_system::Config>::BlockNumber,
+  <T as Config>::Signature
   {
     OwnerChanged(AccountId, AccountId, AccountId, BlockNumber),
     DelegateAdded(AccountId, Vec<u8>, AccountId, Option<BlockNumber>),
@@ -326,7 +326,7 @@ decl_event!(
 );
 
 decl_error! {
-    pub enum Error for Module<T: Trait> {
+    pub enum Error for Module<T: Config> {
         NotOwner,
         InvalidDelegate,
         BadSignature,
@@ -339,7 +339,7 @@ decl_error! {
     }
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
     /// Validates if the AccountId 'actual_owner' owns the identity.
     pub fn is_owner(identity: &T::AccountId, actual_owner: &T::AccountId) -> DispatchResult {
         let owner = Self::identity_owner(identity);
