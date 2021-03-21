@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2019-2020 Parity Technologies (UK) Ltd.
+// Copyright (C) 2019-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -222,7 +222,7 @@ impl Duration {
 }
 
 impl Timestamp {
-	/// Creates new `Timestamp` given unix timestamp in millis.
+	/// Creates new `Timestamp` given unix timestamp in milliseconds.
 	pub fn from_unix_millis(millis: u64) -> Self {
 		Timestamp(millis)
 	}
@@ -242,7 +242,7 @@ impl Timestamp {
 		Duration(self.0.saturating_sub(other.0))
 	}
 
-	/// Return number of millis since UNIX epoch.
+	/// Return number of milliseconds since UNIX epoch.
 	pub fn unix_millis(&self) -> u64 {
 		self.0
 	}
@@ -325,7 +325,7 @@ pub trait Externalities: Send {
 	/// Returns information about the local node's network state.
 	fn network_state(&self) -> Result<OpaqueNetworkState, ()>;
 
-	/// Returns current UNIX timestamp (in milliseconds)
+	/// Returns current UNIX timestamp (in millis)
 	fn timestamp(&mut self) -> Timestamp;
 
 	/// Pause the execution until `deadline` is reached.
@@ -746,6 +746,14 @@ impl TransactionPoolExt {
 	}
 }
 
+/// Change to be applied to the offchain worker db in regards to a key.
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub enum OffchainOverlayedChange {
+	/// Remove the data associated with the key
+	Remove,
+	/// Overwrite the value of an associated key
+	SetValue(Vec<u8>),
+}
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2018-2020 Parity Technologies (UK) Ltd.
+// Copyright (C) 2018-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: GPL-3.0-or-later WITH Classpath-exception-2.0
 
 // This program is free software: you can redistribute it and/or modify
@@ -246,7 +246,9 @@ pub fn testnet_genesis(
 			changes_trie_config: Default::default(),
 		}),
 		pallet_balances: Some(BalancesConfig {
-			balances: endowed_accounts.iter().cloned()
+			balances: endowed_accounts.iter()
+                .filter(|k| initial_authorities.iter().all(|l| k != &&l.0))
+                .cloned()
 				.map(|k| (k, ENDOWMENT))
 				.chain(initial_authorities.iter().map(|x| (x.0.clone(), STASH)))
 				.collect(),

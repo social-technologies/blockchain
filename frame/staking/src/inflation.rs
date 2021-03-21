@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2019-2020 Parity Technologies (UK) Ltd.
+// Copyright (C) 2019-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,17 +28,17 @@ use sp_runtime::{Perbill, traits::AtLeast32BitUnsigned, curve::PiecewiseLinear};
 /// `staker-payout = yearly_inflation(npos_token_staked / total_tokens) * total_tokens / era_per_year`
 /// `maximum-payout = max_yearly_inflation * total_tokens / era_per_year`
 ///
-/// `era_duration` is expressed in MILLINETecond.
+/// `era_duration` is expressed in millisecond.
 pub fn compute_total_payout<N>(
 	yearly_inflation: &PiecewiseLinear<'static>,
 	npos_token_staked: N,
 	total_tokens: N,
 	era_duration: u64
 ) -> (N, N) where N: AtLeast32BitUnsigned + Clone {
-	// millis per year for the Julian year (365.25 days).
-	const MILLINETECONDS_PER_YEAR: u64 = 1000 * 3600 * 24 * 36525 / 100;
+	// Milliseconds per year for the Julian year (365.25 days).
+	const MILLISECONDS_PER_YEAR: u64 = 1000 * 3600 * 24 * 36525 / 100;
 
-	let portion = Perbill::from_rational_approximation(era_duration as u64, MILLINETECONDS_PER_YEAR);
+	let portion = Perbill::from_rational_approximation(era_duration as u64, MILLISECONDS_PER_YEAR);
 	let payout = portion * yearly_inflation.calculate_for_fraction_times_denominator(
 		npos_token_staked,
 		total_tokens.clone(),

@@ -26,10 +26,10 @@ use sp_std::{ops::Div, prelude::*};
 
 type TokenDossierOf = TokenDossier;
 pub type CurrencyOf<T> =
-    <<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
-pub type BalanceOf<T> = <<T as Trait>::FungibleToken as Fungible<
-    <T as pallet_social_tokens::Trait>::SocialTokenId,
-    <T as frame_system::Trait>::AccountId,
+    <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+pub type BalanceOf<T> = <<T as Config>::FungibleToken as Fungible<
+    <T as pallet_social_tokens::Config>::SocialTokenId,
+    <T as frame_system::Config>::AccountId,
 >>::Balance;
 
 #[derive(Encode, Decode)]
@@ -53,10 +53,10 @@ impl<A, B: Zero, C: Zero> Exchange<A, B, C> {
     }
 }
 
-pub trait Trait: frame_system::Trait + pallet_social_tokens::Trait {
+pub trait Config: frame_system::Config + pallet_social_tokens::Config {
     type Currency: Currency<Self::AccountId>;
     type ModuleId: Get<ModuleId>;
-    type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+    type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
     type ExchangeId: Parameter + Member + AtLeast32Bit + Default + Copy;
     type FungibleToken: IssueAndBurn<Self::SocialTokenId, Self::AccountId>;
     /// help to convert native token balance to fungible token balance
@@ -66,10 +66,10 @@ pub trait Trait: frame_system::Trait + pallet_social_tokens::Trait {
 decl_event! {
     pub enum Event<T> where
         CurrencyOf = CurrencyOf<T>,
-        <T as frame_system::Trait>::AccountId,
+        <T as frame_system::Config>::AccountId,
         Balance = BalanceOf<T>,
-        <T as Trait>::ExchangeId,
-        <T as pallet_social_tokens::Trait>::SocialTokenId,
+        <T as Config>::ExchangeId,
+        <T as pallet_social_tokens::Config>::SocialTokenId,
 
     {
         /// A new exchange created. [exchange_id, lp_token_id, trade_token_id]
@@ -82,7 +82,7 @@ decl_event! {
 }
 
 decl_error! {
-    pub enum Error for Module<T: Trait> {
+    pub enum Error for Module<T: Config> {
         TooLate,
         /// exchange already exists
         ExchangeExists,
@@ -100,7 +100,7 @@ decl_error! {
 }
 
 decl_storage! {
-    trait Store for Module<T: Trait> as UniswapExchanges {
+    trait Store for Module<T: Config> as UniswapExchanges {
 
         pub Exchanges get(fn exchanges): map hasher(twox_64_concat) T::ExchangeId => Option<Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>>;
 
@@ -114,7 +114,7 @@ decl_storage! {
 }
 
 decl_module! {
-    pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+    pub struct Module<T: Config> for enum Call where origin: T::Origin {
 
         fn deposit_event() = default;
 
@@ -315,7 +315,7 @@ decl_module! {
     }
 }
 
-impl<T: Trait> Module<T> {
+impl<T: Config> Module<T> {
     /// The account id of the exchanges pot
     fn account_id() -> T::AccountId {
         T::ModuleId::get().into_account()

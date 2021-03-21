@@ -1,4 +1,4 @@
-use crate::{Module, Trait};
+use crate::{Module, Config};
 use frame_support::{impl_outer_origin, parameter_types, weights::Weight};
 use frame_system as system;
 use pallet_timestamp as timestamp;
@@ -18,6 +18,8 @@ impl_outer_origin! {
 // configuration traits of modules we want to use.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
+
+/*
 parameter_types! {
   pub const BlockHashCount: u64 = 250;
   pub const MaximumBlockWeight: Weight = 1024;
@@ -25,7 +27,7 @@ parameter_types! {
   pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
 }
 
-impl system::Trait for Test {
+impl system::Config for Test {
     type BaseCallFilter = ();
     type Origin = Origin;
     type Call = ();
@@ -52,15 +54,51 @@ impl system::Trait for Test {
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
 }
+*/
 
-impl timestamp::Trait for Test {
+parameter_types! {
+    pub const BlockHashCount: u64 = 250;
+    pub BlockWeights: frame_system::limits::BlockWeights =
+        frame_system::limits::BlockWeights::simple_max(1024);
+}
+impl frame_system::Config for Test {
+    type BaseCallFilter = ();
+    type BlockWeights = ();
+    type BlockLength = ();
+    type DbWeight = ();
+    type Origin = Origin;
+    type Index = u64;
+    type BlockNumber = u64;
+//    type Call = Call;
+    type Call = ();
+    type Hash = H256;
+    type Hashing = BlakeTwo256;
+//    type AccountId = u128; // u64 is not enough to hold bytes used to generate bounty account
+    type AccountId = sr25519::Public;
+    type Lookup = IdentityLookup<Self::AccountId>;
+    type Header = Header;
+//    type Event = Event;
+    type Event = ();
+    type BlockHashCount = BlockHashCount;
+    type Version = ();
+//    type PalletInfo = PalletInfo;
+    type PalletInfo = ();
+//    type AccountData = pallet_balances::AccountData<u64>;
+    type AccountData = ();
+    type OnNewAccount = ();
+    type OnKilledAccount = ();
+    type SystemWeightInfo = ();
+    type SS58Prefix = ();
+}
+
+impl timestamp::Config for Test {
     type Moment = u64;
     type OnTimestampSet = ();
     type MinimumPeriod = ();
     type WeightInfo = ();
 }
 
-impl Trait for Test {
+impl Config for Test {
     type Event = ();
     type Public = sr25519::Public;
     type Signature = sr25519::Signature;
