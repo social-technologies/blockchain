@@ -27,6 +27,7 @@ fn mint_burn_tokens() {
             }
         );
         assert_eq!(Erc721::token_count(), 1.into());
+        assert_eq!(Erc721::max_token_id(), 1.into());
         assert_noop!(
             Erc721::mint(Origin::signed(1), USER_A, id_a, metadata_a), // Erc721::mint(Origin::root(), USER_A, id_a, metadata_a),
             Error::<Test>::TokenAlreadyExists
@@ -46,6 +47,7 @@ fn mint_burn_tokens() {
             }
         );
         assert_eq!(Erc721::token_count(), 2.into());
+        assert_eq!(Erc721::max_token_id(), 2.into());
         assert_noop!(
             Erc721::mint(Origin::signed(1), USER_A, id_b, metadata_b), // Erc721::mint(Origin::root(), USER_A, id_b, metadata_b),
             Error::<Test>::TokenAlreadyExists
@@ -53,11 +55,13 @@ fn mint_burn_tokens() {
 
         assert_ok!(Erc721::burn(Origin::signed(1), id_a)); // assert_ok!(Erc721::burn(Origin::root(), id_a));
         assert_eq!(Erc721::token_count(), 1.into());
+        assert_eq!(Erc721::max_token_id(), 2.into());
         assert!(!<Tokens>::contains_key(&id_a));
         assert!(!<TokenOwner<Test>>::contains_key(&id_a));
 
         assert_ok!(Erc721::burn(Origin::signed(1), id_b)); // assert_ok!(Erc721::burn(Origin::root(), id_b));
         assert_eq!(Erc721::token_count(), 0.into());
+        assert_eq!(Erc721::max_token_id(), 2.into());
         assert!(!<Tokens>::contains_key(&id_b));
         assert!(!<TokenOwner<Test>>::contains_key(&id_b));
     })
