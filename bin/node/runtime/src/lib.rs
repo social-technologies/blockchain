@@ -1050,11 +1050,6 @@ impl pallet_social_tokens::Config for Runtime {
 	type ExistentialDeposit = ExistentialDepositOfSocialTokens;
 	type OnNewAccount = ();
 	type MaxSocialTokensSupply = MaxSocialTokensSupply;
-	type SocialCreatorOrigin = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureMembers<_4, AccountId, CouncilCollective>
-	>;
 }
 
 impl pallet_social_treasury::Config for Runtime {

@@ -44,9 +44,6 @@ pub trait Config: frame_system::Config {
     type OnNewAccount: OnNewAccount<(Self::SocialTokenId, Self::AccountId)>;
 
     type MaxSocialTokensSupply: Get<u128>;
-
-    /// Origin from which can create a new social.
-    type SocialCreatorOrigin: EnsureOrigin<Self::Origin>;
 }
 
 /// Simplified reasons for withdrawing balance.
@@ -202,7 +199,7 @@ decl_event!(
         Unreserved(AccountId, SocialTokenId, SocialTokenBalance),
         /// A new \[account\] was created.
         NewAccount(AccountId, SocialTokenId),
-        SocialCreated(SocialTokenId),
+        TokenCreated(SocialTokenId),
         /// Some assets were issued. [token_id, owner, total_supply]
         Issued(SocialTokenId, AccountId, SocialTokenBalance),
     }
@@ -258,10 +255,9 @@ decl_module! {
         }
 
         #[weight = 1_000_000_000_000]
-        pub fn create_social(origin) {
-            T::SocialCreatorOrigin::ensure_origin(origin)?;
+        pub fn create_token(origin) {
             let new_social_id = Self::create_new_social_token()?;
-            Self::deposit_event(RawEvent::SocialCreated(new_social_id));
+            Self::deposit_event(RawEvent::TokenCreated(new_social_id));
         }
     }
 }
