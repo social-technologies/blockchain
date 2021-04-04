@@ -1,14 +1,13 @@
-# Social 🌎 Network v3 &middot; [![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
+[![GitHub license](https://img.shields.io/badge/license-GPL3%2FApache2-blue)](LICENSE) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.adoc)
+![Social.Network](/docs/media/logo.png)
 
-Social 🌎 Network v3 is a next-generation governance, economic, and social system for humanity built on Polkadot Substrate. To learn more [read the whitepaper](https://bit.ly/2Jheagq) 🚀
-
-![Substrate Builders Program](/docs/SBP_M2.png)
+Social.Network v3 is a next-generation governance, economic, and social system for humanity built on Polkadot Substrate. To learn more about how the decentralized system works [read the whitepaper](https://bit.ly/2Jheagq) 🚀
 
 ## Earn NET by running a Node
 
-Social 🌎 Network v3 is powered by a decentralized ledger enabling anyone in the world to participate by running the node software in this repository. This removes the need for a central party or middleman to extract rent or censor the network for personal gain, control, or power. The blockchain is capable of securing and maintaining a single source of truth, globally, with 6 second finality using a byzantine fault tolerant, nominated Proof-of-Stake consensus algorithm.
+Social.Network is capable of providing a single source of truth, globally, with 6 second finality using a nominated Proof-of-Stake blockchain. Anyone can participate and join the network of node operators who make up a decentralized network eliminating the possibility of a central corporation controlling our global social network for profit, censorship, or control.
 
-Node operators are incentivized with NET tokens for keeping the software running, and earn greater rewards the more reliable their nodes are over time. In addition to staking and transaction fees, Node operators can choose to support Societies by pinning their data on IPFS and earn Social Tokens for doing so.
+Social.Network node operators are incentivized with NET tokens for keeping the software running, and earn greater rewards the more reliable their nodes are over time. They can charge fees for staking rewards (NET), earn NET transaction fees, and additionally upgrade their nodes to Guardians to earn Social Tokens of their choosing by pinning their content to IPFS.
 
 ## Running a NET Node
 
@@ -52,9 +51,10 @@ Please see [this guide](https://substrate.dev/docs/en/knowledgebase/getting-star
 
 ## Setup your Rust Environment
 
-Social 🌎 Network v3 software is built in rust, so node operators must setup their tooling as follows:
+Social.Network v3 software is built in rust, so node operators must setup their tooling as follows:
 
 Install rust with the following:
+TODO: needs code cleanup to build latest
 ```
 # Install
 curl https://sh.rustup.rs -sSf | sh
@@ -67,9 +67,9 @@ rustup default nightly-2021-01-25
 rustup target add wasm32-unknown-unknown --toolchain nightly-2021-01-25
 ```
 
-## Download Social 🌎 Network v3
+## Download Social.Network
 
-To get a copy of Social 🌎 Network v3 software on your machine:
+To get a copy of Social.Network software on your machine:
 
 ```
 git clone https://github.com/social-network/v3.git
@@ -84,7 +84,9 @@ WASM_BUILD_TOOLCHAIN=nightly-2021-01-25 cargo build --release
 
 Note if you are doing other blockchain development work, you will need to update your toolchain to match our version for the compilation to work. Feel free to join the #support circle in the [Social Technologies Society](https://social.network/join/tech) if you need help getting setup.
 
-## Help Build Social 🌎 Network v3
+## Help Build Social.Network v3
+
+![Substrate Builders Program](/docs/media/builders.png)
 
 As a decentralized project, we welcome all contributions that help us reach our mission faster, but ask that you follow our values. See our [welcome blog](https://blog.social.network/welcome-to-social) for more details.
 
