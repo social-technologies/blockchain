@@ -1,12 +1,12 @@
 [package]
-name = "pallet-society"
+name = "pallet-social-network-dao"
 version = "3.0.0"
-authors = ["Parity Technologies <admin@parity.io>"]
-edition = "2018"
+authors = ["Social Technologies <sangoku@social.network>"]
+edition = "2021"
 license = "Apache-2.0"
-homepage = "https://substrate.dev"
-repository = "https://github.com/paritytech/substrate/"
-description = "FRAME society pallet"
+homepage = "https://social.network"
+repository = "https://github.com/social-network/v3/"
+description = "FRAME Social Network DAO pallet"
 readme = "README.md"
 
 [package.metadata.docs.rs]
@@ -24,7 +24,6 @@ rand_chacha = { version = "0.2", default-features = false }
 [dev-dependencies]
 sp-core = { version = "3.0.0", path = "../../primitives/core" }
 sp-io ={ version = "3.0.0", path = "../../primitives/io" }
-frame-support-test = { version = "3.0.0", path = "../support/test" }
 pallet-balances = { version = "3.0.0", path = "../balances" }
 
 [features]
@@ -42,4 +41,3 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
 ]
-try-runtime = ["frame-support/try-runtime"]

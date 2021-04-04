@@ -22,9 +22,8 @@ use crate as pallet_society;
 
 use frame_support::{
 	parameter_types, ord_parameter_types,
-	traits::{OnInitialize, OnFinalize},
+	traits::{OnInitialize, OnFinalize, TestRandomness},
 };
-use frame_support_test::TestRandomness;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -41,9 +40,9 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Society: pallet_society::{Pallet, Call, Storage, Event<T>, Config<T>},
+		System: frame_system::{Module, Call, Config, Storage, Event<T>},
+		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
+		Society: pallet_society::{Module, Call, Storage, Event<T>, Config<T>},
 	}
 );
 
@@ -57,7 +56,6 @@ parameter_types! {
 	pub const ChallengePeriod: u64 = 8;
 	pub const BlockHashCount: u64 = 250;
 	pub const ExistentialDeposit: u64 = 1;
-	pub const MaxCandidateIntake: u32 = 10;
 	pub const SocietyModuleId: ModuleId = ModuleId(*b"py/socie");
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(1024);
@@ -91,7 +89,6 @@ impl frame_system::Config for Test {
 	type AccountData = pallet_balances::AccountData<u64>;
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
-	type OnSetCode = ();
 }
 
 impl pallet_balances::Config for Test {
@@ -106,8 +103,8 @@ impl pallet_balances::Config for Test {
 
 impl Config for Test {
 	type Event = Event;
-	type Currency = pallet_balances::Pallet<Self>;
-	type Randomness = TestRandomness<Self>;
+	type Currency = pallet_balances::Module<Self>;
+	type Randomness = TestRandomness;
 	type CandidateDeposit = CandidateDeposit;
 	type WrongSideDeduction = WrongSideDeduction;
 	type MaxStrikes = MaxStrikes;
@@ -118,7 +115,6 @@ impl Config for Test {
 	type FounderSetOrigin = EnsureSignedBy<FounderSetAccount, u128>;
 	type SuspensionJudgementOrigin = EnsureSignedBy<SuspensionJudgementSetAccount, u128>;
 	type ChallengePeriod = ChallengePeriod;
-	type MaxCandidateIntake = MaxCandidateIntake;
 	type ModuleId = SocietyModuleId;
 }
 

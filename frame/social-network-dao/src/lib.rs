@@ -17,8 +17,8 @@
 
 //! # Society Module
 //!
-//! - [`Config`]
-//! - [`Call`]
+//! - [`society::Config`](./trait.Config.html)
+//! - [`Call`](./enum.Call.html)
 //!
 //! ## Overview
 //!
@@ -272,7 +272,7 @@ type BalanceOf<T, I> = <<T as Config<I>>::Currency as Currency<<T as system::Con
 type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 /// The module's configuration trait.
-pub trait Config<I = DefaultInstance>: system::Config {
+pub trait Config<I=DefaultInstance>: system::Config {
 	/// The overarching event type.
 	type Event: From<Event<Self, I>> + Into<<Self as system::Config>::Event>;
 
@@ -283,7 +283,7 @@ pub trait Config<I = DefaultInstance>: system::Config {
 	type Currency: ReservableCurrency<Self::AccountId>;
 
 	/// Something that provides randomness in the runtime.
-	type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
+	type Randomness: Randomness<Self::Hash>;
 
 	/// The minimum amount of a deposit required for a bid to be made.
 	type CandidateDeposit: Get<BalanceOf<Self, I>>;
@@ -316,9 +316,6 @@ pub trait Config<I = DefaultInstance>: system::Config {
 
 	/// The number of blocks between membership challenges.
 	type ChallengePeriod: Get<Self::BlockNumber>;
-
-	/// The maximum number of candidates that we accept per round.
-	type MaxCandidateIntake: Get<u32>;
 }
 
 /// A vote by a member on a candidate application.
@@ -500,9 +497,6 @@ decl_module! {
 		/// The societies's module id
 		const ModuleId: ModuleId = T::ModuleId::get();
 
-		/// Maximum candidate intake per round.
-		const MaxCandidateIntake: u32 = T::MaxCandidateIntake::get();
-
 		// Used for handling module events.
 		fn deposit_event() = default;
 
@@ -590,8 +584,7 @@ decl_module! {
 					// no reason that either should fail.
 					match b.remove(pos).kind {
 						BidKind::Deposit(deposit) => {
-							let err_amount = T::Currency::unreserve(&who, deposit);
-							debug_assert!(err_amount.is_zero());
+							let _ = T::Currency::unreserve(&who, deposit);
 						}
 						BidKind::Vouch(voucher, _) => {
 							<Vouching<T, I>>::remove(&voucher);
@@ -800,7 +793,7 @@ decl_module! {
 
 			let mut payouts = <Payouts<T, I>>::get(&who);
 			if let Some((when, amount)) = payouts.first() {
-				if when <= &<system::Pallet<T>>::block_number() {
+				if when <= &<system::Module<T>>::block_number() {
 					T::Currency::transfer(&Self::payouts(), &who, *amount, AllowDeath)?;
 					payouts.remove(0);
 					if payouts.is_empty() {
@@ -988,7 +981,7 @@ decl_module! {
 						// Reduce next pot by payout
 						<Pot<T, I>>::put(pot - value);
 						// Add payout for new candidate
-						let maturity = <system::Pallet<T>>::block_number()
+						let maturity = <system::Module<T>>::block_number()
 							+ Self::lock_duration(Self::members().len() as u32);
 						Self::pay_accepted_candidate(&who, value, kind, maturity);
 					}
@@ -1242,8 +1235,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			let Bid { who: popped, kind, .. } = bids.pop().expect("b.len() > 1000; qed");
 			match kind {
 				BidKind::Deposit(deposit) => {
-					let err_amount = T::Currency::unreserve(&popped, deposit);
-					debug_assert!(err_amount.is_zero());
+					let _ = T::Currency::unreserve(&popped, deposit);
 				}
 				BidKind::Vouch(voucher, _) => {
 					<Vouching<T, I>>::remove(&voucher);
@@ -1317,9 +1309,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		let mut pot = <Pot<T, I>>::get();
 
 		// we'll need a random seed here.
-		// TODO: deal with randomness freshness
-		// https://github.com/paritytech/substrate/issues/8312
-		let (seed, _) = T::Randomness::random(phrase);
+		let seed = T::Randomness::random(phrase);
 		// seed needs to be guaranteed to be 32 bytes.
 		let seed = <[u8; 32]>::decode(&mut TrailingZeroInput::new(seed.as_ref()))
 			.expect("input is padded with zeroes; qed");
@@ -1332,7 +1322,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			// critical issues or side-effects. This is auto-correcting as members fall out of society.
 			members.reserve(candidates.len());
 
-			let maturity = <system::Pallet<T>>::block_number()
+			let maturity = <system::Module<T>>::block_number()
 				+ Self::lock_duration(members.len() as u32);
 
 			let mut rewardees = Vec::new();
@@ -1410,8 +1400,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					Self::bump_payout(winner, maturity, total_slash);
 				} else {
 					// Move the slashed amount back from payouts account to local treasury.
-					let res = T::Currency::transfer(&Self::payouts(), &Self::account_id(), total_slash, AllowDeath);
-					debug_assert!(res.is_ok());
+					let _ = T::Currency::transfer(&Self::payouts(), &Self::account_id(), total_slash, AllowDeath);
 				}
 			}
 
@@ -1422,8 +1411,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 				// this should never fail since we ensure we can afford the payouts in a previous
 				// block, but there's not much we can do to recover if it fails anyway.
-				let res = T::Currency::transfer(&Self::account_id(), &Self::payouts(), total_payouts, AllowDeath);
-				debug_assert!(res.is_ok());
+				let _ = T::Currency::transfer(&Self::account_id(), &Self::payouts(), total_payouts, AllowDeath);
 			}
 
 			// if at least one candidate was accepted...
@@ -1524,8 +1512,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			BidKind::Deposit(deposit) => {
 				// In the case that a normal deposit bid is accepted we unreserve
 				// the deposit.
-				let err_amount = T::Currency::unreserve(candidate, deposit);
-				debug_assert!(err_amount.is_zero());
+				let _ = T::Currency::unreserve(candidate, deposit);
 				value
 			}
 			BidKind::Vouch(voucher, tip) => {
@@ -1578,9 +1565,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 				// Start a new defender rotation
 				let phrase = b"society_challenge";
 				// we'll need a random seed here.
-				// TODO: deal with randomness freshness
-				// https://github.com/paritytech/substrate/issues/8312
-				let (seed, _) = T::Randomness::random(phrase);
+				let seed = T::Randomness::random(phrase);
 				// seed needs to be guaranteed to be 32 bytes.
 				let seed = <[u8; 32]>::decode(&mut TrailingZeroInput::new(seed.as_ref()))
 					.expect("input is padded with zeroes; qed");
@@ -1626,11 +1611,11 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	/// May be empty.
 	pub fn take_selected(
 		members_len: usize,
-		pot: BalanceOf<T, I>,
+		pot: BalanceOf<T, I>
 	) -> Vec<Bid<T::AccountId, BalanceOf<T, I>>> {
 		let max_members = MaxMembers::<I>::get() as usize;
-		let mut max_selections: usize =
-			(T::MaxCandidateIntake::get() as usize).min(max_members.saturating_sub(members_len));
+		// No more than 10 will be returned.
+		let mut max_selections: usize = 10.min(max_members.saturating_sub(members_len));
 
 		if max_selections > 0 {
 			// Get the number of left-most bidders whose bids add up to less than `pot`.
