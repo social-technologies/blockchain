@@ -15,21 +15,21 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
-frame-support = { version = "3.0.0", default-features = false, path = "../support" }
-frame-system = { version = "3.0.0", default-features = false, path = "../system" }
-pallet-timestamp = { version = "3.0.0", default-features = false, path = "../timestamp" }
-pallet-balances = { version = "3.0.0", default-features = false, path = "../balances" }
-sp-core = { version = "3.0.0", default-features = false, path = "../../primitives/core" }
-sp-runtime = { version = "3.0.0", default-features = false, path = "../../primitives/runtime" }
-sp-std = { version = "3.0.0", default-features = false, path = "../../primitives/std" }
-sp-io = { version = "3.0.0", default-features = false, path = "../../primitives/io" }
-primitive-types = { version = "0.9.0", default-features = false, features = ["rlp", "byteorder"] }
+frame-support = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+frame-system = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-timestamp = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+pallet-balances = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-core = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-runtime = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-std = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
+sp-io = { version = "3.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "frontier" }
 fp-evm = { version = "1.0.0", default-features = false, path = "../../primitives/evm" }
-rlp = { version = "0.4", default-features = false }
-evm = { version = "0.24", default-features = false }
+primitive-types = { version = "0.9.0", default-features = false, features = ["rlp", "byteorder"] }
+rlp = { version = "0.5", default-features = false }
+evm = { version = "0.25.0", default-features = false, features = ["with-codec"] }
+evm-runtime = { version = "0.25.0", default-features = false }
+evm-gasometer = { version = "0.25.0", default-features = false }
 sha3 = { version = "0.8", default-features = false }
-impl-trait-for-tuples = "0.1"
-ripemd160 = { version = "0.9", default-features = false }
 log = { version = "0.4", default-features = false }
 
 [features]
@@ -44,10 +44,14 @@ std = [
 	"pallet-balances/std",
 	"sp-io/std",
 	"sp-std/std",
+	"fp-evm/std",
 	"sha3/std",
 	"rlp/std",
 	"primitive-types/std",
 	"evm/std",
+	"evm/with-serde",
+	"evm-runtime/std",
+	"evm-gasometer/std",
 	"pallet-timestamp/std",
-	"ripemd160/std",
+	"log/std",
 ]

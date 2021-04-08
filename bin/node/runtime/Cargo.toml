@@ -157,7 +157,6 @@ std = [
 	"sp-version/std",
 	"pallet-recovery/std",
 	"pallet-vesting/std",
-	"log/std",
 	"frame-try-runtime/std",
 	"sp-npos-elections/std",
 	"pallet-society/std",

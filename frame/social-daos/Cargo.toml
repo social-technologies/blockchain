@@ -28,10 +28,12 @@ pallet-treasury = { default-features = false, version = '3.0.0', path = '../trea
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
 sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
+pallet-social-guardians = { default-features = false, version = '0.1.0', path = '../social-guardians' }
 
 [dev-dependencies]
 pallet-balances = { default-features = false, version = '3.0.0', path = '../balances' }
 pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
+
 pallet-offences = { default-features = false, version = '3.0.0', path = '../offences' }
 pallet-timestamp = { default-features = false, version = '3.0.0', path = '../timestamp' }
 pallet-treasury = { default-features = false, version = '3.0.0', path = '../treasury' }
@@ -52,4 +54,5 @@ std = [
     'frame-system/std',
     'pallet-treasury/std',
     'pallet-staking/std',
+	'pallet-social-guardians/std',
 ]

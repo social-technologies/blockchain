@@ -23,7 +23,7 @@ use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use node_runtime::{
 	GenesisConfig, BalancesConfig, SessionConfig, StakingConfig, SystemConfig,
 	GrandpaConfig, IndicesConfig, ContractsConfig, wasm_binary_unwrap,
-	AccountId, StakerStatus, BabeConfig, BABE_GENESIS_EPOCH_CONFIG,
+	AccountId, StakerStatus, BabeConfig, BABE_GENESIS_EPOCH_CONFIG, SocietyConfig
 };
 use node_runtime::constants::currency::*;
 use sp_core::ChangesTrieConfiguration;
@@ -116,6 +116,11 @@ pub fn config_endowed(
 		pallet_elections_phragmen: Default::default(),
 		pallet_sudo: Default::default(),
 		pallet_treasury: Default::default(),
+		pallet_society: SocietyConfig {
+			members: vec![alice(), bob()],
+			pot: 0,
+			max_members: 999,
+		},
 		pallet_vesting: Default::default(),
 		pallet_gilt: Default::default(),
 	}

@@ -180,7 +180,7 @@ impl<OuterOrigin> EnsureAddressOrigin<OuterOrigin> for EnsureAddressTruncated wh
 	) -> Result<AccountId32, OuterOrigin> {
 		origin.into().and_then(|o| match o {
 			RawOrigin::Signed(who)
-			if AsRef::<[u8; 32]>::as_ref(&who)[0..20] == address[0..20] => Ok(who),
+				if AsRef::<[u8; 32]>::as_ref(&who)[0..20] == address[0..20] => Ok(who),
 			r => Err(OuterOrigin::from(r))
 		})
 	}
@@ -595,18 +595,18 @@ pub trait OnChargeEVMTransaction<T: Config> {
 pub struct EVMCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>);
 
 impl<T, C, OU> OnChargeEVMTransaction<T> for EVMCurrencyAdapter<C, OU>
-	where
-		T: Config,
-		C: Currency<<T as frame_system::Config>::AccountId>,
-		C::PositiveImbalance: Imbalance<
-			<C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-			Opposite = C::NegativeImbalance,
-		>,
-		C::NegativeImbalance: Imbalance<
-			<C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-			Opposite = C::PositiveImbalance,
-		>,
-		OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
+where
+	T: Config,
+	C: Currency<<T as frame_system::Config>::AccountId>,
+	C::PositiveImbalance: Imbalance<
+		<C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::NegativeImbalance,
+	>,
+	C::NegativeImbalance: Imbalance<
+		<C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
+		Opposite = C::PositiveImbalance,
+	>,
+	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
 {
 	// Kept type as Option to satisfy bound of Default
 	type LiquidityInfo = Option<NegativeImbalanceOf<C, T>>;
@@ -619,7 +619,7 @@ impl<T, C, OU> OnChargeEVMTransaction<T> for EVMCurrencyAdapter<C, OU>
 			WithdrawReasons::FEE,
 			ExistenceRequirement::AllowDeath,
 		)
-			.map_err(|_| Error::<T>::BalanceLow)?;
+		.map_err(|_| Error::<T>::BalanceLow)?;
 		Ok(Some(imbalance))
 	}
 
@@ -643,7 +643,6 @@ impl<T, C, OU> OnChargeEVMTransaction<T> for EVMCurrencyAdapter<C, OU>
 			// merge the imbalance caused by paying the fees and refunding parts of it again.
 			let adjusted_paid = paid
 				.offset(refund_imbalance)
-				.same()
 				.map_err(|_| Error::<T>::BalanceLow)?;
 			OU::on_unbalanced(adjusted_paid);
 		}
@@ -654,10 +653,10 @@ impl<T, C, OU> OnChargeEVMTransaction<T> for EVMCurrencyAdapter<C, OU>
 /// Implementation for () does not specify what to do with imbalance
 impl<T> OnChargeEVMTransaction<T> for ()
 	where
-		T: Config,
-		<T::Currency as Currency<<T as frame_system::Config>::AccountId>>::PositiveImbalance:
+	T: Config,
+	<T::Currency as Currency<<T as frame_system::Config>::AccountId>>::PositiveImbalance:
 		Imbalance<<T::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance, Opposite = <T::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance>,
-		<T::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance:
+	<T::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance:
 		Imbalance<<T::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance, Opposite = <T::Currency as Currency<<T as frame_system::Config>::AccountId>>::PositiveImbalance>, {
 	// Kept type as Option to satisfy bound of Default
 	type LiquidityInfo = Option<NegativeImbalanceOf<T::Currency, T>>;
