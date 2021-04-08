@@ -1,7 +1,7 @@
 [package]
 authors = ["Social Technologies <developers@social.network>"]
 description = 'FRAME pallet to upgrade validators into guardians.'
-edition = '2021'
+edition = '2018'
 homepage = 'https://social.network'
 license = 'Apache-2.0'
 name = 'pallet-social-guardians'

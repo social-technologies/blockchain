@@ -2,7 +2,7 @@
 name = 'pallet-social-bridge'
 version = '0.1.0'
 authors = ['developers@social.network']
-edition = '2021'
+edition = '2018'
 
 [dependencies]
 # third-party dependencies

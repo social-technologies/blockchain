@@ -243,7 +243,7 @@ pub trait Ext: sealing::Sealed {
 	fn tombstone_deposit(&self) -> BalanceOf<Self::T>;
 
 	/// Returns a random number for the current block with the given subject.
-	fn random(&self, subject: &[u8]) -> (SeedOf<Self::T>, BlockNumberOf<Self::T>);
+	fn random(&self, subject: &[u8]) -> SeedOf<Self::T>;
 
 	/// Deposit an event with the given topics.
 	///
@@ -845,7 +845,7 @@ where
 		self.value_transferred
 	}
 
-	fn random(&self, subject: &[u8]) -> (SeedOf<T>, BlockNumberOf<T>) {
+	fn random(&self, subject: &[u8]) -> SeedOf<T> {
 		T::Randomness::random(subject)
 	}
 

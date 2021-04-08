@@ -1133,7 +1133,7 @@ define_env!(Env, <E: Ext>,
 		}
 		let subject_buf = ctx.read_sandbox_memory(subject_ptr, subject_len)?;
 		Ok(ctx.write_sandbox_output(
-			out_ptr, out_len_ptr, &ctx.ext.random(&subject_buf).0.encode(), false, already_charged
+			out_ptr, out_len_ptr, &ctx.ext.random(&subject_buf).encode(), false, already_charged
 		)?)
 	},
 

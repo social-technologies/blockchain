@@ -78,6 +78,7 @@ pallet-session-benchmarking = { version = "3.0.0", path = "../../../frame/sessio
 pallet-staking = { version = "3.0.0", default-features = false, path = "../../../frame/staking" }
 pallet-staking-reward-curve = { version = "3.0.0", default-features = false, path = "../../../frame/staking/reward-curve" }
 pallet-scheduler = { version = "3.0.0", default-features = false, path = "../../../frame/scheduler" }
+pallet-society = { version = "3.0.0", default-features = false, path = "../../../frame/society" }
 pallet-sudo = { version = "3.0.0", default-features = false, path = "../../../frame/sudo" }
 pallet-timestamp = { version = "3.0.0", default-features = false, path = "../../../frame/timestamp" }
 pallet-tips = { version = "3.0.0", default-features = false, path = "../../../frame/tips" }
@@ -159,6 +160,7 @@ std = [
 	"log/std",
 	"frame-try-runtime/std",
 	"sp-npos-elections/std",
+	"pallet-society/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",
@@ -184,6 +186,7 @@ runtime-benchmarks = [
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"pallet-scheduler/runtime-benchmarks",
+	"pallet-society/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-tips/runtime-benchmarks",
@@ -233,4 +236,5 @@ try-runtime = [
 	"pallet-recovery/try-runtime",
 	"pallet-vesting/try-runtime",
 	"pallet-gilt/try-runtime",
+	"pallet-society/try-runtime",
 ]
