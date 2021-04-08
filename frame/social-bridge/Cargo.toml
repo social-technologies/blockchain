@@ -12,7 +12,7 @@ serde = { version = '1.0.114', optional = true }
 chainbridge = { version = '0.0.2', default-features = false, path = '../chainbridge' }
 frame-support = { version = '3.0.0', default-features = false, path = '../support' }
 frame-system = { version = '3.0.0', default-features = false, path = '../system' }
-pallet-social-nft = { version = '0.0.1', default-features = false, path = '../social-nft' }
+pallet-social-nft = { version = '0.0.1', default-features = false, path = '../social-nfts' }
 pallet-social-tokens = { version = '0.1.0', default-features = false, path = '../social-tokens' }
 sp-std = { version = '3.0.0', default-features = false, path = '../../primitives/std' }
 sp-runtime = { version = '3.0.0', default-features = false, path = '../../primitives/runtime' }

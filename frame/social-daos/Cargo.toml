@@ -26,7 +26,6 @@ frame-system = { default-features = false, version = '3.0.0', path = '../system'
 pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
 pallet-treasury = { default-features = false, version = '3.0.0', path = '../treasury' }
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
-pallet-social-validators = { default-features = false, version = '0.1.0', path = '../social-validators' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
 sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
 
@@ -39,7 +38,6 @@ pallet-treasury = { default-features = false, version = '3.0.0', path = '../trea
 pallet-session = { default-features = false, version = '3.0.0', path = '../session' }
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
 pallet-staking-reward-curve = { version = '3.0.0',  path = "../staking/reward-curve" }
-pallet-social-validators = { default-features = false, version = '0.1.0', path = '../social-validators' }
 sp-core = { default-features = false, version = '3.0.0', path = '../../primitives/core' }
 sp-io = { default-features = false, version = '3.0.0', path = '../../primitives/io' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }

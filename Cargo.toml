@@ -113,7 +113,6 @@ members = [
 	"frame/social-network-dao",
 	"frame/social-network-db",
 	"frame/social-nfts",
-	"frame/social-recovery",
 	"frame/social-tokens",
 	"frame/staking",
 	"frame/staking/reward-curve",

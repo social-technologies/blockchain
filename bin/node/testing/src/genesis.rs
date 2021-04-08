@@ -22,7 +22,7 @@ use crate::keyring::*;
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use node_runtime::{
 	GenesisConfig, BalancesConfig, SessionConfig, StakingConfig, SystemConfig,
-	GrandpaConfig, IndicesConfig, ContractsConfig, SocietyConfig, wasm_binary_unwrap,
+	GrandpaConfig, IndicesConfig, ContractsConfig, wasm_binary_unwrap,
 	AccountId, StakerStatus, BabeConfig, BABE_GENESIS_EPOCH_CONFIG,
 };
 use node_runtime::constants::currency::*;
@@ -116,11 +116,6 @@ pub fn config_endowed(
 		pallet_elections_phragmen: Default::default(),
 		pallet_sudo: Default::default(),
 		pallet_treasury: Default::default(),
-		pallet_society: SocietyConfig {
-			members: vec![alice(), bob()],
-			pot: 0,
-			max_members: 999,
-		},
 		pallet_vesting: Default::default(),
 		pallet_gilt: Default::default(),
 	}
