@@ -1,3 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
+// This file is part of Frontier.
+//
+// Copyright (c) 2020 Parity Technologies (UK) Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #![cfg(test)]
 
 use super::*;
@@ -8,7 +25,6 @@ use frame_support::{
 };
 use sp_core::{Blake2Hasher, H256};
 use sp_runtime::{
-	Perbill,
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
@@ -23,16 +39,30 @@ impl_outer_dispatch! {
 	}
 }
 
+pub struct PalletInfo;
+
+impl frame_support::traits::PalletInfo for PalletInfo {
+	fn index<P: 'static>() -> Option<usize> {
+		return Some(0)
+	}
+
+	fn name<P: 'static>() -> Option<&'static str> {
+		return Some("TestName")
+	}
+}
+
 #[derive(Clone, Eq, PartialEq)]
 pub struct Test;
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub const MaximumBlockWeight: Weight = 1024;
-	pub const MaximumBlockLength: u32 = 2 * 1024;
-	pub const AvailableBlockRatio: Perbill = Perbill::one();
+	pub BlockWeights: frame_system::limits::BlockWeights =
+		frame_system::limits::BlockWeights::simple_max(1024);
 }
-impl frame_system::Trait for Test {
+impl frame_system::Config for Test {
 	type BaseCallFilter = ();
+	type BlockWeights = ();
+	type BlockLength = ();
+	type DbWeight = ();
 	type Origin = Origin;
 	type Index = u64;
 	type BlockNumber = u64;
@@ -44,25 +74,19 @@ impl frame_system::Trait for Test {
 	type Header = Header;
 	type Event = ();
 	type BlockHashCount = BlockHashCount;
-	type MaximumBlockWeight = MaximumBlockWeight;
-	type DbWeight = ();
-	type BlockExecutionWeight = ();
-	type ExtrinsicBaseWeight = ();
-	type MaximumExtrinsicWeight = MaximumBlockWeight;
-	type MaximumBlockLength = MaximumBlockLength;
-	type AvailableBlockRatio = AvailableBlockRatio;
 	type Version = ();
-	type PalletInfo = ();
+	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<u64>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
+	type SS58Prefix = ();
 }
 
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
-impl pallet_balances::Trait for Test {
+impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type Balance = u64;
 	type DustRemoval = ();
@@ -75,7 +99,7 @@ impl pallet_balances::Trait for Test {
 parameter_types! {
 	pub const MinimumPeriod: u64 = 1000;
 }
-impl pallet_timestamp::Trait for Test {
+impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
@@ -91,18 +115,22 @@ impl FeeCalculator for FixedGasPrice {
 	}
 }
 
-impl Trait for Test {
+impl Config for Test {
 	type FeeCalculator = FixedGasPrice;
+	type GasWeightMapping = ();
 
 	type CallOrigin = EnsureAddressRoot<Self::AccountId>;
 	type WithdrawOrigin = EnsureAddressNever<Self::AccountId>;
 
 	type AddressMapping = HashedAddressMapping<Blake2Hasher>;
 	type Currency = Balances;
+	type Runner = crate::runner::stack::Runner<Self>;
 
 	type Event = Event<Test>;
 	type Precompiles = ();
-	type ChainId = SystemChainId;
+	type ChainId = ();
+	type BlockGasLimit = ();
+	type OnChargeTransaction = ();
 }
 
 type System = frame_system::Module<Test>;
@@ -169,21 +197,22 @@ fn fail_call_return_ok() {
 }
 
 #[test]
-fn mutate_account_works() {
+fn fee_deduction() {
 	new_test_ext().execute_with(|| {
-		EVM::mutate_account_basic(
-			&H160::from_str("1000000000000000000000000000000000000001").unwrap(),
-			Account {
-				nonce: U256::from(10),
-				balance: U256::from(1000),
-			},
-		);
+		// Create an EVM address and the corresponding Substrate address that will be charged fees and refunded
+		let evm_addr = H160::from_str("1000000000000000000000000000000000000003").unwrap();
+		let substrate_addr = <Test as Config>::AddressMapping::into_account_id(evm_addr);
 
-		assert_eq!(EVM::account_basic(
-			&H160::from_str("1000000000000000000000000000000000000001").unwrap()
-		), Account {
-			nonce: U256::from(10),
-			balance: U256::from(1000),
-		});
+		// Seed account
+		let _ = <Test as Config>::Currency::deposit_creating(&substrate_addr, 100);
+		assert_eq!(Balances::free_balance(&substrate_addr), 100);
+
+		// Deduct fees as 10 units
+		let imbalance = <<Test as Config>::OnChargeTransaction as OnChargeEVMTransaction<Test>>::withdraw_fee(&evm_addr, U256::from(10)).unwrap();
+		assert_eq!(Balances::free_balance(&substrate_addr), 90);
+
+		// Refund fees as 5 units
+		<<Test as Config>::OnChargeTransaction as OnChargeEVMTransaction<Test>>::correct_and_deposit_fee(&evm_addr, U256::from(5), imbalance).unwrap();
+		assert_eq!(Balances::free_balance(&substrate_addr), 95);
 	});
 }

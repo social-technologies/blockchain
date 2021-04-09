@@ -74,6 +74,10 @@ use pallet_session::{historical as pallet_session_historical};
 use sp_inherents::{InherentData, CheckInherentsResult};
 use static_assertions::const_assert;
 use pallet_contracts::WeightInfo;
+use pallet_evm::{
+	FeeCalculator, HashedAddressMapping,
+	EnsureAddressTruncated, Runner,
+};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -1006,31 +1010,42 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
 }
 
-/*
-pub struct GasPriceCalculator;
+/// Fixed gas price of `1`.
+pub struct FixedGasPrice;
 
-impl pallet_evm::FeeCalculator for GasPriceCalculator {
+impl FeeCalculator for FixedGasPrice {
 	fn min_gas_price() -> U256 {
-		U256::from(1)
+		// Gas price is always one token per gas.
+		1.into()
 	}
 }
 
+parameter_types! {
+	pub BlockGasLimit: U256 = U256::from(u32::max_value());
+}
+
 impl pallet_evm::Config for Runtime {
-	type FeeCalculator = GasPriceCalculator;
-	type CallOrigin = pallet_evm::EnsureAddressTruncated;
-	type WithdrawOrigin = pallet_evm::EnsureAddressTruncated;
-	type AddressMapping = pallet_evm::HashedAddressMapping<BlakeTwo256>;
+	type FeeCalculator = FixedGasPrice;
+	type GasWeightMapping = ();
+	type CallOrigin = EnsureAddressTruncated;
+	type WithdrawOrigin = EnsureAddressTruncated;
+	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	type Currency = Balances;
 	type Event = Event;
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type Precompiles = (
-		pallet_evm::precompiles::ECRecover,
-		pallet_evm::precompiles::Sha256,
-		pallet_evm::precompiles::Ripemd160,
-		pallet_evm::precompiles::Identity,
+		pallet_evm_precompile_simple::ECRecover,
+		pallet_evm_precompile_simple::Sha256,
+		pallet_evm_precompile_simple::Ripemd160,
+		pallet_evm_precompile_simple::Identity,
+		pallet_evm_precompile_simple::ECRecoverPublicKey,
+		pallet_evm_precompile_sha3fips::Sha3FIPS256,
+		pallet_evm_precompile_sha3fips::Sha3FIPS512,
 	);
-	type ChainId = pallet_evm::SystemChainId;
+	type ChainId = ChainId;
+	type BlockGasLimit = BlockGasLimit;
+	type OnChargeTransaction = ();
 }
-*/
 
 impl pallet_did::Config for Runtime {
 	type Event = Event;
@@ -1208,7 +1223,7 @@ construct_runtime!(
 		Assets: pallet_assets::{Module, Call, Storage, Event<T>},
 		Mmr: pallet_mmr::{Module, Storage},
 		Lottery: pallet_lottery::{Module, Call, Storage, Event<T>},
-//		Evm: pallet_evm::{Module, Call, Storage, Event<T>},
+		Evm: pallet_evm::{Module, Call, Storage, Event<T>},
 		Did: pallet_did::{Module, Call, Storage, Event<T>},
 		SocialTokens: pallet_social_tokens::{Module, Call, Storage, Event<T>},
 		SocialTreasury: pallet_social_treasury::{Module, Call, Storage, Event<T>},

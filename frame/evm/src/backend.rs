@@ -1,3 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
+// This file is part of Frontier.
+//
+// Copyright (c) 2020 Parity Technologies (UK) Ltd.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 use sp_std::marker::PhantomData;
 use sp_std::vec::Vec;
 #[cfg(feature = "std")]
@@ -80,7 +97,7 @@ impl<'vicinity, T: Trait> BackendT for Backend<'vicinity, T> {
 
 	fn block_timestamp(&self) -> U256 {
 		let now: u128 = pallet_timestamp::Module::<T>::get().unique_saturated_into();
-		U256::from(now)
+		U256::from(now / 1000)
 	}
 
 	fn block_difficulty(&self) -> U256 {
@@ -88,7 +105,7 @@ impl<'vicinity, T: Trait> BackendT for Backend<'vicinity, T> {
 	}
 
 	fn block_gas_limit(&self) -> U256 {
-		U256::zero()
+		T::BlockGasLimit::get()
 	}
 
 	fn chain_id(&self) -> U256 {
@@ -122,95 +139,5 @@ impl<'vicinity, T: Trait> BackendT for Backend<'vicinity, T> {
 
 	fn storage(&self, address: H160, index: H256) -> H256 {
 		AccountStorages::get(address, index)
-	}
-}
-
-impl<'vicinity, T: Trait> ApplyBackend for Backend<'vicinity, T> {
-	fn apply<A, I, L>(
-		&mut self,
-		values: A,
-		logs: L,
-		delete_empty: bool,
-	) where
-		A: IntoIterator<Item=Apply<I>>,
-		I: IntoIterator<Item=(H256, H256)>,
-		L: IntoIterator<Item=evm::backend::Log>,
-	{
-		for apply in values {
-			match apply {
-				Apply::Modify {
-					address, basic, code, storage, reset_storage,
-				} => {
-					Module::<T>::mutate_account_basic(&address, Account {
-						nonce: basic.nonce,
-						balance: basic.balance,
-					});
-
-					if let Some(code) = code {
-						debug::debug!(
-							target: "evm",
-							"Inserting code ({} bytes) at {:?}",
-							code.len(),
-							address
-						);
-						AccountCodes::insert(address, code);
-					}
-
-					if reset_storage {
-						AccountStorages::remove_prefix(address);
-					}
-
-					for (index, value) in storage {
-						if value == H256::default() {
-							debug::debug!(
-								target: "evm",
-								"Removing storage for {:?} [index: {:?}]",
-								address,
-								index
-							);
-							AccountStorages::remove(address, index);
-						} else {
-							debug::debug!(
-								target: "evm",
-								"Updating storage for {:?} [index: {:?}, value: {:?}]",
-								address,
-								index,
-								value
-							);
-							AccountStorages::insert(address, index, value);
-						}
-					}
-
-					if delete_empty {
-						Module::<T>::remove_account_if_empty(&address);
-					}
-				},
-				Apply::Delete { address } => {
-					debug::debug!(
-						target: "evm",
-						"Deleting account at {:?}",
-						address
-					);
-					Module::<T>::remove_account(&address)
-				},
-			}
-		}
-
-		for log in logs {
-			debug::trace!(
-				target: "evm",
-				"Inserting log for {:?}, topics ({}) {:?}, data ({}): {:?}]",
-				log.address,
-				log.topics.len(),
-				log.topics,
-				log.data.len(),
-				log.data
-			);
-			Module::<T>::deposit_event(Event::<T>::Log(Log {
-				address: log.address,
-				topics: log.topics,
-				data: log.data,
-			}));
-		}
 	}
 }
