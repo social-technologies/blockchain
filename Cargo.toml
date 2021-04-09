@@ -72,7 +72,7 @@ members = [
 	"frame/democracy",
 	"frame/did",
 	"frame/elections",
-#	"frame/evm",
+	"frame/evm",
 	"frame/example",
 	"frame/example-offchain-worker",
 	"frame/example-parallel",
