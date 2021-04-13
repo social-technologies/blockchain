@@ -25,7 +25,7 @@ frame_support::construct_runtime!(
         System: system::{Module, Call, Event<T>},
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
         Bridge: bridge::{Module, Call, Storage, Event<T>},
-        SocialToken: pallet_social_tokens::{Module, Call, Storage, Event<T>},
+        Assets: pallet_assets::{Module, Call, Storage, Event<T>},
         SocialBridge: social_bridge::{Module, Call, Event<T>},
         Erc721: pallet_social_nft::{Module, Call, Storage, Event<T>},
     }
@@ -101,17 +101,25 @@ impl bridge::Config for Test {
 }
 
 parameter_types! {
-    pub const MaxSocialTokensSupply: u128 = 77_777_777;
+    pub const AssetDepositBase: u64 = 1;
+    pub const AssetDepositPerZombie: u64 = 1;
+    pub const StringLimit: u32 = 50;
+    pub const MetadataDepositBase: u64 = 1;
+    pub const MetadataDepositPerByte: u64 = 1;
 }
 
-impl pallet_social_tokens::Config for Test {
+impl pallet_assets::Config for Test {
+    type Currency = Balances;
     type Event = Event;
     type Balance = u64;
-    type SocialTokenId = u32;
-    type ExistentialDeposit = ExistentialDeposit;
-    type OnNewAccount = ();
-    type MaxSocialTokensSupply = MaxSocialTokensSupply;
-    type SocialCreatorOrigin = EnsureRoot<u64>;
+    type AssetId = u32;
+    type ForceOrigin = frame_system::EnsureRoot<u64>;
+    type AssetDepositBase = AssetDepositBase;
+    type AssetDepositPerZombie = AssetDepositPerZombie;
+    type StringLimit = StringLimit;
+    type MetadataDepositBase = MetadataDepositBase;
+    type MetadataDepositPerByte = MetadataDepositPerByte;
+    type WeightInfo = ();
 }
 
 parameter_types! {

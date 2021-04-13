@@ -22,12 +22,13 @@ version = '2.0.0'
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 frame-support = { default-features = false, version = '3.0.0', path = '../support' }
 frame-system = { default-features = false, version = '3.0.0', path = '../system' }
-pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
+pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
 sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
 
 [dev-dependencies]
-pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
+pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
+pallet-balances = { version = "3.0.0", path = "../balances" }
 sp-core = { default-features = false, version = '3.0.0', path = '../../primitives/core' }
 sp-io = { default-features = false, version = '3.0.0', path = '../../primitives/io' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
@@ -39,6 +40,6 @@ std = [
     'codec/std',
     'frame-support/std',
     'frame-system/std',
-    'pallet-social-tokens/std',
+    'pallet-assets/std',
     'serde',
 ]

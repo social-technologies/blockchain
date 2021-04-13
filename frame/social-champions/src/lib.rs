@@ -12,14 +12,14 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub trait Config: frame_system::Config + pallet_social_tokens::Config {
+pub trait Config: frame_system::Config + pallet_assets::Config {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 }
 
 decl_storage! {
     trait Store for Module<T: Config> as ValidatorRegistry {
-        ChampionOf get(fn social_of): map hasher(blake2_128_concat) T::AccountId => T::SocialTokenId;
-        Validators get(fn validators): map hasher(blake2_128_concat) T::SocialTokenId => Vec<T::AccountId>;
+        ChampionOf get(fn social_of): map hasher(blake2_128_concat) T::AccountId => T::AssetId;
+        Validators get(fn validators): map hasher(blake2_128_concat) T::AssetId => Vec<T::AccountId>;
     }
 }
 
@@ -27,10 +27,10 @@ decl_event!(
     pub enum Event<T>
     where
         AccountId = <T as frame_system::Config>::AccountId,
-        SocialTokenId = <T as pallet_social_tokens::Config>::SocialTokenId,
+        AssetId = <T as pallet_assets::Config>::AssetId,
     {
-        Registered(AccountId, SocialTokenId),
-        Unregistered(AccountId, SocialTokenId),
+        Registered(AccountId, AssetId),
+        Unregistered(AccountId, AssetId),
     }
 );
 
@@ -48,10 +48,10 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 10_000 + T::DbWeight::get().writes(1)]
-        pub fn register(origin, social_token_id: T::SocialTokenId) -> dispatch::DispatchResult {
+        pub fn register(origin, social_token_id: T::AssetId) -> dispatch::DispatchResult {
             let validator = ensure_signed(origin)?;
 
-            <pallet_social_tokens::Module<T>>::validate_social_token_id(social_token_id)?;
+            <pallet_assets::Module<T>>::validate_asset_id(social_token_id)?;
             ensure!(!<ChampionOf<T>>::contains_key(&validator), Error::<T>::AlreadyRegistered);
 
             <ChampionOf<T>>::insert(&validator, social_token_id);

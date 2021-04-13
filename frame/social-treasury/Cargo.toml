@@ -23,7 +23,7 @@ serde = { version = "1.0.101", optional = true, features = ["derive"] }
 
 frame-support = { default-features = false, version = '3.0.0', path = '../support' }
 frame-system = { default-features = false, version = '3.0.0', path = '../system' }
-pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
+pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
 pallet-treasury = { default-features = false, version = '3.0.0', path = '../treasury' }
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
 pallet-social-champions = { default-features = false, version = '0.1.0', path = '../social-champions' }
@@ -32,7 +32,7 @@ sp-std = { default-features = false, version = '3.0.0', path = '../../primitives
 
 [dev-dependencies]
 pallet-balances = { default-features = false, version = '3.0.0', path = '../balances' }
-pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
+pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
 pallet-offences = { default-features = false, version = '3.0.0', path = '../offences' }
 pallet-timestamp = { default-features = false, version = '3.0.0', path = '../timestamp' }
 pallet-treasury = { default-features = false, version = '3.0.0', path = '../treasury' }

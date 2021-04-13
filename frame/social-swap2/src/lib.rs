@@ -5,7 +5,7 @@ use frame_support::{
     traits::{Currency, ExistenceRequirement, Get},
 };
 use frame_system::{ensure_root, ensure_signed};
-use pallet_social_tokens::{Fungible, IssueAndBurn};
+use pallet_assets::{Fungible, IssueAndBurn};
 use sp_runtime::{
     traits::{CheckedAdd, CheckedSub, IntegerSquareRoot, SaturatedConversion, Saturating, Scale},
     DispatchError, DispatchResult,
@@ -15,16 +15,16 @@ use sp_std::{convert::TryInto, prelude::*};
 pub type CurrencyOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 pub type BalanceOf<T> = <<T as Config>::FungibleToken as Fungible<
-    <T as pallet_social_tokens::Config>::SocialTokenId,
+    <T as pallet_assets::Config>::AssetId,
     <T as frame_system::Config>::AccountId,
 >>::Balance;
 
 pub trait Config:
-    frame_system::Config + pallet_social_tokens::Config + pallet_timestamp::Config
+    frame_system::Config + pallet_assets::Config + pallet_timestamp::Config
 {
     type Currency: Currency<Self::AccountId>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-    type FungibleToken: IssueAndBurn<Self::SocialTokenId, Self::AccountId>;
+    type FungibleToken: IssueAndBurn<Self::AssetId, Self::AccountId>;
 
     type MinimumLiquidity: Get<Self::Balance>;
 }
@@ -61,7 +61,7 @@ decl_error! {
 decl_storage! {
     trait Store for Module<T: Config> as UniswapExchanges {
 
-        pub SocialTokenId get(fn social_token_id): T::SocialTokenId = 1u32.into();
+        pub AssetId get(fn social_token_id): T::AssetId = 1u32.into();
 
         pub FeeTo get(fn fee_to): T::AccountId;
         pub Address0 get(fn address0): T::AccountId;
@@ -143,7 +143,7 @@ decl_module! {
             let reserve1 = Self::reserve1();
             let balance0 = T::FungibleToken::balances(&social_token_id, &Self::token0());
             let balance1 = T::FungibleToken::balances(&social_token_id, &Self::token1());
-            let liquidity = T::Currency::free_balance(&Self::treasury())
+            let liquidity = <T as Config>::Currency::free_balance(&Self::treasury())
                 .saturated_into::<u128>()
                 .saturated_into::<BalanceOf<T>>();
 
@@ -313,7 +313,7 @@ impl<T: Config> Module<T> {
         to: &T::AccountId,
         amount: BalanceOf<T>,
     ) -> DispatchResult {
-        T::Currency::transfer(
+        <T as Config>::Currency::transfer(
             &Self::treasury(),
             to,
             amount.saturated_into::<u128>().saturated_into(),
