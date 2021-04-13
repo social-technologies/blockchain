@@ -63,6 +63,8 @@ decl_storage! {
         pub TokenOwner get(fn owner_of): map hasher(opaque_blake2_256) NftId => Option<T::AccountId>;
         /// Total number of tokens in existence
         pub TokenCount get(fn token_count): U256 = U256::zero();
+        /// Maximum token id
+        pub MaxTokenId get(fn max_token_id): U256 = U256::zero();
     }
 }
 
@@ -116,6 +118,9 @@ impl<T: Config> Module<T> {
         <TokenOwner<T>>::insert(&id, owner.clone());
         let new_total = <TokenCount>::get().saturating_add(U256::one());
         <TokenCount>::put(new_total);
+        if <MaxTokenId>::get() < id {
+            <MaxTokenId>::put(id)
+        }
 
         Self::deposit_event(RawEvent::Minted(owner, id));
 
