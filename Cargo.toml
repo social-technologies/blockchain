@@ -101,7 +101,6 @@ members = [
 	"frame/social-champions",
 	"frame/social-nft",
 	"frame/social-swap",
-	"frame/social-tokens",
 	"frame/social-treasury",
 	"frame/social-usernames",
 	"frame/society",

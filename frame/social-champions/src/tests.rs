@@ -39,11 +39,11 @@ fn registration_with_invalid_social_id_should_not_work() {
     new_test_ext().execute_with(|| {
         assert_noop!(
             ValidatorRegistry::register(Origin::signed(1), 0),
-            pallet_social_tokens::Error::<Test>::InvalidSocialTokenId
+            pallet_assets::Error::<Test>::Unknown
         );
         assert_noop!(
             ValidatorRegistry::register(Origin::signed(1), 100500),
-            pallet_social_tokens::Error::<Test>::InvalidSocialTokenId
+            pallet_assets::Error::<Test>::Unknown
         );
     });
 }

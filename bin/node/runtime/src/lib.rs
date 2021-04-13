@@ -998,7 +998,7 @@ parameter_types! {
 
 impl pallet_assets::Config for Runtime {
 	type Event = Event;
-	type Balance = u64;
+	type Balance = u128;
 	type AssetId = u32;
 	type Currency = Balances;
 	type ForceOrigin = EnsureRoot<AccountId>;
@@ -1051,20 +1051,6 @@ impl pallet_did::Config for Runtime {
 	type Event = Event;
 	type Public = MultiSigner;
 	type Signature = Signature;
-}
-
-parameter_types! {
-	pub const ExistentialDepositOfSocialTokens: u128 = 1;
-	pub const MaxSocialTokensSupply: u128 = 7_777_777_777 * NET;
-}
-
-impl pallet_social_tokens::Config for Runtime {
-	type Event = Event;
-	type Balance = u128;
-	type SocialTokenId = u32;
-	type ExistentialDeposit = ExistentialDepositOfSocialTokens;
-	type OnNewAccount = ();
-	type MaxSocialTokensSupply = MaxSocialTokensSupply;
 }
 
 impl pallet_social_treasury::Config for Runtime {
@@ -1165,7 +1151,7 @@ impl pallet_social_swap::Config for Runtime {
 	type Currency = Balances;
 	type ModuleId = ExchangeModuleId;
 	type Event = Event;
-	type FungibleToken = SocialTokens;
+	type FungibleToken = Assets;
 	type Handler = BalanceHandler;
 	type ExchangeId = u64;
 }
@@ -1177,7 +1163,7 @@ parameter_types! {
 impl pallet_social_swap2::Config for Runtime {
 	type Currency = Balances;
 	type Event = Event;
-	type FungibleToken = SocialTokens;
+	type FungibleToken = Assets;
 	type MinimumLiquidity = MinimumLiquidity;
 }
 
@@ -1225,7 +1211,6 @@ construct_runtime!(
 		Lottery: pallet_lottery::{Module, Call, Storage, Event<T>},
 		Evm: pallet_evm::{Module, Call, Storage, Event<T>},
 		Did: pallet_did::{Module, Call, Storage, Event<T>},
-		SocialTokens: pallet_social_tokens::{Module, Call, Storage, Event<T>},
 		SocialTreasury: pallet_social_treasury::{Module, Call, Storage, Event<T>},
 		SocialChampions: pallet_social_champions::{Module, Call, Storage, Event<T>},
 		SocialUsernames: pallet_social_usernames::{Module, Call, Storage, Event<T>},

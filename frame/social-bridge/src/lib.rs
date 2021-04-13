@@ -5,7 +5,6 @@ use chainbridge as bridge;
 use frame_support::traits::{Currency, EnsureOrigin, ExistenceRequirement::AllowDeath, Get};
 use frame_support::{
     decl_error, decl_event, decl_module, dispatch::DispatchResult, ensure,
-    traits::ExistenceRequirement,
 };
 use frame_system::{self as system, ensure_signed};
 use pallet_social_nft as erc721;
@@ -22,7 +21,7 @@ type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 pub trait Config:
-    system::Config + bridge::Config + pallet_social_tokens::Config + erc721::Config
+    system::Config + bridge::Config + pallet_assets::Config + erc721::Config
 {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
     /// Specifies the origin check provided by the bridge for calls that can only be called by the bridge pallet
@@ -74,7 +73,7 @@ decl_module! {
             let source = ensure_signed(origin)?;
             ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
             let bridge_id = <bridge::Module<T>>::account_id();
-            T::Currency::transfer(&source, &bridge_id, amount, AllowDeath)?;
+            <T as Config>::Currency::transfer(&source, &bridge_id, amount, AllowDeath)?;
 
             let resource_id = T::NativeTokenId::get();
             <bridge::Module<T>>::transfer_fungible(dest_id, resource_id, recipient, U256::from(amount.saturated_into::<u128>()))
@@ -84,16 +83,18 @@ decl_module! {
         #[weight = 195_000_000]
         pub fn transfer_social_tokens(
             origin,
-            #[compact] token_id: T::SocialTokenId,
+            #[compact] token_id: T::AssetId,
             #[compact] value: T::Balance,
             recipient: Vec<u8>,
             dest_id: bridge::ChainId
         ) -> DispatchResult {
             let source = ensure_signed(origin)?;
             ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
-            <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
+            <pallet_assets::Module<T>>::validate_asset_id(token_id)?;
             let bridge_id = <bridge::Module<T>>::account_id();
-            <pallet_social_tokens::Module<T>>::do_transfer(&source, &bridge_id, token_id, value, ExistenceRequirement::AllowDeath)?;
+            <pallet_assets::Module<T>>::do_transfer(token_id, source, bridge_id, value)
+                .map(|_| ())
+                .map_err(|err| err.error)?;
 
             let resource_id = bridge::derive_resource_id(dest_id, &Self::social_token_acronym(token_id));
             <bridge::Module<T>>::transfer_fungible(dest_id, resource_id, recipient, U256::from(value.saturated_into::<u128>()))
@@ -147,7 +148,7 @@ decl_module! {
 }
 
 impl<T: Config> Module<T> {
-    fn social_token_acronym(token_id: T::SocialTokenId) -> Vec<u8> {
+    fn social_token_acronym(token_id: T::AssetId) -> Vec<u8> {
         let mut acronym = b"NET".to_vec();
         let postfix = U256::from(token_id.saturated_into::<u128>());
         let mut buf = vec![];

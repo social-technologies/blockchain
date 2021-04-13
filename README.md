@@ -132,8 +132,7 @@ In order to be compatible with polkadot.js the following type definitions will n
     "swap_token": "TokenId",
     "account": "AccountId"
   },
-  "SocialId": "u32",
-  "SocialTokenId": "u32",
+  "AssetId": "u32",
   "SocialTokenBalance": "u128",
   "RegistrarIndex": "u32",
   "Judgement": {

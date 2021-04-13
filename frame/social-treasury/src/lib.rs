@@ -30,17 +30,19 @@ mod tests;
 mod default_weights;
 pub mod weights;
 
-type BalanceOf<T> = <T as pallet_social_tokens::Config>::Balance;
-type PositiveImbalanceOf<T> = pallet_social_tokens::PositiveImbalance<T>;
-type NegativeImbalanceOf<T> = pallet_social_tokens::NegativeImbalance<T>;
-type TokenId<T> = <T as pallet_social_tokens::Config>::SocialTokenId;
+type BalanceOf<T> = <T as pallet_assets::Config>::Balance;
+// TODO: uncomment
+type PositiveImbalanceOf<T> = pallet_assets::PositiveImbalance<T>;
+type NegativeImbalanceOf<T> = pallet_assets::NegativeImbalance<T>;
+
+type TokenId<T> = <T as pallet_assets::Config>::AssetId;
 
 
 pub trait Config:
     frame_system::Config
     + pallet_treasury::Config
     + pallet_staking::Config
-    + pallet_social_tokens::Config
+    + pallet_assets::Config
     + pallet_social_champions::Config
 {
     /// Origin from which approvals must come.
@@ -70,6 +72,7 @@ pub trait Config:
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
     /// Handler for the unbalanced decrease when slashing for a rejected proposal or bounty.
+    // TODO: uncomment
     type OnSlash: OnUnbalanced<NegativeImbalanceOf<Self>>;
 
     /// Fraction of a proposal's value that should be bonded in order to place the proposal.
@@ -104,6 +107,7 @@ pub trait Config:
     type MaximumReasonLength: Get<u32>;
 
     /// Handler for the unbalanced decrease when treasury funds are burned.
+    // TODO: uncomment
     type BurnDestination: OnUnbalanced<NegativeImbalanceOf<Self>>;
 
     /// Weight information for extrinsics in this pallet.
@@ -116,7 +120,7 @@ pub type ProposalIndex = u32;
 /// A spending proposal.
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct Proposal<AccountId, Balance, SocialTokenId> {
+pub struct Proposal<AccountId, Balance, AssetId> {
     /// The account proposing it.
     proposer: AccountId,
     /// The (total) amount that should be paid if the proposal is accepted.
@@ -125,7 +129,7 @@ pub struct Proposal<AccountId, Balance, SocialTokenId> {
     beneficiary: AccountId,
     /// The amount held on deposit (reserved) for making this proposal.
     bond: Balance,
-    social_token_id: SocialTokenId,
+    social_token_id: AssetId,
 }
 
 /// An open tipping "motion". Retains all details of a tip including information on the finder
@@ -136,7 +140,7 @@ pub struct OpenTip<
     Balance: Parameter,
     BlockNumber: Parameter,
     Hash: Parameter,
-    SocialTokenId: Parameter,
+    AssetId: Parameter,
 > {
     /// The hash of the reason for the tip. The reason should be a human-readable UTF-8 encoded string. A URL would be
     /// sensible.
@@ -154,7 +158,7 @@ pub struct OpenTip<
     tips: Vec<(AccountId, Balance)>,
     /// Whether this tip should result in the finder taking a fee.
     finders_fee: bool,
-    social_token_id: SocialTokenId,
+    social_token_id: AssetId,
 }
 
 /// An index of a bounty. Just a `u32`.
@@ -162,7 +166,7 @@ pub type BountyIndex = u32;
 
 /// A bounty proposal.
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct Bounty<AccountId, Balance, BlockNumber, SocialTokenId> {
+pub struct Bounty<AccountId, Balance, BlockNumber, AssetId> {
     /// The account proposing it.
     proposer: AccountId,
     /// The (total) amount that should be paid if the bounty is rewarded.
@@ -175,7 +179,7 @@ pub struct Bounty<AccountId, Balance, BlockNumber, SocialTokenId> {
     bond: Balance,
     /// The status of this bounty.
     status: BountyStatus<AccountId, BlockNumber>,
-    social_token_id: SocialTokenId,
+    social_token_id: AssetId,
 }
 
 /// The status of a bounty proposal.
@@ -258,42 +262,42 @@ decl_event!(
     where
         AccountId = <T as frame_system::Config>::AccountId,
         Hash = <T as frame_system::Config>::Hash,
-        SocialTokenBalance = <T as pallet_social_tokens::Config>::Balance,
-        SocialTokenId = <T as pallet_social_tokens::Config>::SocialTokenId,
+        SocialTokenBalance = <T as pallet_assets::Config>::Balance,
+        AssetId = <T as pallet_assets::Config>::AssetId,
     {
         /// New proposal. \[proposal_index\]
         Proposed(ProposalIndex),
         /// We have ended a spend period and will now allocate funds. \[budget_remaining\]
-        Spending(SocialTokenId, SocialTokenBalance),
+        Spending(AssetId, SocialTokenBalance),
         /// Some funds have been allocated. \[proposal_index, award, beneficiary\]
-        Awarded(ProposalIndex, SocialTokenId, SocialTokenBalance, AccountId),
+        Awarded(ProposalIndex, AssetId, SocialTokenBalance, AccountId),
         /// A proposal was rejected; funds were slashed. \[proposal_index, slashed\]
-        Rejected(ProposalIndex, SocialTokenId, SocialTokenBalance),
+        Rejected(ProposalIndex, AssetId, SocialTokenBalance),
         /// Some of our funds have been burnt. \[burn\]
-        Burnt(SocialTokenId, SocialTokenBalance),
+        Burnt(AssetId, SocialTokenBalance),
         /// Spending has finished; this is the amount that rolls over until next spend.
         /// \[budget_remaining\]
-        Rollover(SocialTokenId, SocialTokenBalance),
+        Rollover(AssetId, SocialTokenBalance),
         /// Some funds have been deposited. \[deposit\]
-        Deposit(SocialTokenId, SocialTokenBalance),
+        Deposit(AssetId, SocialTokenBalance),
         /// A new tip suggestion has been opened. \[tip_hash\]
         NewTip(Hash),
         /// A tip suggestion has reached threshold and is closing. \[tip_hash\]
         TipClosing(Hash),
         /// A tip suggestion has been closed. \[tip_hash, who, payout\]
-        TipClosed(Hash, AccountId, SocialTokenId, SocialTokenBalance),
+        TipClosed(Hash, AccountId, AssetId, SocialTokenBalance),
         /// A tip suggestion has been retracted. \[tip_hash\]
         TipRetracted(Hash),
         /// New bounty proposal. [index]
         BountyProposed(BountyIndex),
         /// A bounty proposal was rejected; funds were slashed. [index, bond]
-        BountyRejected(BountyIndex, SocialTokenId, SocialTokenBalance),
+        BountyRejected(BountyIndex, AssetId, SocialTokenBalance),
         /// A bounty proposal is funded and became active. [index]
         BountyBecameActive(BountyIndex),
         /// A bounty is awarded to a beneficiary. [index, beneficiary]
         BountyAwarded(BountyIndex, AccountId),
         /// A bounty is claimed by beneficiary. [index, payout, beneficiary]
-        BountyClaimed(BountyIndex, SocialTokenId, SocialTokenBalance, AccountId),
+        BountyClaimed(BountyIndex, AssetId, SocialTokenBalance, AccountId),
         /// A bounty is cancelled. [index]
         BountyCanceled(BountyIndex),
         /// A bounty expiry is extended. [index]
@@ -343,6 +347,8 @@ decl_module! {
         type Error = Error<T>;
 
         fn deposit_event() = default;
+// TODO: uncomment
+/*
 
         /// Put forward a suggestion for spending. A deposit proportional to the value
         /// is reserved and slashed if the proposal is rejected. It is returned once the
@@ -362,10 +368,10 @@ decl_module! {
         ) {
             let proposer = ensure_signed(origin)?;
             let beneficiary = T::Lookup::lookup(beneficiary)?;
-            <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
+            <pallet_assets::Module<T>>::validate_asset_id(token_id)?;
 
             let bond = Self::calculate_bond(value);
-            <pallet_social_tokens::Module<T>>::reserve(&proposer, token_id, bond)
+            <pallet_assets::Module<T>>::reserve(&proposer, token_id, bond)
                 .map_err(|_| Error::<T>::InsufficientProposersBalance)?;
 
             let c = Self::proposal_count();
@@ -390,7 +396,7 @@ decl_module! {
 
             let proposal = <Proposals<T>>::take(&proposal_id).ok_or(Error::<T>::InvalidIndex)?;
             let value = proposal.bond;
-            let imbalance = <pallet_social_tokens::Module<T>>::slash_reserved(
+            let imbalance = <pallet_assets::Module<T>>::slash_reserved(
                 &proposal.proposer,
                 proposal.social_token_id,
                 value
@@ -442,7 +448,7 @@ decl_module! {
             let finder = ensure_signed(origin)?;
 
             ensure!(reason.len() <= <T as Config>::MaximumReasonLength::get() as usize, Error::<T>::ReasonTooBig);
-            <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
+            <pallet_assets::Module<T>>::validate_asset_id(token_id)?;
 
             let reason_hash = <T as frame_system::Config>::Hashing::hash(&reason[..]);
             ensure!(!Reasons::<T>::contains_key(&reason_hash), Error::<T>::AlreadyKnown);
@@ -451,7 +457,7 @@ decl_module! {
 
             let deposit = <T as Config>::TipReportDepositBase::get()
                 + <T as Config>::DataDepositPerByte::get() * (reason.len() as u32).into();
-            <pallet_social_tokens::Module<T>>::reserve(&finder, token_id, deposit)?;
+            <pallet_assets::Module<T>>::reserve(&finder, token_id, deposit)?;
 
             Reasons::<T>::insert(&reason_hash, &reason);
             let tip = OpenTip {
@@ -496,7 +502,7 @@ decl_module! {
             Reasons::<T>::remove(&tip.reason);
             Tips::<T>::remove(&hash);
             if !tip.deposit.is_zero() {
-                let _ = <pallet_social_tokens::Module<T>>::unreserve(&who, tip.social_token_id, tip.deposit);
+                let _ = <pallet_assets::Module<T>>::unreserve(&who, tip.social_token_id, tip.deposit);
             }
             Self::deposit_event(RawEvent::TipRetracted(hash));
         }
@@ -526,7 +532,7 @@ decl_module! {
         #[weight = <T as Config>::WeightInfo::tip_new(reason.len() as u32, <T as Config>::Tippers::max_len() as u32)]
         fn tip_new(origin, reason: Vec<u8>, who: T::AccountId, #[compact] token_id: TokenId<T>, #[compact] tip_value: BalanceOf<T>) {
             let tipper = ensure_signed(origin)?;
-            <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
+            <pallet_assets::Module<T>>::validate_asset_id(token_id)?;
             ensure!(<T as Config>::Tippers::contains(&tipper), BadOrigin);
             let reason_hash = <T as frame_system::Config>::Hashing::hash(&reason[..]);
             ensure!(!Reasons::<T>::contains_key(&reason_hash), Error::<T>::AlreadyKnown);
@@ -635,7 +641,7 @@ decl_module! {
             token_id: TokenId<T>,
         ) {
             let proposer = ensure_signed(origin)?;
-            <pallet_social_tokens::Module<T>>::validate_social_token_id(token_id)?;
+            <pallet_assets::Module<T>>::validate_asset_id(token_id)?;
             Self::create_bounty(proposer, description, token_id, value)?;
         }
 
@@ -734,7 +740,7 @@ decl_module! {
                 let token_id = bounty.social_token_id;
 
                 let slash_curator = |curator: &T::AccountId, curator_deposit: &mut BalanceOf<T>| {
-                    let imbalance = <pallet_social_tokens::Module<T>>::slash_reserved(curator, token_id, *curator_deposit).0;
+                    let imbalance = <pallet_assets::Module<T>>::slash_reserved(curator, token_id, *curator_deposit).0;
                     <T as Config>::OnSlash::on_unbalanced(imbalance);
                     *curator_deposit = Zero::zero();
                 };
@@ -772,7 +778,7 @@ decl_module! {
                                 } else {
                                     // Else this is the curator, willingly giving up their role.
                                     // Give back their deposit.
-                                    let _ = <pallet_social_tokens::Module<T>>::unreserve(&curator, bounty.social_token_id, bounty.curator_deposit);
+                                    let _ = <pallet_assets::Module<T>>::unreserve(&curator, bounty.social_token_id, bounty.curator_deposit);
                                     // Continue to change bounty status below...
                                 }
                             },
@@ -815,7 +821,7 @@ decl_module! {
                         ensure!(signer == *curator, Error::<T>::RequireCurator);
 
                         let deposit = <T as Config>::BountyCuratorDeposit::get() * bounty.fee;
-                        <pallet_social_tokens::Module<T>>::reserve(curator, bounty.social_token_id, deposit)?;
+                        <pallet_assets::Module<T>>::reserve(curator, bounty.social_token_id, deposit)?;
                         bounty.curator_deposit = deposit;
 
                         let update_due = system::Module::<T>::block_number() + <T as Config>::BountyUpdatePeriod::get();
@@ -876,12 +882,12 @@ decl_module! {
                 if let BountyStatus::PendingPayout { curator, beneficiary, unlock_at } = bounty.status {
                     ensure!(system::Module::<T>::block_number() >= unlock_at, Error::<T>::Premature);
                     let bounty_account = Self::bounty_account_id(bounty_id);
-                    let balance = <pallet_social_tokens::Module<T>>::free_balance(&bounty_account, bounty.social_token_id);
+                    let balance = <pallet_assets::Module<T>>::free_balance(&bounty_account, bounty.social_token_id);
                     let fee = bounty.fee.min(balance); // just to be safe
                     let payout = balance.saturating_sub(fee);
-                    let _ = <pallet_social_tokens::Module<T>>::unreserve(&curator, bounty.social_token_id, bounty.curator_deposit);
-                    let _ = <pallet_social_tokens::Module<T>>::do_transfer(&bounty_account, &curator, bounty.social_token_id, fee, AllowDeath); // should not fail
-                    let _ = <pallet_social_tokens::Module<T>>::do_transfer(&bounty_account, &beneficiary, bounty.social_token_id, payout, AllowDeath); // should not fail
+                    let _ = <pallet_assets::Module<T>>::unreserve(&curator, bounty.social_token_id, bounty.curator_deposit);
+                    let _ = <pallet_assets::Module<T>>::do_transfer(&bounty_account, &curator, bounty.social_token_id, fee, AllowDeath); // should not fail
+                    let _ = <pallet_assets::Module<T>>::do_transfer(&bounty_account, &beneficiary, bounty.social_token_id, payout, AllowDeath); // should not fail
                     *maybe_bounty = None;
 
                     BountyDescriptions::remove(bounty_id);
@@ -913,7 +919,7 @@ decl_module! {
                         // The reject origin would like to cancel a proposed bounty.
                         BountyDescriptions::remove(bounty_id);
                         let value = bounty.bond;
-                        let imbalance = <pallet_social_tokens::Module<T>>::slash_reserved(&bounty.proposer, token_id, value).0;
+                        let imbalance = <pallet_assets::Module<T>>::slash_reserved(&bounty.proposer, token_id, value).0;
                         <T as Config>::OnSlash::on_unbalanced(imbalance);
                         *maybe_bounty = None;
 
@@ -932,7 +938,7 @@ decl_module! {
                     },
                     BountyStatus::Active { curator, .. } => {
                         // Cancelled by council, refund deposit of the working curator.
-                        let _ = <pallet_social_tokens::Module<T>>::unreserve(&curator, token_id, bounty.curator_deposit);
+                        let _ = <pallet_assets::Module<T>>::unreserve(&curator, token_id, bounty.curator_deposit);
                         // Then execute removal of the bounty below.
                     },
                     BountyStatus::PendingPayout { .. } => {
@@ -948,8 +954,8 @@ decl_module! {
 
                 BountyDescriptions::remove(bounty_id);
 
-                let balance = <pallet_social_tokens::Module<T>>::free_balance(&bounty_account, bounty.social_token_id);
-                let _ = <pallet_social_tokens::Module<T>>::do_transfer(
+                let balance = <pallet_assets::Module<T>>::free_balance(&bounty_account, bounty.social_token_id);
+                let _ = <pallet_assets::Module<T>>::do_transfer(
                     &bounty_account,
                     &Self::account_id(),
                     bounty.social_token_id,
@@ -1005,6 +1011,7 @@ decl_module! {
                 0
             }
         }
+*/
 
         fn on_finalize() {
             match <pallet_staking::Module<T>>::current_era() {
@@ -1014,18 +1021,18 @@ decl_module! {
                     if era < current_era {
                         let reward_points = <pallet_staking::Module<T>>::eras_reward_points(era);
                         let treasury_account_id = Self::account_id();
-                        let (min_token_id, max_token_id) = <pallet_social_tokens::Module<T>>::social_token_ids();
 
                         for (account_id, points) in reward_points.individual {
                             if let Some(controller) = <pallet_staking::Module<T>>::bonded(account_id) {
                                 let social_token_id = <pallet_social_champions::Module<T>>::social_of(controller);
-                                if social_token_id >= min_token_id && social_token_id <= max_token_id {
-                                    <pallet_social_tokens::Module<T>>::issue_social_token(
-                                        treasury_account_id.clone(),
+                                if <pallet_assets::Module<T>>::validate_asset_id(social_token_id).is_ok() {
+                                    let _ = <pallet_assets::Module<T>>::do_mint(
                                         social_token_id,
-                                        points.into()
+                                        treasury_account_id.clone(),
+                                        treasury_account_id.clone(),
+                                        points.into(),
+                                        pallet_assets::CheckAssetIssuer::No,
                                     );
-                                    let _ = <pallet_social_tokens::Module<T>>::issue(social_token_id, points.into());
                                 }
                             }
                         }
@@ -1050,6 +1057,8 @@ impl<T: Config> Module<T> {
         <pallet_treasury::Module<T>>::account_id()
     }
 
+// TODO: uncomment
+/*
     /// The account ID of a bounty account
     pub fn bounty_account_id(id: BountyIndex) -> T::AccountId {
         <pallet_treasury::Module<T>>::bounty_account_id(id)
@@ -1120,7 +1129,7 @@ impl<T: Config> Module<T> {
         let max_payout = Self::pot(tip.social_token_id);
         let mut payout = tips[tips.len() / 2].1.min(max_payout);
         if !tip.deposit.is_zero() {
-            let _ = <pallet_social_tokens::Module<T>>::unreserve(
+            let _ = <pallet_assets::Module<T>>::unreserve(
                 &tip.finder,
                 tip.social_token_id,
                 tip.deposit,
@@ -1133,7 +1142,7 @@ impl<T: Config> Module<T> {
                 payout -= finders_fee;
                 // this should go through given we checked it's at most the free balance, but still
                 // we only make a best-effort.
-                let _ = <pallet_social_tokens::Module<T>>::do_transfer(
+                let _ = <pallet_assets::Module<T>>::do_transfer(
                     &treasury,
                     &tip.finder,
                     tip.social_token_id,
@@ -1143,7 +1152,7 @@ impl<T: Config> Module<T> {
             }
         }
         // same as above: best-effort only.
-        let _ = <pallet_social_tokens::Module<T>>::do_transfer(
+        let _ = <pallet_assets::Module<T>>::do_transfer(
             &treasury,
             &tip.who,
             tip.social_token_id,
@@ -1163,7 +1172,7 @@ impl<T: Config> Module<T> {
         let mut total_weight: Weight = Zero::zero();
 
         let mut budgets_remaining = vec![];
-        let (min_token_id, max_token_id) = <pallet_social_tokens::Module<T>>::social_token_ids();
+        let (min_token_id, max_token_id) = <pallet_assets::Module<T>>::social_token_ids();
         let mut token_id: TokenId<T> = 0u32.into();
         while token_id < min_token_id {
             budgets_remaining.push(0u32.into());
@@ -1197,7 +1206,7 @@ impl<T: Config> Module<T> {
                         <Proposals<T>>::remove(index);
 
                         // return their deposit.
-                        let _ = <pallet_social_tokens::Module<T>>::unreserve(
+                        let _ = <pallet_assets::Module<T>>::unreserve(
                             &p.proposer,
                             p.social_token_id,
                             p.bond,
@@ -1205,7 +1214,7 @@ impl<T: Config> Module<T> {
 
                         // provide the allocation.
                         imbalances[id].subsume(
-                            <pallet_social_tokens::Module<T>>::deposit_creating(
+                            <pallet_assets::Module<T>>::deposit_creating(
                                 &p.beneficiary,
                                 p.social_token_id,
                                 p.value,
@@ -1245,7 +1254,7 @@ impl<T: Config> Module<T> {
                             bounty.status = BountyStatus::Funded;
 
                             // return their deposit.
-                            let _ = <pallet_social_tokens::Module<T>>::unreserve(
+                            let _ = <pallet_assets::Module<T>>::unreserve(
                                 &bounty.proposer,
                                 bounty.social_token_id,
                                 bounty.bond,
@@ -1253,7 +1262,7 @@ impl<T: Config> Module<T> {
 
                             // fund the bounty account
                             imbalances[id].subsume(
-                                <pallet_social_tokens::Module<T>>::deposit_creating(
+                                <pallet_assets::Module<T>>::deposit_creating(
                                     &Self::bounty_account_id(index),
                                     bounty.social_token_id,
                                     bounty.value,
@@ -1285,7 +1294,7 @@ impl<T: Config> Module<T> {
                 let burn = (<T as Config>::Burn::get() * budget_remaining).min(budget_remaining);
                 budgets_remaining[id] -= burn;
 
-                let (debit, credit) = <pallet_social_tokens::Module<T>>::pair(token_id, burn);
+                let (debit, credit) = <pallet_assets::Module<T>>::pair(token_id, burn);
                 imbalances[id].subsume(debit);
                 <T as Config>::BurnDestination::on_unbalanced(credit);
                 Self::deposit_event(RawEvent::Burnt(token_id, burn))
@@ -1295,7 +1304,7 @@ impl<T: Config> Module<T> {
             // proof: budget_remaining is account free balance minus ED;
             // Thus we can't spend more than account free balance minus ED;
             // Thus account is kept alive; qed;
-            if let Err(problem) = <pallet_social_tokens::Module<T>>::settle(
+            if let Err(problem) = <pallet_assets::Module<T>>::settle(
                 &account_id,
                 token_id,
                 imbalances[id].clone(),
@@ -1318,8 +1327,8 @@ impl<T: Config> Module<T> {
     /// Return the amount of money in the pot.
     // The existential deposit is not part of the pot so treasury account never gets deleted.
     fn pot(token_id: TokenId<T>) -> BalanceOf<T> {
-        <pallet_social_tokens::Module<T>>::free_balance(&Self::account_id(), token_id)
-            .saturating_sub(<pallet_social_tokens::Module<T>>::minimum_balance())
+        <pallet_assets::Module<T>>::free_balance(&Self::account_id(), token_id)
+            .saturating_sub(<pallet_assets::Module<T>>::minimum_balance())
     }
 
     fn create_bounty(
@@ -1342,7 +1351,7 @@ impl<T: Config> Module<T> {
         // reserve deposit for new bounty
         let bond = <T as Config>::BountyDepositBase::get()
             + <T as Config>::DataDepositPerByte::get() * (description.len() as u32).into();
-        <pallet_social_tokens::Module<T>>::reserve(&proposer, token_id, bond)
+        <pallet_assets::Module<T>>::reserve(&proposer, token_id, bond)
             .map_err(|_| Error::<T>::InsufficientProposersBalance)?;
 
         BountyCount::put(index + 1);
@@ -1364,4 +1373,5 @@ impl<T: Config> Module<T> {
 
         Ok(())
     }
+*/
 }

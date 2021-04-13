@@ -17,7 +17,7 @@ sp-io = { default-features = false, version = '3.0.0', path = '../../primitives/
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
 sp-core = { default-features = false, version = '3.0.0', path = '../../primitives/core' }
 pallet-timestamp = { default-features = false, version = '3.0.0', path = '../timestamp' }
-pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
+pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
 
 [features]
 default = ['std']
@@ -31,5 +31,5 @@ std = [
     'sp-core/std',
     'sp-runtime/std',
     'pallet-timestamp/std',
-    'pallet-social-tokens/std',
+    'pallet-assets/std',
 ]

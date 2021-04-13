@@ -113,24 +113,47 @@
 mod benchmarking;
 pub mod weights;
 
-use sp_std::{fmt::Debug, prelude::*};
+use sp_std::{fmt::Debug, prelude::*, result};
 use sp_runtime::{
 	RuntimeDebug,
 	traits::{
-		AtLeast32BitUnsigned, Zero, StaticLookup, Saturating, CheckedSub, CheckedAdd,
+		AtLeast32BitUnsigned, Zero, StaticLookup, Saturating, CheckedSub, CheckedAdd, Member,
 	}
 };
 use codec::{Encode, Decode, HasCompact};
 use frame_support::{
+	Parameter,
+	dispatch::{DispatchResult, DispatchResultWithPostInfo},
 	ensure,
-	traits::{Currency, ReservableCurrency, BalanceStatus::Reserved},
+	traits::{Currency, BalanceStatus::Reserved, Get, Imbalance, ReservableCurrency, TryDrop},
 	dispatch::DispatchError,
 };
 pub use weights::WeightInfo;
 
 pub use pallet::*;
+pub use self::imbalances::{NegativeImbalance, PositiveImbalance};
 
 type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+pub enum CheckAssetIssuer {
+	Yes,
+	No,
+}
+
+type Symbol = [u8; 8];
+const NET_V1: Symbol = *b"NETSWAP1";
+
+/// TODO: consider if there need to be more fields
+#[derive(Encode, Decode)]
+pub struct TokenDossier {
+	pub symbol: Symbol,
+}
+
+impl TokenDossier {
+	pub fn new_lp_token() -> Self {
+		TokenDossier { symbol: NET_V1 }
+	}
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -152,10 +175,10 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The units in which we record balances.
-		type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy;
+		type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize;
 
 		/// The arithmetic type of asset identifier.
-		type AssetId: Member + Parameter + Default + Copy + HasCompact;
+		type AssetId: Member + Parameter + Default + Copy + HasCompact + AtLeast32BitUnsigned + MaybeSerializeDeserialize;
 
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -223,29 +246,7 @@ pub mod pallet {
 			let owner = ensure_signed(origin)?;
 			let admin = T::Lookup::lookup(admin)?;
 
-			ensure!(!Asset::<T>::contains_key(id), Error::<T>::InUse);
-			ensure!(!min_balance.is_zero(), Error::<T>::MinBalanceZero);
-
-			let deposit = T::AssetDepositPerZombie::get()
-				.saturating_mul(max_zombies.into())
-			 	.saturating_add(T::AssetDepositBase::get());
-			T::Currency::reserve(&owner, deposit)?;
-
-			Asset::<T>::insert(id, AssetDetails {
-				owner: owner.clone(),
-				issuer: admin.clone(),
-				admin: admin.clone(),
-				freezer: admin.clone(),
-				supply: Zero::zero(),
-				deposit,
-				max_zombies,
-				min_balance,
-				zombies: Zero::zero(),
-				accounts: Zero::zero(),
-				is_frozen: false,
-			});
-			Self::deposit_event(Event::Created(id, owner, admin));
-			Ok(().into())
+			Self::do_create(id, owner, admin, max_zombies, min_balance)
 		}
 
 		/// Issue a new class of fungible assets from a privileged origin.
@@ -296,6 +297,9 @@ pub mod pallet {
 				accounts: Zero::zero(),
 				is_frozen: false,
 			});
+			if Self::max_asset_id() < id {
+				MaxAssetId::<T>::put(id)
+			}
 			Self::deposit_event(Event::ForceCreated(id, owner));
 			Ok(().into())
 		}
@@ -389,24 +393,7 @@ pub mod pallet {
 			let origin = ensure_signed(origin)?;
 			let beneficiary = T::Lookup::lookup(beneficiary)?;
 
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-
-				ensure!(&origin == &details.issuer, Error::<T>::NoPermission);
-				details.supply = details.supply.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
-
-				Account::<T>::try_mutate(id, &beneficiary, |t| -> DispatchResultWithPostInfo {
-					let new_balance = t.balance.saturating_add(amount);
-					ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
-					if t.balance.is_zero() {
-						t.is_zombie = Self::new_account(&beneficiary, details)?;
-					}
-					t.balance = new_balance;
-					Ok(().into())
-				})?;
-				Self::deposit_event(Event::Issued(id, beneficiary, amount));
-				Ok(().into())
-			})
+			Self::do_mint(id, origin, beneficiary, amount, CheckAssetIssuer::Yes)
 		}
 
 		/// Reduce the balance of `who` by as much as possible up to `amount` assets of `id`.
@@ -434,33 +421,7 @@ pub mod pallet {
 			let origin = ensure_signed(origin)?;
 			let who = T::Lookup::lookup(who)?;
 
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let d = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				ensure!(&origin == &d.admin, Error::<T>::NoPermission);
-
-				let burned = Account::<T>::try_mutate_exists(
-					id,
-					&who,
-					|maybe_account| -> Result<T::Balance, DispatchError> {
-						let mut account = maybe_account.take().ok_or(Error::<T>::BalanceZero)?;
-						let mut burned = amount.min(account.balance);
-						account.balance -= burned;
-						*maybe_account = if account.balance < d.min_balance {
-							burned += account.balance;
-							Self::dead_account(&who, d, account.is_zombie);
-							None
-						} else {
-							Some(account)
-						};
-						Ok(burned)
-					}
-				)?;
-
-				d.supply = d.supply.saturating_sub(burned);
-
-				Self::deposit_event(Event::Burned(id, who, burned));
-				Ok(().into())
-			})
+			Self::do_burn(id, origin, who, amount, CheckAssetIssuer::Yes)
 		}
 
 		/// Move some assets from the sender account to another.
@@ -489,52 +450,9 @@ pub mod pallet {
 			#[pallet::compact] amount: T::Balance
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
-			ensure!(!amount.is_zero(), Error::<T>::AmountZero);
-
-			let mut origin_account = Account::<T>::get(id, &origin);
-			ensure!(!origin_account.is_frozen, Error::<T>::Frozen);
-			origin_account.balance = origin_account.balance.checked_sub(&amount)
-				.ok_or(Error::<T>::BalanceLow)?;
-
 			let dest = T::Lookup::lookup(target)?;
-			Asset::<T>::try_mutate(id, |maybe_details| {
-				let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
-				ensure!(!details.is_frozen, Error::<T>::Frozen);
 
-				if dest == origin {
-					return Ok(().into())
-				}
-
-				let mut amount = amount;
-				if origin_account.balance < details.min_balance {
-					amount += origin_account.balance;
-					origin_account.balance = Zero::zero();
-				}
-
-				Account::<T>::try_mutate(id, &dest, |a| -> DispatchResultWithPostInfo {
-					let new_balance = a.balance.saturating_add(amount);
-					ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
-					if a.balance.is_zero() {
-						a.is_zombie = Self::new_account(&dest, details)?;
-					}
-					a.balance = new_balance;
-					Ok(().into())
-				})?;
-
-				match origin_account.balance.is_zero() {
-					false => {
-						Self::dezombify(&origin, details, &mut origin_account.is_zombie);
-						Account::<T>::insert(id, &origin, &origin_account)
-					}
-					true => {
-						Self::dead_account(&origin, details, origin_account.is_zombie);
-						Account::<T>::remove(id, &origin);
-					}
-				}
-
-				Self::deposit_event(Event::Transferred(id, origin, dest, amount));
-				Ok(().into())
-			})
+			Self::do_transfer(id, origin, dest, amount)
 		}
 
 		/// Move some assets from one account to another.
@@ -983,6 +901,8 @@ pub mod pallet {
 		BadState,
 		/// Invalid metadata given.
 		BadMetadata,
+		/// Have no permission to transfer someone's balance
+		NotAllowed,
 	}
 
 	#[pallet::storage]
@@ -1013,6 +933,58 @@ pub mod pallet {
 		AssetMetadata<BalanceOf<T>>,
 		ValueQuery
 	>;
+	#[pallet::storage]
+	#[pallet::getter(fn max_asset_id)]
+	/// The maximum asset id.
+	pub(super) type MaxAssetId<T: Config> = StorageValue<_, T::AssetId, ValueQuery>;
+	#[pallet::storage]
+	#[pallet::getter(fn allowances)]
+	/// Allowance
+	pub(super) type Allowances<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		T::AssetId,
+		Blake2_128Concat,
+		(T::AccountId, T::AccountId),
+		T::Balance,
+		ValueQuery
+	>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub assets: Vec<(T::AssetId, T::AccountId, T::AccountId, u32, T::Balance)>
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self {
+				assets: Default::default(),
+			}
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			for asset in &self.assets {
+				let (id, owner, admin, max_zombies, min_balance) = asset;
+				Asset::<T>::insert(id, AssetDetails {
+					owner: owner.clone(),
+					issuer: admin.clone(),
+					admin: admin.clone(),
+					freezer: admin.clone(),
+					supply: Zero::zero(),
+					deposit: Zero::zero(),
+					max_zombies: max_zombies.clone(),
+					min_balance: min_balance.clone(),
+					zombies: Zero::zero(),
+					accounts: Zero::zero(),
+					is_frozen: false,
+				});
+			}
+		}
+	}
 }
 
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug)]
@@ -1093,6 +1065,170 @@ impl<T: Config> Pallet<T> {
 		Asset::<T>::get(id).map(|x| x.max_zombies - x.zombies).unwrap_or_else(Zero::zero)
 	}
 
+	/// Check to the asset id exists
+	pub fn validate_asset_id(id: T::AssetId) -> DispatchResult {
+		ensure!(Asset::<T>::contains_key(id), Error::<T>::Unknown);
+
+		Ok(())
+	}
+
+	pub fn do_create(
+		id: T::AssetId,
+		owner: T::AccountId,
+		admin: T::AccountId,
+		max_zombies: u32,
+		min_balance: T::Balance,
+	) -> DispatchResultWithPostInfo {
+		ensure!(!Asset::<T>::contains_key(id), Error::<T>::InUse);
+		ensure!(!min_balance.is_zero(), Error::<T>::MinBalanceZero);
+
+		let deposit = T::AssetDepositPerZombie::get()
+			.saturating_mul(max_zombies.into())
+			.saturating_add(T::AssetDepositBase::get());
+		T::Currency::reserve(&owner, deposit)?;
+
+		Asset::<T>::insert(id, AssetDetails {
+			owner: owner.clone(),
+			issuer: admin.clone(),
+			admin: admin.clone(),
+			freezer: admin.clone(),
+			supply: Zero::zero(),
+			deposit,
+			max_zombies,
+			min_balance,
+			zombies: Zero::zero(),
+			accounts: Zero::zero(),
+			is_frozen: false,
+		});
+		if Self::max_asset_id() < id {
+			MaxAssetId::<T>::put(id)
+		}
+		Self::deposit_event(Event::Created(id, owner, admin));
+		Ok(().into())
+	}
+
+	pub fn do_mint(
+		id: T::AssetId,
+		issuer: T::AccountId,
+		beneficiary: T::AccountId,
+		amount: T::Balance,
+		check_asset_issuer: CheckAssetIssuer
+	) -> DispatchResultWithPostInfo {
+		Asset::<T>::try_mutate(id, |maybe_details| {
+			let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+
+			ensure!(
+				matches!(check_asset_issuer, CheckAssetIssuer::No) || &issuer == &details.issuer,
+				Error::<T>::NoPermission,
+			);
+			details.supply = details.supply.checked_add(&amount).ok_or(Error::<T>::Overflow)?;
+
+			Account::<T>::try_mutate(id, &beneficiary, |t| -> DispatchResultWithPostInfo {
+				let new_balance = t.balance.saturating_add(amount);
+				ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
+				if t.balance.is_zero() {
+					t.is_zombie = Self::new_account(&beneficiary, details)?;
+				}
+				t.balance = new_balance;
+				Ok(().into())
+			})?;
+			Self::deposit_event(Event::Issued(id, beneficiary, amount));
+			Ok(().into())
+		})
+	}
+
+	pub fn do_burn(
+		id: T::AssetId,
+		caller: T::AccountId,
+		who: T::AccountId,
+		amount: T::Balance,
+		check_asset_issuer: CheckAssetIssuer,
+	) -> DispatchResultWithPostInfo {
+		Asset::<T>::try_mutate(id, |maybe_details| {
+			let d = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+			ensure!(
+				matches!(check_asset_issuer, CheckAssetIssuer::No) || &caller == &d.admin,
+				Error::<T>::NoPermission
+			);
+
+			let burned = Account::<T>::try_mutate_exists(
+				id,
+				&who,
+				|maybe_account| -> Result<T::Balance, DispatchError> {
+					let mut account = maybe_account.take().ok_or(Error::<T>::BalanceZero)?;
+					let mut burned = amount.min(account.balance);
+					account.balance -= burned;
+					*maybe_account = if account.balance < d.min_balance {
+						burned += account.balance;
+						Self::dead_account(&who, d, account.is_zombie);
+						None
+					} else {
+						Some(account)
+					};
+					Ok(burned)
+				}
+			)?;
+
+			d.supply = d.supply.saturating_sub(burned);
+
+			Self::deposit_event(Event::Burned(id, who, burned));
+			Ok(().into())
+		})
+	}
+
+	pub fn do_transfer(
+		id: T::AssetId,
+		source: T::AccountId,
+		dest: T::AccountId,
+		amount: T::Balance
+	) -> DispatchResultWithPostInfo {
+		ensure!(!amount.is_zero(), Error::<T>::AmountZero);
+
+		let mut origin_account = Account::<T>::get(id, &source);
+		ensure!(!origin_account.is_frozen, Error::<T>::Frozen);
+		origin_account.balance = origin_account.balance.checked_sub(&amount)
+			.ok_or(Error::<T>::BalanceLow)?;
+
+		Asset::<T>::try_mutate(id, |maybe_details| {
+			let details = maybe_details.as_mut().ok_or(Error::<T>::Unknown)?;
+			ensure!(!details.is_frozen, Error::<T>::Frozen);
+
+			if dest == source {
+				return Ok(().into())
+			}
+
+			let mut amount = amount;
+			if origin_account.balance < details.min_balance {
+				amount += origin_account.balance;
+				origin_account.balance = Zero::zero();
+			}
+
+			Account::<T>::try_mutate(id, &dest, |a| -> DispatchResultWithPostInfo {
+				let new_balance = a.balance.saturating_add(amount);
+				ensure!(new_balance >= details.min_balance, Error::<T>::BalanceLow);
+				if a.balance.is_zero() {
+					a.is_zombie = Self::new_account(&dest, details)?;
+				}
+				a.balance = new_balance;
+				Ok(().into())
+			})?;
+
+			match origin_account.balance.is_zero() {
+				false => {
+					Self::dezombify(&source, details, &mut origin_account.is_zombie);
+					Account::<T>::insert(id, &source, &origin_account)
+				}
+				true => {
+					Self::dead_account(&source, details, origin_account.is_zombie);
+					Account::<T>::remove(id, &source);
+				}
+			}
+
+			Self::deposit_event(Event::Transferred(id, source, dest, amount));
+			Ok(().into())
+		})
+	}
+
 	fn new_account(
 		who: &T::AccountId,
 		d: &mut AssetDetails<T::Balance, T::AccountId, BalanceOf<T>>,
@@ -1136,6 +1272,282 @@ impl<T: Config> Pallet<T> {
 			frame_system::Module::<T>::dec_consumers(who);
 		}
 		d.accounts = d.accounts.saturating_sub(1);
+	}
+}
+
+pub trait Fungible<AssetId, AccountId> {
+	type Balance: Member + Parameter + AtLeast32BitUnsigned + Default + Copy;
+
+	fn total_supply(token_id: &AssetId) -> Self::Balance;
+
+	fn balances(token_id: &AssetId, who: &AccountId) -> Self::Balance;
+
+	fn allowances(
+		token_id: &AssetId,
+		owner: &AccountId,
+		spender: &AccountId,
+	) -> Self::Balance;
+
+	fn transfer(
+		token_id: &AssetId,
+		from: &AccountId,
+		to: &AccountId,
+		value: Self::Balance,
+	) -> DispatchResult;
+
+	fn transfer_from(
+		token_id: &AssetId,
+		from: &AccountId,
+		operator: &AccountId,
+		to: &AccountId,
+		value: Self::Balance,
+	) -> DispatchResult;
+}
+
+pub trait IssueAndBurn<AssetId, AccountId>: Fungible<AssetId, AccountId> {
+	fn exists(asset_id: &AssetId) -> bool;
+
+	fn create_new_asset(owner: &AccountId, dossier: TokenDossier) -> Result<AssetId, DispatchError>;
+
+	fn issue(asset_id: &AssetId, who: &AccountId, value: Self::Balance) -> DispatchResult;
+
+	fn burn(asset_id: &AssetId, who: &AccountId, value: Self::Balance) -> DispatchResult;
+}
+
+impl<T: Config> Fungible<T::AssetId, T::AccountId> for Module<T> {
+	type Balance = T::Balance;
+
+	fn total_supply(token_id: &T::AssetId) -> Self::Balance {
+		Self::total_supply(*token_id)
+	}
+
+	fn balances(token_id: &T::AssetId, who: &T::AccountId) -> Self::Balance {
+		Self::balance(*token_id, who.clone())
+	}
+
+	fn allowances(
+		token_id: &T::AssetId,
+		owner: &T::AccountId,
+		spender: &T::AccountId,
+	) -> Self::Balance {
+		Self::allowances(token_id, (owner, spender))
+	}
+
+	fn transfer(
+		token_id: &T::AssetId,
+		from: &T::AccountId,
+		to: &T::AccountId,
+		value: Self::Balance,
+	) -> DispatchResult {
+		Self::do_transfer(
+			*token_id,
+			from.clone(),
+			to.clone(),
+			value,
+		)
+		.map(|_| ())
+		.map_err(|err| err.error)
+	}
+
+	fn transfer_from(
+		token_id: &T::AssetId,
+		from: &T::AccountId,
+		operator: &T::AccountId,
+		to: &T::AccountId,
+		value: Self::Balance,
+	) -> DispatchResult {
+		let new_allowance = Self::allowances(token_id, (from, operator))
+			.checked_sub(&value)
+			.ok_or(Error::<T>::Overflow)?;
+
+		if from != to {
+			Self::do_transfer(
+				*token_id,
+				from.clone(),
+				to.clone(),
+				value,
+			)
+			.map(|_| ())
+			.map_err(|err| err.error)?;
+		}
+
+		<Allowances<T>>::mutate(token_id, (from, operator), |approved_balance| {
+			*approved_balance = new_allowance;
+		});
+
+		Ok(())
+	}
+}
+
+impl<T: Config> IssueAndBurn<T::AssetId, T::AccountId> for Module<T> {
+	fn exists(asset_id: &T::AssetId) -> bool {
+		Asset::<T>::contains_key(asset_id)
+	}
+
+	fn create_new_asset(owner: &T::AccountId, _dossier: TokenDossier) -> Result<T::AssetId, DispatchError> {
+		const MAX_ZOMBIES: u32 = 0;
+		const MIN_BALANCE: u32 = 0;
+		let id = Self::max_asset_id() + 1u32.into();
+		Self::do_create(id, owner.clone(), owner.clone(), MAX_ZOMBIES, MIN_BALANCE.into())
+			.map(|_| id)
+			.map_err(|err| err.error)
+	}
+
+	fn issue(
+		token_id: &T::AssetId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> DispatchResult {
+		ensure!(Self::exists(token_id), Error::<T>::Unknown);
+
+		Self::do_mint(*token_id, who.clone(), who.clone(), value, CheckAssetIssuer::No)
+			.map(|_| ())
+			.map_err(|err| err.error)
+	}
+
+	fn burn(
+		token_id: &T::AssetId,
+		who: &T::AccountId,
+		value: Self::Balance,
+	) -> DispatchResult {
+		ensure!(Self::exists(token_id), Error::<T>::Unknown);
+
+		Self::do_burn(*token_id, who.clone(), who.clone(), value, CheckAssetIssuer::No)
+			.map(|_| ())
+			.map_err(|err| err.error)
+	}
+}
+
+mod imbalances {
+	use super::{Config, Imbalance, Saturating, TryDrop, Zero, result};
+	use sp_std::mem;
+
+	/// Opaque, move-only struct with private fields that serves as a token denoting that
+	/// funds have been destroyed without any equal and opposite accounting.
+	#[must_use]
+	#[derive(Clone)]
+	pub struct PositiveImbalance<T: Config>(T::Balance);
+
+	impl<T: Config> PositiveImbalance<T> {
+		/// Create a new positive imbalance from a balance.
+		pub fn new(amount: T::Balance) -> Self {
+			PositiveImbalance(amount)
+		}
+	}
+
+	/// Opaque, move-only struct with private fields that serves as a token denoting that
+	/// funds have been destroyed without any equal and opposite accounting.
+	#[must_use]
+	#[derive(Clone)]
+	pub struct NegativeImbalance<T: Config>(T::Balance);
+
+	impl<T: Config> NegativeImbalance<T> {
+		/// Create a new negative imbalance from a balance.
+		pub fn new(amount: T::Balance) -> Self {
+			NegativeImbalance(amount)
+		}
+	}
+
+	impl<T: Config> TryDrop for PositiveImbalance<T> {
+		fn try_drop(self) -> result::Result<(), Self> {
+			self.drop_zero()
+		}
+	}
+
+	impl<T: Config> Imbalance<T::Balance> for PositiveImbalance<T> {
+		type Opposite = NegativeImbalance<T>;
+
+		fn zero() -> Self {
+			Self(Zero::zero())
+		}
+		fn drop_zero(self) -> result::Result<(), Self> {
+			if self.0.is_zero() {
+				Ok(())
+			} else {
+				Err(self)
+			}
+		}
+		fn split(self, amount: T::Balance) -> (Self, Self) {
+			let first = self.0.min(amount);
+			let second = self.0 - first;
+
+			mem::forget(self);
+			(Self(first), Self(second))
+		}
+		fn merge(mut self, other: Self) -> Self {
+			self.0 = self.0.saturating_add(other.0);
+			mem::forget(other);
+
+			self
+		}
+		fn subsume(&mut self, other: Self) {
+			self.0 = self.0.saturating_add(other.0);
+			mem::forget(other);
+		}
+		fn offset(self, other: Self::Opposite) -> result::Result<Self, Self::Opposite> {
+			let (a, b) = (self.0, other.0);
+			mem::forget((self, other));
+
+			if a >= b {
+				Ok(Self(a - b))
+			} else {
+				Err(NegativeImbalance::new(b - a))
+			}
+		}
+		fn peek(&self) -> T::Balance {
+			self.0.clone()
+		}
+	}
+
+	impl<T: Config> TryDrop for NegativeImbalance<T> {
+		fn try_drop(self) -> result::Result<(), Self> {
+			self.drop_zero()
+		}
+	}
+
+	impl<T: Config> Imbalance<T::Balance> for NegativeImbalance<T> {
+		type Opposite = PositiveImbalance<T>;
+
+		fn zero() -> Self {
+			Self(Zero::zero())
+		}
+		fn drop_zero(self) -> result::Result<(), Self> {
+			if self.0.is_zero() {
+				Ok(())
+			} else {
+				Err(self)
+			}
+		}
+		fn split(self, amount: T::Balance) -> (Self, Self) {
+			let first = self.0.min(amount);
+			let second = self.0 - first;
+
+			mem::forget(self);
+			(Self(first), Self(second))
+		}
+		fn merge(mut self, other: Self) -> Self {
+			self.0 = self.0.saturating_add(other.0);
+			mem::forget(other);
+
+			self
+		}
+		fn subsume(&mut self, other: Self) {
+			self.0 = self.0.saturating_add(other.0);
+			mem::forget(other);
+		}
+		fn offset(self, other: Self::Opposite) -> result::Result<Self, Self::Opposite> {
+			let (a, b) = (self.0, other.0);
+			mem::forget((self, other));
+
+			if a >= b {
+				Ok(Self(a - b))
+			} else {
+				Err(PositiveImbalance::new(b - a))
+			}
+		}
+		fn peek(&self) -> T::Balance {
+			self.0.clone()
+		}
 	}
 }
 

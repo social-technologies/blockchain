@@ -12,7 +12,7 @@ use frame_support::{
     IterableStorageDoubleMap, IterableStorageMap, Parameter,
 };
 use frame_system::ensure_signed;
-use pallet_social_tokens::{Fungible, IssueAndBurn, TokenDossier};
+use pallet_assets::{Fungible, IssueAndBurn, TokenDossier};
 use sp_runtime::{
     traits::{
         AccountIdConversion, AtLeast32Bit, AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedDiv,
@@ -28,14 +28,14 @@ type TokenDossierOf = TokenDossier;
 pub type CurrencyOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 pub type BalanceOf<T> = <<T as Config>::FungibleToken as Fungible<
-    <T as pallet_social_tokens::Config>::SocialTokenId,
+    <T as pallet_assets::Config>::AssetId,
     <T as frame_system::Config>::AccountId,
 >>::Balance;
 
 #[derive(Encode, Decode)]
-pub struct Exchange<SocialTokenId, Balance, CurrencyOf> {
-    pub lp_token: SocialTokenId,
-    pub trade_token: SocialTokenId,
+pub struct Exchange<AssetId, Balance, CurrencyOf> {
+    pub lp_token: AssetId,
+    pub trade_token: AssetId,
     /// trade token amount in the exchange
     pub trade_token_amount: Balance,
     /// native currency amount in the exchange
@@ -53,12 +53,12 @@ impl<A, B: Zero, C: Zero> Exchange<A, B, C> {
     }
 }
 
-pub trait Config: frame_system::Config + pallet_social_tokens::Config {
+pub trait Config: frame_system::Config + pallet_assets::Config {
     type Currency: Currency<Self::AccountId>;
     type ModuleId: Get<ModuleId>;
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
     type ExchangeId: Parameter + Member + AtLeast32Bit + Default + Copy;
-    type FungibleToken: IssueAndBurn<Self::SocialTokenId, Self::AccountId>;
+    type FungibleToken: IssueAndBurn<Self::AssetId, Self::AccountId>;
     /// help to convert native token balance to fungible token balance
     type Handler: Convert<CurrencyOf<Self>, BalanceOf<Self>>;
 }
@@ -69,11 +69,11 @@ decl_event! {
         <T as frame_system::Config>::AccountId,
         Balance = BalanceOf<T>,
         <T as Config>::ExchangeId,
-        <T as pallet_social_tokens::Config>::SocialTokenId,
+        <T as pallet_assets::Config>::AssetId,
 
     {
         /// A new exchange created. [exchange_id, lp_token_id, trade_token_id]
-        NewExchange(ExchangeId, SocialTokenId, SocialTokenId),
+        NewExchange(ExchangeId, AssetId, AssetId),
         /// Add liquidity [exchange_id, liquidity_provider, native_token, trade_token, liquidity_minted]
         AddLiquidity(ExchangeId, AccountId, CurrencyOf, Balance, Balance),
         /// Remove liquidity [exchange_id, liquidity_burner, native_token, trade_token, liquidity_burned]
@@ -102,11 +102,11 @@ decl_error! {
 decl_storage! {
     trait Store for Module<T: Config> as UniswapExchanges {
 
-        pub Exchanges get(fn exchanges): map hasher(twox_64_concat) T::ExchangeId => Option<Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>>;
+        pub Exchanges get(fn exchanges): map hasher(twox_64_concat) T::ExchangeId => Option<Exchange<T::AssetId, BalanceOf<T>, CurrencyOf<T>>>;
 
-        pub TradeTokenToExchange get(fn tt_to_exchange): map hasher(twox_64_concat) T::SocialTokenId => Option<T::ExchangeId>;
+        pub TradeTokenToExchange get(fn tt_to_exchange): map hasher(twox_64_concat) T::AssetId => Option<T::ExchangeId>;
 
-        pub LPTokenToExchange get(fn lp_to_exchange): map hasher(twox_64_concat) T::SocialTokenId => T::ExchangeId;
+        pub LPTokenToExchange get(fn lp_to_exchange): map hasher(twox_64_concat) T::AssetId => T::ExchangeId;
         /// The next exchange identifier
         pub NextExchangeId get(fn next_exchange_id): T::ExchangeId;
 
@@ -119,7 +119,7 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 0]
-        fn create_exchange(origin, token_id: T::SocialTokenId) -> DispatchResult {
+        fn create_exchange(origin, token_id: T::AssetId) -> DispatchResult {
             // make sure there will be only one exchange for a specific trade token
             // and this trade token exists
             ensure!(T::FungibleToken::exists(&token_id), Error::<T>::TradeTokenNotExists);
@@ -321,20 +321,20 @@ impl<T: Config> Module<T> {
         T::ModuleId::get().into_account()
     }
 
-    fn create_lp_token(exchange_id: T::ExchangeId) -> Result<T::SocialTokenId, DispatchError> {
+    fn create_lp_token(exchange_id: T::ExchangeId) -> Result<T::AssetId, DispatchError> {
         // create a new lp token for exchange
-        T::FungibleToken::create_new_asset(TokenDossierOf::new_lp_token())
+        T::FungibleToken::create_new_asset(&Self::account_id(), TokenDossierOf::new_lp_token())
     }
 
     fn input_liquidity(
         who: &T::AccountId,
         native_token_amount: CurrencyOf<T>,
-        trade_token_id: &T::SocialTokenId,
+        trade_token_id: &T::AssetId,
         trade_token_amount: BalanceOf<T>,
-        exchange: &mut Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>,
+        exchange: &mut Exchange<T::AssetId, BalanceOf<T>, CurrencyOf<T>>,
     ) -> DispatchResult {
         let this = Self::account_id();
-        T::Currency::transfer(
+        <T as Config>::Currency::transfer(
             who,
             &this,
             native_token_amount,
@@ -350,12 +350,12 @@ impl<T: Config> Module<T> {
     fn withdraw_liquidity(
         who: &T::AccountId,
         native_token_amount: CurrencyOf<T>,
-        trade_token_id: &T::SocialTokenId,
+        trade_token_id: &T::AssetId,
         trade_token_amount: BalanceOf<T>,
-        exchange: &mut Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>,
+        exchange: &mut Exchange<T::AssetId, BalanceOf<T>, CurrencyOf<T>>,
     ) -> DispatchResult {
         let this = Self::account_id();
-        T::Currency::transfer(
+        <T as Config>::Currency::transfer(
             &this,
             who,
             native_token_amount,
@@ -371,16 +371,16 @@ impl<T: Config> Module<T> {
     /// change the storage
     /// put this at the end of the `native_to_trade_input` function
     fn native_to_trade_swap(
-        exchange: &mut Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>,
+        exchange: &mut Exchange<T::AssetId, BalanceOf<T>, CurrencyOf<T>>,
         native_in: CurrencyOf<T>,
-        trade_token_id: &T::SocialTokenId,
+        trade_token_id: &T::AssetId,
         trade_out: BalanceOf<T>,
         buyer: &T::AccountId,
         recipient: &T::AccountId,
     ) -> DispatchResult {
         let this = Self::account_id();
         // transfer native token in
-        T::Currency::transfer(&buyer, &this, native_in, ExistenceRequirement::KeepAlive)?;
+        <T as Config>::Currency::transfer(&buyer, &this, native_in, ExistenceRequirement::KeepAlive)?;
         // modify Exchange
         exchange.native_token_amount += native_in;
         T::FungibleToken::transfer(&trade_token_id, &this, recipient, trade_out)?;
@@ -390,16 +390,16 @@ impl<T: Config> Module<T> {
 
     /// change the storage
     fn trade_to_native_swap(
-        exchange: &mut Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>,
+        exchange: &mut Exchange<T::AssetId, BalanceOf<T>, CurrencyOf<T>>,
         trade_in: BalanceOf<T>,
-        trade_token_id: &T::SocialTokenId,
+        trade_token_id: &T::AssetId,
         native_out: CurrencyOf<T>,
         buyer: &T::AccountId,
         recipient: &T::AccountId,
     ) -> DispatchResult {
         let this = Self::account_id();
         // transfer native token in
-        T::Currency::transfer(&this, &buyer, native_out, ExistenceRequirement::KeepAlive)?;
+        <T as Config>::Currency::transfer(&this, &buyer, native_out, ExistenceRequirement::KeepAlive)?;
         // modify Exchange
         exchange.native_token_amount -= native_out;
         T::FungibleToken::transfer(&trade_token_id, recipient, &this, trade_in)?;
@@ -422,7 +422,7 @@ impl<T: Config> Module<T> {
     }
 
     fn native_to_trade_input(
-        exchange: &mut Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>,
+        exchange: &mut Exchange<T::AssetId, BalanceOf<T>, CurrencyOf<T>>,
         native_in: CurrencyOf<T>,
         min_trade_tokens: BalanceOf<T>,
         deadline: T::BlockNumber,
@@ -458,7 +458,7 @@ impl<T: Config> Module<T> {
     }
 
     fn trade_to_native_input(
-        exchange: &mut Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>,
+        exchange: &mut Exchange<T::AssetId, BalanceOf<T>, CurrencyOf<T>>,
         trade_in: BalanceOf<T>,
         min_native_tokens: CurrencyOf<T>,
         deadline: T::BlockNumber,
@@ -495,7 +495,7 @@ impl<T: Config> Module<T> {
 
     /// evoked by dispatchble functions
     fn native_to_trade_output(
-        exchange: &mut Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>,
+        exchange: &mut Exchange<T::AssetId, BalanceOf<T>, CurrencyOf<T>>,
         trade_token_bought: BalanceOf<T>,
         deadline: T::BlockNumber,
         buyer: &T::AccountId,
@@ -530,7 +530,7 @@ impl<T: Config> Module<T> {
 
     /// evoked by dispatchable functions
     fn trade_to_native_output(
-        exchange: &mut Exchange<T::SocialTokenId, BalanceOf<T>, CurrencyOf<T>>,
+        exchange: &mut Exchange<T::AssetId, BalanceOf<T>, CurrencyOf<T>>,
         native_token_bought: CurrencyOf<T>,
         deadline: T::BlockNumber,
         buyer: &T::AccountId,
