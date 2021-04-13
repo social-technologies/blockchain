@@ -99,7 +99,7 @@ decl_storage! {
 	}
 }
 
-impl<T: Config> Randomness<T::Hash, T::BlockNumber> for Module<T> {
+impl<T: Config> Randomness<T::Hash> for Module<T> {
 	/// This randomness uses a low-influence function, drawing upon the block hashes from the
 	/// previous 81 blocks. Its result for any given subject will be known far in advance by anyone
 	/// observing the chain. Any block producer has significant influence over their block hashes
@@ -110,15 +110,14 @@ impl<T: Config> Randomness<T::Hash, T::BlockNumber> for Module<T> {
 	/// WARNING: Hashing the result of this function will remove any low-influence properties it has
 	/// and mean that all bits of the resulting value are entirely manipulatable by the author of
 	/// the parent block, who can determine the value of `parent_hash`.
-	fn random(subject: &[u8]) -> (T::Hash, T::BlockNumber) {
-		let block_number = <frame_system::Pallet<T>>::block_number();
+	fn random(subject: &[u8]) -> T::Hash {
+		let block_number = <frame_system::Module<T>>::block_number();
 		let index = block_number_to_index::<T>(block_number);
 
 		let hash_series = <RandomMaterial<T>>::get();
-		let seed = if !hash_series.is_empty() {
+		if !hash_series.is_empty() {
 			// Always the case after block 1 is initialized.
-			hash_series
-				.iter()
+			hash_series.iter()
 				.cycle()
 				.skip(index)
 				.take(RANDOM_MATERIAL_LEN as usize)
@@ -127,12 +126,7 @@ impl<T: Config> Randomness<T::Hash, T::BlockNumber> for Module<T> {
 				.triplet_mix()
 		} else {
 			T::Hash::default()
-		};
-
-		(
-			seed,
-			block_number.saturating_sub(RANDOM_MATERIAL_LEN.into()),
-		)
+		}
 	}
 }
 

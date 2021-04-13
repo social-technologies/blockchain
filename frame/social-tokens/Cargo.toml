@@ -1,7 +1,7 @@
 [package]
 authors = ["Social Technologies <developers@social.network>"]
 description = 'FRAME pallet to manage social tokens.'
-edition = '2021'
+edition = '2018'
 homepage = 'https://social.network'
 license = 'Apache-2.0'
 name = 'pallet-social-tokens'

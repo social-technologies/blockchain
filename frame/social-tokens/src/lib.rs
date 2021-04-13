@@ -140,7 +140,7 @@ impl<Balance: Saturating + Copy + Ord> AccountData<Balance> {
     }
 }
 
-type Symbol = [u8; 8];
+type Symbol = [u8; 6];
 const NET_LP: Symbol = *b"NETDEX";
 
 /// TODO: consider if there need to be more fields
@@ -772,7 +772,7 @@ impl<T: Config> Module<T> {
 mod imbalances {
     use super::{result, Imbalance, Saturating, Config, TryDrop, Zero};
     use sp_std::mem;
-
+	use frame_support::traits::SameOrOther;
     /// Opaque, move-only struct with private fields that serves as a token denoting that
     /// funds have been created without any equal and opposite accounting.
     #[must_use]
@@ -805,6 +805,12 @@ mod imbalances {
         }
     }
 
+	impl<T: Config> Default for PositiveImbalance<T> {
+		fn default() -> Self {
+			Self(T::Balance::default())
+		}
+	}
+
     impl<T: Config> Imbalance<T::Balance> for PositiveImbalance<T> {
         type Opposite = NegativeImbalance<T>;
 
@@ -835,15 +841,17 @@ mod imbalances {
             self.0 = self.0.saturating_add(other.0);
             mem::forget(other);
         }
-        fn offset(self, other: Self::Opposite) -> result::Result<Self, Self::Opposite> {
+        fn offset(self, other: Self::Opposite) -> SameOrOther<Self, Self::Opposite> {
             let (a, b) = (self.0, other.0);
             mem::forget((self, other));
 
-            if a >= b {
-                Ok(Self(a - b))
-            } else {
-                Err(NegativeImbalance::new(b - a))
-            }
+			if a > b {
+				SameOrOther::Same(Self(a - b))
+			} else if b > a {
+				SameOrOther::Other(NegativeImbalance::new(b - a))
+			} else {
+				SameOrOther::None
+			}
         }
         fn peek(&self) -> T::Balance {
             self.0.clone()
@@ -856,6 +864,11 @@ mod imbalances {
         }
     }
 
+	impl<T: Config> Default for NegativeImbalance<T> {
+		fn default() -> Self {
+			Self(T::Balance::default())
+		}
+	}
     impl<T: Config> Imbalance<T::Balance> for NegativeImbalance<T> {
         type Opposite = PositiveImbalance<T>;
 
@@ -886,15 +899,17 @@ mod imbalances {
             self.0 = self.0.saturating_add(other.0);
             mem::forget(other);
         }
-        fn offset(self, other: Self::Opposite) -> result::Result<Self, Self::Opposite> {
+        fn offset(self, other: Self::Opposite) -> SameOrOther<Self, Self::Opposite> {
             let (a, b) = (self.0, other.0);
             mem::forget((self, other));
 
-            if a >= b {
-                Ok(Self(a - b))
-            } else {
-                Err(PositiveImbalance::new(b - a))
-            }
+			if a > b {
+				SameOrOther::Same(Self(a - b))
+			} else if b > a {
+				SameOrOther::Other(PositiveImbalance::new(b - a))
+			} else {
+				SameOrOther::None
+			}
         }
         fn peek(&self) -> T::Balance {
             self.0.clone()

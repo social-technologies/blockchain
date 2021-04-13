@@ -2,7 +2,7 @@
 name = "pallet-social-network-dao"
 version = "3.0.0"
 authors = ["Social Technologies <sangoku@social.network>"]
-edition = "2021"
+edition = "2018"
 license = "Apache-2.0"
 homepage = "https://social.network"
 repository = "https://github.com/social-network/v3/"

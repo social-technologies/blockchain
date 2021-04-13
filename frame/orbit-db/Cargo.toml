@@ -2,7 +2,7 @@
 name = "pallet-orbit-db"
 version = "3.0.0"
 authors = ["Social Technologies <developers@social.network>"]
-edition = "2021"
+edition = "2018"
 license = "Unlicense"
 homepage = "https://orbitdb.org"
 repository = "https://github.com/social-network/orbitdb/"

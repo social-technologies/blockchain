@@ -18,7 +18,6 @@
 //! Test utilities
 
 use super::*;
-use crate as pallet_society;
 
 use frame_support::{
 	parameter_types, ord_parameter_types,
@@ -42,7 +41,6 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-		Society: pallet_society::{Module, Call, Storage, Event<T>, Config<T>},
 	}
 );
 
@@ -152,11 +150,6 @@ impl EnvBuilder {
 		self.balances.push((Society::account_id(), self.balance.max(self.pot)));
 		pallet_balances::GenesisConfig::<Test> {
 			balances: self.balances,
-		}.assimilate_storage(&mut t).unwrap();
-		pallet_society::GenesisConfig::<Test>{
-			members: self.members,
-			pot: self.pot,
-			max_members: self.max_members,
 		}.assimilate_storage(&mut t).unwrap();
 		let mut ext: sp_io::TestExternalities = t.into();
 		ext.execute_with(f)

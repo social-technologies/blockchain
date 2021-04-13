@@ -47,7 +47,7 @@ decl_event! {
 decl_error! {
     pub enum Error for Module<T: Config> {
         /// ID not recognized
-        NFTIdIdDoesNotExist,
+        NFTIdDoesNotExist,
         /// Already exists with an owner
         TokenAlreadyExists,
         /// Origin is not owner
@@ -58,7 +58,7 @@ decl_error! {
 decl_storage! {
     trait Store for Module<T: Config> as SocialNFT {
         /// Maps tokenId to Erc721 object
-        pub Tokens get(fn tokens): map hasher(opaque_blake2_256) NFTId => Option<Erc721Token>;
+        pub Tokens get(fn tokens): map hasher(opaque_blake2_256) NFTId => Option<SocialNFT>;
         /// Maps tokenId to owner
         pub TokenOwner get(fn owner_of): map hasher(opaque_blake2_256) NFTId => Option<T::AccountId>;
         /// Total number of tokens in existence
@@ -110,7 +110,7 @@ impl<T: Config> Module<T> {
     pub fn mint_token(owner: T::AccountId, id: NFTId, metadata: Vec<u8>) -> DispatchResult {
         ensure!(!Tokens::contains_key(id), Error::<T>::TokenAlreadyExists);
 
-        let new_token = Erc721Token { id, metadata };
+        let new_token = SocialNFT { id, metadata };
 
         <Tokens>::insert(&id, new_token);
         <TokenOwner<T>>::insert(&id, owner.clone());

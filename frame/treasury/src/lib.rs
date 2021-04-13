@@ -153,7 +153,7 @@ pub trait SpendFunds<T: Config<I>, I=DefaultInstance> {
 
 /// An index of a proposal. Just a `u32`.
 pub type ProposalIndex = u32;
-
+pub type BountyIndex = u32;
 /// A spending proposal.
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
@@ -350,6 +350,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	/// value and only call this once.
 	pub fn account_id() -> T::AccountId {
 		T::ModuleId::get().into_account()
+	}
+
+	/// The account ID of a bounty account
+	pub fn bounty_account_id(id: BountyIndex) -> T::AccountId {
+		// only use two byte prefix to support 16 byte account id (used by test)
+		// "modl" ++ "py/trsry" ++ "bt" is 14 bytes, and two bytes remaining for bounty index
+		T::ModuleId::get().into_sub_account(("bt", id))
 	}
 
 	/// The needed bond for a proposal whose spend is `value`.

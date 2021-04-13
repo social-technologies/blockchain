@@ -2,7 +2,7 @@
 name = "pallet-social-dex"
 version = "0.2.0"
 authors = ["Social Technologies <sangoku@social.network>"]
-edition = "2021"
+edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

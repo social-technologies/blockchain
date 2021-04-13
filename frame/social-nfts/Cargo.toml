@@ -2,7 +2,7 @@
 name = 'pallet-social-nft'
 version = '0.0.1'
 authors = ['developers@social.network']
-edition = '2021'
+edition = '2018'
 
 [dependencies]
 # third-party dependencies

@@ -47,7 +47,6 @@ pub use sp_consensus_babe::{AuthorityId, PUBLIC_KEY_LENGTH, RANDOMNESS_LENGTH, V
 
 mod default_weights;
 mod equivocation;
-mod randomness;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -57,9 +56,6 @@ mod mock;
 mod tests;
 
 pub use equivocation::{BabeEquivocationOffence, EquivocationHandler, HandleEquivocation};
-pub use randomness::{
-	CurrentBlockRandomness, RandomnessFromOneEpochAgo, RandomnessFromTwoEpochsAgo,
-};
 
 pub use pallet::*;
 

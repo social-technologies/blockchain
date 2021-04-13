@@ -155,12 +155,11 @@ std = [
 	"sp-transaction-pool/std",
 	"pallet-utility/std",
 	"sp-version/std",
-	"pallet-society/std",
 	"pallet-recovery/std",
 	"pallet-vesting/std",
-	"log/std",
 	"frame-try-runtime/std",
 	"sp-npos-elections/std",
+	"pallet-society/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",
@@ -233,8 +232,8 @@ try-runtime = [
 	"pallet-transaction-payment/try-runtime",
 	"pallet-treasury/try-runtime",
 	"pallet-utility/try-runtime",
-	"pallet-society/try-runtime",
 	"pallet-recovery/try-runtime",
 	"pallet-vesting/try-runtime",
 	"pallet-gilt/try-runtime",
+	"pallet-society/try-runtime",
 ]

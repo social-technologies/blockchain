@@ -22,8 +22,8 @@ use crate::keyring::*;
 use sp_keyring::{Ed25519Keyring, Sr25519Keyring};
 use node_runtime::{
 	GenesisConfig, BalancesConfig, SessionConfig, StakingConfig, SystemConfig,
-	GrandpaConfig, IndicesConfig, ContractsConfig, SocietyConfig, wasm_binary_unwrap,
-	AccountId, StakerStatus, BabeConfig, BABE_GENESIS_EPOCH_CONFIG,
+	GrandpaConfig, IndicesConfig, ContractsConfig, wasm_binary_unwrap,
+	AccountId, StakerStatus, BabeConfig, BABE_GENESIS_EPOCH_CONFIG, SocietyConfig
 };
 use node_runtime::constants::currency::*;
 use sp_core::ChangesTrieConfiguration;
