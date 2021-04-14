@@ -32,6 +32,11 @@ pub type BalanceOf<T> = <<T as Config>::FungibleToken as Fungible<
     <T as frame_system::Config>::AccountId,
 >>::Balance;
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 #[derive(Encode, Decode)]
 pub struct Exchange<AssetId, Balance, CurrencyOf> {
     pub lp_token: AssetId,
