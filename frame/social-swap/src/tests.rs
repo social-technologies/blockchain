@@ -262,3 +262,152 @@ fn test_remove_liquidity_should_work() {
 
 	});
 }
+
+#[test]
+fn test_native_to_trade_token_input_should_not_work() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(
+			SocialSwap::native_to_trade_token_input(
+				Origin::signed(1),
+				1,
+				1000,
+				12,
+				10,
+				1
+			),
+			Error::<Test>::ExchangeNotExists
+		);
+	});
+}
+
+#[test]
+fn test_native_to_trade_token_input_should_work() {
+	new_test_ext().execute_with(|| {
+		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
+		let account_id: u64 = 1;
+		assert_eq!(
+			SocialSwap::native_to_trade_token_input(
+				Origin::signed(account_id),
+				exchange_id,
+				1000,
+				10,
+				1,
+				2
+			),
+			Ok(())
+		);
+	});
+}
+
+#[test]
+fn test_trade_to_native_token_input_should_not_work() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(
+			SocialSwap::trade_to_native_token_input(
+				Origin::signed(1),
+				1,
+				1000,
+				12,
+				10,
+				1
+			),
+			Error::<Test>::ExchangeNotExists
+		);
+	});
+}
+
+#[test]
+fn test_trade_to_native_token_input_should_work() {
+	new_test_ext().execute_with(|| {
+		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
+		let account_id: u64 = 1;
+		assert_eq!(
+			SocialSwap::trade_to_native_token_input(
+				Origin::signed(account_id),
+				exchange_id,
+				1000,
+				10,
+				1,
+				2
+			),
+			Ok(())
+		);
+	});
+}
+
+#[test]
+fn test_native_to_trade_token_output_should_not_work() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(
+			SocialSwap::native_to_trade_token_output(
+				Origin::signed(1),
+				1,
+				1000,
+				10,
+				1
+			),
+			Error::<Test>::ExchangeNotExists
+		);
+	});
+}
+
+#[test]
+fn test_native_to_trade_token_output_should_work() {
+	new_test_ext().execute_with(|| {
+		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
+		let account_id: u64 = 1;
+		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
+		exchange.native_token_amount = 40000;
+		exchange.trade_token_amount = 40000;
+		<Exchanges<Test>>::mutate(&exchange_id, |e| *e = Some(exchange));
+		assert_eq!(
+			SocialSwap::native_to_trade_token_output(
+				Origin::signed(account_id),
+				exchange_id,
+				1000,
+				1,
+				2
+			),
+			Ok(())
+		);
+	});
+}
+
+#[test]
+fn test_trade_to_native_token_output_should_not_work() {
+	new_test_ext().execute_with(|| {
+		assert_noop!(
+			SocialSwap::trade_to_native_token_output(
+				Origin::signed(1),
+				1,
+				1000,
+				10,
+				1
+			),
+			Error::<Test>::ExchangeNotExists
+		);
+	});
+}
+
+#[test]
+fn test_trade_to_native_token_output_should_work() {
+	new_test_ext().execute_with(|| {
+		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
+		let account_id: u64 = 1;
+		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
+		exchange.native_token_amount = 40000;
+		exchange.trade_token_amount = 40000;
+		<Exchanges<Test>>::mutate(&exchange_id, |e| *e = Some(exchange));
+		assert_eq!(
+			SocialSwap::trade_to_native_token_output(
+				Origin::signed(account_id),
+				exchange_id,
+				1000,
+				1,
+				2
+			),
+			Ok(())
+		);
+	});
+}
+
