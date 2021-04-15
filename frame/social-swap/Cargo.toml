@@ -18,12 +18,6 @@ sp-runtime = { default-features = false, version = '3.0.0', path = '../../primit
 sp-core = { default-features = false, version = '3.0.0', path = '../../primitives/core' }
 pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
 
-
-[dev-dependencies]
-serde = "1.0.101"
-pallet-balances = {version = '3.0.0', path = '../balances' }
-
-
 [dev-dependencies]
 serde = "1.0.101"
 pallet-balances = {version = '3.0.0', path = '../balances' }
