@@ -128,6 +128,8 @@ use frame_support::{
 	traits::{Currency, BalanceStatus::Reserved, Get, Imbalance, ReservableCurrency, TryDrop},
 	dispatch::DispatchError,
 };
+#[cfg(feature = "std")]
+use frame_support::traits::GenesisBuild;
 pub use weights::WeightInfo;
 
 pub use pallet::*;
@@ -987,6 +989,26 @@ pub mod pallet {
 	}
 }
 
+#[cfg(feature = "std")]
+impl<T: Config> GenesisConfig<T> {
+	/// Direct implementation of `GenesisBuild::build_storage`.
+	///
+	/// Kept in order not to break dependency.
+	pub fn build_storage(&self) -> Result<sp_runtime::Storage, String> {
+		<Self as GenesisBuild<T>>::build_storage(self)
+	}
+
+	/// Direct implementation of `GenesisBuild::assimilate_storage`.
+	///
+	/// Kept in order not to break dependency.
+	pub fn assimilate_storage(
+		&self,
+		storage: &mut sp_runtime::Storage
+	) -> Result<(), String> {
+		<Self as GenesisBuild<T>>::assimilate_storage(self, storage)
+	}
+}
+
 #[derive(Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug)]
 pub struct AssetDetails<
 	Balance: Encode + Decode + Clone + Debug + Eq + PartialEq,
@@ -1307,7 +1329,10 @@ pub trait Fungible<AssetId, AccountId> {
 pub trait IssueAndBurn<AssetId, AccountId>: Fungible<AssetId, AccountId> {
 	fn exists(asset_id: &AssetId) -> bool;
 
-	fn create_new_asset(owner: &AccountId, dossier: TokenDossier) -> Result<AssetId, DispatchError>;
+	fn create_new_asset(owner: &AccountId,
+						dossier: TokenDossier,
+						max_zombies: u32,
+						min_balance: u32) -> Result<AssetId, DispatchError>;
 
 	fn issue(asset_id: &AssetId, who: &AccountId, value: Self::Balance) -> DispatchResult;
 
@@ -1384,11 +1409,12 @@ impl<T: Config> IssueAndBurn<T::AssetId, T::AccountId> for Module<T> {
 		Asset::<T>::contains_key(asset_id)
 	}
 
-	fn create_new_asset(owner: &T::AccountId, _dossier: TokenDossier) -> Result<T::AssetId, DispatchError> {
-		const MAX_ZOMBIES: u32 = 0;
-		const MIN_BALANCE: u32 = 0;
+	fn create_new_asset(owner: &T::AccountId,
+						_dossier: TokenDossier,
+						max_zombies: u32,
+						min_balance: u32) -> Result<T::AssetId, DispatchError> {
 		let id = Self::max_asset_id() + 1u32.into();
-		Self::do_create(id, owner.clone(), owner.clone(), MAX_ZOMBIES, MIN_BALANCE.into())
+		Self::do_create(id, owner.clone(), owner.clone(), max_zombies, min_balance.into())
 			.map(|_| id)
 			.map_err(|err| err.error)
 	}
