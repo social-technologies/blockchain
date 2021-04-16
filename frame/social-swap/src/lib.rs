@@ -127,8 +127,8 @@ decl_module! {
         fn create_exchange(
 			origin,
 			token_id: T::AssetId,
-			max_zombies: u32,
-			min_balance: u32) -> DispatchResult {
+			#[compact] max_zombies: u32,
+			#[compact] min_balance: u32) -> DispatchResult {
             // make sure there will be only one exchange for a specific trade token
             // and this trade token exists
             ensure!(T::FungibleToken::exists(&token_id), Error::<T>::TradeTokenNotExists);

@@ -67,8 +67,6 @@ fn test_create_exchange_token_should_work() {
 			Ok(())
 		);
 		assert_eq!(TradeTokenToExchange::<Test>::contains_key(ASSET_ID), true);
-		let exchange_id = TradeTokenToExchange::<Test>::get(ASSET_ID).unwrap();
-		assert_eq!(Exchanges::<Test>::contains_key(exchange_id), true);
 	});
 }
 
