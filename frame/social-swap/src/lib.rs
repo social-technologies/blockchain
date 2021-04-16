@@ -124,7 +124,11 @@ decl_module! {
         fn deposit_event() = default;
 
         #[weight = 0]
-        fn create_exchange(origin, token_id: T::AssetId) -> DispatchResult {
+        fn create_exchange(
+			origin,
+			token_id: T::AssetId,
+			max_zombies: u32,
+			min_balance: u32) -> DispatchResult {
             // make sure there will be only one exchange for a specific trade token
             // and this trade token exists
             ensure!(T::FungibleToken::exists(&token_id), Error::<T>::TradeTokenNotExists);
@@ -133,8 +137,8 @@ decl_module! {
 
             // new allocated exchange id, and craete a new lp token for it
             let exchange_id = Self::next_exchange_id();
-            let lp_asset_id = Self::create_lp_token(exchange_id)?;
 
+            let lp_asset_id = Self::create_lp_token(exchange_id, max_zombies, min_balance)?;
             let exchange_info = Exchange::new(lp_asset_id, token_id);
             // add new exchange info
             <Exchanges<T>>::insert(&exchange_id, exchange_info);
@@ -326,9 +330,15 @@ impl<T: Config> Module<T> {
         T::ModuleId::get().into_account()
     }
 
-    fn create_lp_token(exchange_id: T::ExchangeId) -> Result<T::AssetId, DispatchError> {
+    fn create_lp_token(exchange_id: T::ExchangeId,
+					   max_zombies: u32,
+					   min_balance: u32) -> Result<T::AssetId, DispatchError> {
         // create a new lp token for exchange
-        T::FungibleToken::create_new_asset(&Self::account_id(), TokenDossierOf::new_lp_token())
+        T::FungibleToken::create_new_asset(
+			&Self::account_id(),
+			TokenDossierOf::new_lp_token(),
+			max_zombies,
+			min_balance)
     }
 
     fn input_liquidity(
@@ -368,6 +378,7 @@ impl<T: Config> Module<T> {
         )?;
         exchange.native_token_amount -= native_token_amount;
         T::FungibleToken::transfer(&trade_token_id, &this, who, trade_token_amount)?;
+
         exchange.trade_token_amount -= trade_token_amount;
 
         Ok(())

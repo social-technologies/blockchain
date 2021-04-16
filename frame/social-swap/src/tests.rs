@@ -1,20 +1,24 @@
 use crate::{mock::*, Error};
 use frame_support::assert_noop;
+use pallet_assets::*;
 use super::*;
-use pallet_social_tokens::*;
 
 fn create_exchange_test() -> (u64, u32, u32) {
-	let social_token_id: u32 = SocialSwap::create_lp_token(1).unwrap();
+	let max_zombies:u32 = 3;
+	let min_balance:u32 = 10;
+
 	assert_eq!(
 		SocialSwap::create_exchange(
 			Origin::signed(1),
-			social_token_id
+			ASSET_ID,
+			max_zombies,
+			min_balance
 		),
 		Ok(())
 	);
-	let exchange_id = TradeTokenToExchange::<Test>::get(social_token_id).unwrap();
+	let exchange_id = TradeTokenToExchange::<Test>::get(ASSET_ID).unwrap();
 	let exchange = Exchanges::<Test>::get(exchange_id).unwrap();
-	(exchange_id, social_token_id, exchange.lp_token)
+	(exchange_id, ASSET_ID, exchange.lp_token)
 }
 
 #[test]
@@ -23,7 +27,9 @@ fn test_create_exchange_wrong_token_id_should_not_work() {
 		assert_noop!(
 			SocialSwap::create_exchange(
 				Origin::signed(1),
-				1
+				11,
+				MAX_ZOMBIES,
+				MIN_BALANCE as u32
 			),
 			Error::<Test>::TradeTokenNotExists
 		);
@@ -33,12 +39,14 @@ fn test_create_exchange_wrong_token_id_should_not_work() {
 #[test]
 fn test_create_exchange_token_id_without_exchange_should_not_work() {
 	new_test_ext().execute_with(|| {
-		let social_token_id: u32 = SocialSwap::create_lp_token(1).unwrap();
-		TradeTokenToExchange::<Test>::insert(social_token_id, 1u64);
+
+		TradeTokenToExchange::<Test>::insert(ASSET_ID, 1u64);
 		assert_noop!(
 			SocialSwap::create_exchange(
 				Origin::signed(1),
-				social_token_id
+				ASSET_ID,
+				MAX_ZOMBIES,
+				MIN_BALANCE as u32
 			),
 			Error::<Test>::ExchangeExists
 		);
@@ -48,16 +56,18 @@ fn test_create_exchange_token_id_without_exchange_should_not_work() {
 #[test]
 fn test_create_exchange_token_should_work() {
 	new_test_ext().execute_with(|| {
-		let social_token_id: u32 = SocialSwap::create_lp_token(1).unwrap();
+
 		assert_eq!(
 			SocialSwap::create_exchange(
 				Origin::signed(1),
-				social_token_id
+				ASSET_ID,
+				MAX_ZOMBIES,
+				MIN_BALANCE as u32
 			),
 			Ok(())
 		);
-		assert_eq!(TradeTokenToExchange::<Test>::contains_key(social_token_id), true);
-		let exchange_id = TradeTokenToExchange::<Test>::get(social_token_id).unwrap();
+		assert_eq!(TradeTokenToExchange::<Test>::contains_key(ASSET_ID), true);
+		let exchange_id = TradeTokenToExchange::<Test>::get(ASSET_ID).unwrap();
 		assert_eq!(Exchanges::<Test>::contains_key(exchange_id), true);
 	});
 }
@@ -103,12 +113,9 @@ fn test_add_liquidity_with_non_existing_token_should_not_work() {
 #[test]
 fn test_add_liquidity_with_zero_liquidity_should_work() {
 	new_test_ext().execute_with(|| {
-		let (exchange_id, social_token_id, _) = create_exchange_test();
+		let (exchange_id, asset_id, _) = create_exchange_test();
 		let account_id: u64 = 1;
-		pallet_social_tokens::Module::<Test>::issue(social_token_id, 100);
-		let data = AccountData{free: 100_000_0, fee_frozen: 0, misc_frozen: 0, reserved: 0};
-		let account_store = AccountInfo{data, nonce: 1, refcount: 0};
-		pallet_social_tokens::SystemAccount::<Test>::insert((social_token_id, account_id), account_store);
+		pallet_assets::Module::<Test>::issue(&asset_id, &OWNER, 100);
 		assert_eq!(
 			SocialSwap::add_liquidity(
 				Origin::signed(account_id),
@@ -128,16 +135,13 @@ fn test_add_liquidity_with_zero_liquidity_should_work() {
 #[test]
 fn test_add_liquidity_should_work() {
 	new_test_ext().execute_with(|| {
-		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
-		let account_id: u64 = 1;
-		pallet_social_tokens::Module::<Test>::issue(social_token_id, 100);
-		pallet_social_tokens::Module::<Test>::issue(lp_token, 100);
-		let data = AccountData{free: 100_000_0, fee_frozen: 0, misc_frozen: 0, reserved: 0};
-		let account_store = AccountInfo{data, nonce: 1, refcount: 0};
-		pallet_social_tokens::SystemAccount::<Test>::insert((social_token_id, account_id), account_store);
+		let (exchange_id, asset_id, lp_token) = create_exchange_test();
+		let account_id: u64 = 2;
 		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
-		SocialSwap::input_liquidity(&account_id.clone(), 100, &social_token_id, 100, &mut exchange);
+		exchange.native_token_amount = 40000;
+		exchange.trade_token_amount = 40000;
 		<Exchanges<Test>>::mutate(&exchange_id, |e| *e = Some(exchange));
+		pallet_assets::Module::<Test>::issue(&asset_id, &account_id, 20000);
 		assert_eq!(
 			SocialSwap::add_liquidity(
 				Origin::signed(account_id),
@@ -194,9 +198,9 @@ fn test_remove_liquidity_with_non_existing_token_should_not_work() {
 #[test]
 fn test_remove_liquidity_with_non_enough_burn_should_not_work() {
 	new_test_ext().execute_with(|| {
-		let (exchange_id, social_token_id, _) = create_exchange_test();
+		let (exchange_id, asset_id, _) = create_exchange_test();
+		pallet_assets::Module::<Test>::issue(&asset_id, &OWNER, 100);
 		let account_id: u64 = 1;
-		pallet_social_tokens::Module::<Test>::issue(social_token_id, 100);
 		assert_noop!(
 			SocialSwap::remove_liquidity(
 				Origin::signed(account_id),
@@ -215,9 +219,9 @@ fn test_remove_liquidity_with_non_enough_burn_should_not_work() {
 #[test]
 fn test_remove_liquidity_with_non_enough_liquidity_should_not_work() {
 	new_test_ext().execute_with(|| {
-		let (exchange_id, social_token_id, _) = create_exchange_test();
+		let (exchange_id, asset_id, _) = create_exchange_test();
+		pallet_assets::Module::<Test>::issue(&asset_id, &OWNER, 100);
 		let account_id: u64 = 1;
-		pallet_social_tokens::Module::<Test>::issue(social_token_id, 100);
 		assert_noop!(
 			SocialSwap::remove_liquidity(
 				Origin::signed(account_id),
@@ -236,25 +240,22 @@ fn test_remove_liquidity_with_non_enough_liquidity_should_not_work() {
 #[test]
 fn test_remove_liquidity_should_work() {
 	new_test_ext().execute_with(|| {
-		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
-		let account_id: u64 = 1;
-		pallet_social_tokens::Module::<Test>::issue(social_token_id, 100);
-		pallet_social_tokens::Module::<Test>::issue(lp_token, 1000);
-		let data = AccountData{free: 500_000_0, fee_frozen: 10, misc_frozen: 10, reserved: 10};
-		let account_store = AccountInfo{data, nonce: 1, refcount: 0};
-		pallet_social_tokens::SystemAccount::<Test>::insert((social_token_id, account_id), account_store.clone());
-		pallet_social_tokens::SystemAccount::<Test>::insert((social_token_id, SocialSwap::account_id()), account_store.clone());
-		pallet_social_tokens::SystemAccount::<Test>::insert((lp_token, account_id), account_store);
+		let (exchange_id, asset_id, lp_token) = create_exchange_test();
+		let account_id: u64 = 2;
+		pallet_assets::Module::<Test>::issue(&asset_id, &account_id, 101);
+		pallet_assets::Module::<Test>::issue(&asset_id, &SocialSwap::account_id(), 20000);
+		pallet_assets::Module::<Test>::issue(&lp_token, &account_id, 100);
 		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
-		SocialSwap::input_liquidity(&account_id.clone(), 1000, &social_token_id, 300, &mut exchange);
+		exchange.native_token_amount = 400;
+		exchange.trade_token_amount = 400;
 		<Exchanges<Test>>::mutate(&exchange_id, |e| *e = Some(exchange));
 		assert_eq!(
 			SocialSwap::remove_liquidity(
 				Origin::signed(account_id),
 				exchange_id,
-				1000,
-				12,
 				10,
+				1,
+				1,
 				1
 			),
 			Ok(())
@@ -283,7 +284,7 @@ fn test_native_to_trade_token_input_should_not_work() {
 #[test]
 fn test_native_to_trade_token_input_should_work() {
 	new_test_ext().execute_with(|| {
-		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
+		let (exchange_id, asset_id, lp_token) = create_exchange_test();
 		let account_id: u64 = 1;
 		assert_eq!(
 			SocialSwap::native_to_trade_token_input(
@@ -319,7 +320,7 @@ fn test_trade_to_native_token_input_should_not_work() {
 #[test]
 fn test_trade_to_native_token_input_should_work() {
 	new_test_ext().execute_with(|| {
-		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
+		let (exchange_id, asset_id, lp_token) = create_exchange_test();
 		let account_id: u64 = 1;
 		assert_eq!(
 			SocialSwap::trade_to_native_token_input(
@@ -354,7 +355,7 @@ fn test_native_to_trade_token_output_should_not_work() {
 #[test]
 fn test_native_to_trade_token_output_should_work() {
 	new_test_ext().execute_with(|| {
-		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
+		let (exchange_id, asset_id, lp_token) = create_exchange_test();
 		let account_id: u64 = 1;
 		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
 		exchange.native_token_amount = 40000;
@@ -392,7 +393,7 @@ fn test_trade_to_native_token_output_should_not_work() {
 #[test]
 fn test_trade_to_native_token_output_should_work() {
 	new_test_ext().execute_with(|| {
-		let (exchange_id, social_token_id, lp_token) = create_exchange_test();
+		let (exchange_id, asset_id, lp_token) = create_exchange_test();
 		let account_id: u64 = 1;
 		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
 		exchange.native_token_amount = 40000;

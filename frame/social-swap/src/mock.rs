@@ -20,7 +20,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-		SocialTokens: pallet_social_tokens::{Module, Call, Storage, Event<T>},
+		Assets: pallet_assets::{Module, Call, Storage, Event<T>},
 		SocialSwap: pallet_social_swap::{Module, Call, Storage, Event<T>},
 	}
 );
@@ -70,16 +70,25 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-	pub const MaxSocialTokensSupply: u128 = 7_777_777_777;
-}
+		pub const AssetDepositBase: u64 = 1;
+		pub const AssetDepositPerZombie: u64 = 1;
+		pub const StringLimit: u32 = 50;
+		pub const MetadataDepositBase: u64 = 1;
+		pub const MetadataDepositPerByte: u64 = 1;
+	}
 
-impl pallet_social_tokens::Config for Test {
+impl pallet_assets::Config for Test {
+	type Currency = Balances;
 	type Event = Event;
 	type Balance = u64;
-	type SocialTokenId = u32;
-	type ExistentialDeposit = ExistentialDeposit;
-	type OnNewAccount = ();
-	type MaxSocialTokensSupply = MaxSocialTokensSupply;
+	type AssetId = u32;
+	type ForceOrigin = frame_system::EnsureRoot<u64>;
+	type AssetDepositBase = AssetDepositBase;
+	type AssetDepositPerZombie = AssetDepositPerZombie;
+	type StringLimit = StringLimit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -97,15 +106,27 @@ impl pallet_social_swap::Config for Test {
 	type Currency = Balances;
 	type ModuleId = ExchangeModuleId;
 	type Event = Event;
-	type FungibleToken = SocialTokens;
+	type FungibleToken = Assets;
 	type Handler = BalanceHandler;
 	type ExchangeId = u64;
 }
 
+pub const ASSET_ID:u32 = 2;
+pub const OWNER:u64 = 1;
+pub const MAX_ZOMBIES:u32 = 3;
+pub const MIN_BALANCE:u64 = 1;
+
+
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(1, 100_000_0)],
+		balances: vec![(1, 100_000_0), (2, 100_000_0), (SocialSwap::account_id(), 100_000_0)],
 	}.assimilate_storage(&mut t).unwrap();
+
+	pallet_assets::GenesisConfig::<Test> {
+		assets: vec![(ASSET_ID, OWNER, OWNER, MAX_ZOMBIES, MIN_BALANCE)],
+	}.assimilate_storage(&mut t).unwrap();
+
 	t.into()
 }
