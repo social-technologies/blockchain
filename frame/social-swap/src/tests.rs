@@ -138,7 +138,13 @@ fn test_add_liquidity_should_work() {
 		let account_id: u64 = 2;
 		let intial_max_token = 10*10^18;
 		let initial_native_token_transferred = 5*10^18;
-		pallet_assets::Module::<Test>::issue(&asset_id, &account_id, 20000);
+		let intial_supply = 20000;
+		pallet_assets::Module::<Test>::issue(&asset_id, &account_id, intial_supply);
+		// min_liquidity = 0 and totalSupply = 0
+		assert_eq!(
+			pallet_assets::Module::<Test>::total_supply(lp_token),
+			0
+		);
 		assert_eq!(
 			SocialSwap::add_liquidity(
 				Origin::signed(account_id),
@@ -150,10 +156,17 @@ fn test_add_liquidity_should_work() {
 			),
 			Ok(())
 		);
+		assert_eq!(Balances::total_balance(&SocialSwap::account_id()),
+				   INITIAL_BALANCE + initial_native_token_transferred);
 		assert_eq!(
 			pallet_assets::Module::<Test>::total_supply(lp_token),
 			initial_native_token_transferred
 		);
+		assert_eq!(
+			pallet_assets::Module::<Test>::balance(asset_id, SocialSwap::account_id()),
+			intial_max_token
+		);
+
 		let added_native_token_transferred = 25*10^17;
 		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
 		exchange.native_token_amount = 5*10^18;
@@ -176,7 +189,12 @@ fn test_add_liquidity_should_work() {
 			pallet_assets::Module::<Test>::total_supply(lp_token),
 			initial_native_token_transferred + added_native_token_transferred
 		);
-
+		assert_eq!(Balances::total_balance(&SocialSwap::account_id()),
+				   INITIAL_BALANCE + initial_native_token_transferred + added_native_token_transferred);
+		assert_eq!(
+			pallet_assets::Module::<Test>::balance(asset_id, SocialSwap::account_id()),
+			intial_max_token + 1
+		);
 	});
 }
 #[test]
