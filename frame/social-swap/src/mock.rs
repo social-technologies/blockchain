@@ -116,7 +116,9 @@ pub const OWNER:u64 = 1;
 pub const MAX_ZOMBIES:u32 = 3;
 pub const MIN_BALANCE:u64 = 1;
 pub const INITIAL_BALANCE:u64 = 100_000_0;
-
+pub const ETH_RESERVE: u64 = 5*10^18;
+pub const HAY_RESERVE:u64 = 10*10^18;
+pub const ETH_ADDED:u64 = 25*10^17;
 
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
