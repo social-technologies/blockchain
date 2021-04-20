@@ -244,7 +244,7 @@ decl_module! {
             let trade_token_balance = exchange.trade_token_amount;
             // e_0
             let native_token_balance = exchange.native_token_amount;
-            let native_token_should_transfer: u128 = liquidity_burned.checked_mul(&trade_token_balance)
+            let native_token_should_transfer: u128 = liquidity_burned.checked_mul(&T::Handler::convert(native_token_balance))
                 .ok_or(Error::<T>::OverFlow)?
                 .div(total_liquidity).unique_saturated_into();
 

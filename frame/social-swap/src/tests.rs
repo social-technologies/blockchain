@@ -136,27 +136,36 @@ fn test_add_liquidity_should_work() {
 
 		let (exchange_id, asset_id, lp_token) = create_exchange_test();
 		let account_id: u64 = 2;
-		let intial_max_token = 10*10^18;
-		let initial_native_token_transferred = 5*10^18;
-		pallet_assets::Module::<Test>::issue(&asset_id, &account_id, 20000);
+		let intial_supply = 20000;
+		pallet_assets::Module::<Test>::issue(&asset_id, &account_id, intial_supply);
+		assert_eq!(
+			pallet_assets::Module::<Test>::total_supply(lp_token),
+			0
+		);
 		assert_eq!(
 			SocialSwap::add_liquidity(
 				Origin::signed(account_id),
 				exchange_id,
-				initial_native_token_transferred,
+				ETH_RESERVE,
 				0,
-				intial_max_token,
+				HAY_RESERVE,
 				1
 			),
 			Ok(())
 		);
+		assert_eq!(Balances::total_balance(&SocialSwap::account_id()),
+				   INITIAL_BALANCE + ETH_RESERVE);
 		assert_eq!(
 			pallet_assets::Module::<Test>::total_supply(lp_token),
-			initial_native_token_transferred
+			ETH_RESERVE
 		);
-		let added_native_token_transferred = 25*10^17;
+		assert_eq!(
+			pallet_assets::Module::<Test>::balance(asset_id, SocialSwap::account_id()),
+			HAY_RESERVE
+		);
+
 		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
-		exchange.native_token_amount = 5*10^18;
+		exchange.native_token_amount = ETH_RESERVE;
 		exchange.trade_token_amount = 0;
 		<Exchanges<Test>>::mutate(&exchange_id, |e| *e = Some(exchange));
 
@@ -165,7 +174,7 @@ fn test_add_liquidity_should_work() {
 			SocialSwap::add_liquidity(
 				Origin::signed(account_id),
 				exchange_id,
-				added_native_token_transferred,
+				ETH_ADDED,
 				1,
 				15*10^18,
 				1
@@ -174,22 +183,29 @@ fn test_add_liquidity_should_work() {
 		);
 		assert_eq!(
 			pallet_assets::Module::<Test>::total_supply(lp_token),
-			initial_native_token_transferred + added_native_token_transferred
+			ETH_RESERVE + ETH_ADDED
 		);
-
+		assert_eq!(Balances::total_balance(&SocialSwap::account_id()),
+				   INITIAL_BALANCE + ETH_RESERVE + ETH_ADDED);
+		assert_eq!(
+			pallet_assets::Module::<Test>::balance(asset_id, SocialSwap::account_id()),
+			HAY_RESERVE + 1
+		);
 	});
 }
+
 #[test]
 fn test_remove_liquidity_with_wrong_deadline_should_not_work() {
 	new_test_ext().execute_with(|| {
+		let liquidity_burned = 1*10^18;
 		let (exchange_id, _, _) = create_exchange_test();
 		assert_noop!(
 			SocialSwap::remove_liquidity(
 				Origin::signed(1),
 				exchange_id,
-				20000,
-				1000,
-				10,
+				liquidity_burned,
+				1,
+				1,
 				0
 			),
 			Error::<Test>::TooLate
@@ -206,9 +222,9 @@ fn test_remove_liquidity_with_non_existing_token_should_not_work() {
 			SocialSwap::remove_liquidity(
 				Origin::signed(1),
 				exchange_id,
-				20000,
-				1000,
-				10,
+				1,
+				1,
+				1,
 				1
 			),
 			Error::<Test>::TradeTokenNotExists
@@ -218,17 +234,42 @@ fn test_remove_liquidity_with_non_existing_token_should_not_work() {
 }
 
 #[test]
-fn test_remove_liquidity_with_non_enough_burn_should_not_work() {
+fn test_remove_liquidity_with_not_enough_tokens_should_not_work() {
 	new_test_ext().execute_with(|| {
 		let (exchange_id, asset_id, _) = create_exchange_test();
+		let liquidity_burned = 1*10^18;
 		pallet_assets::Module::<Test>::issue(&asset_id, &OWNER, 100);
 		let account_id: u64 = 1;
 		assert_noop!(
 			SocialSwap::remove_liquidity(
 				Origin::signed(account_id),
 				exchange_id,
-				20000,
 				0,
+				1,
+				1,
+				1
+			),
+			Error::<Test>::NotQualifiedBurn
+		);
+
+		assert_noop!(
+			SocialSwap::remove_liquidity(
+				Origin::signed(account_id),
+				exchange_id,
+				liquidity_burned,
+				0,
+				1,
+				1
+			),
+			Error::<Test>::NotQualifiedBurn
+		);
+
+		assert_noop!(
+			SocialSwap::remove_liquidity(
+				Origin::signed(account_id),
+				exchange_id,
+				liquidity_burned,
+				1,
 				0,
 				1
 			),
@@ -239,18 +280,19 @@ fn test_remove_liquidity_with_non_enough_burn_should_not_work() {
 }
 
 #[test]
-fn test_remove_liquidity_with_non_enough_liquidity_should_not_work() {
+fn test_remove_liquidity_with_not_enough_liquidity_should_not_work() {
 	new_test_ext().execute_with(|| {
 		let (exchange_id, asset_id, _) = create_exchange_test();
 		pallet_assets::Module::<Test>::issue(&asset_id, &OWNER, 100);
 		let account_id: u64 = 1;
+		let liquidity_burned = 1*10^18;
 		assert_noop!(
 			SocialSwap::remove_liquidity(
 				Origin::signed(account_id),
 				exchange_id,
-				20000,
-				10,
-				10,
+				liquidity_burned + 1,
+				1,
+				1,
 				1
 			),
 			Error::<Test>::NotEnoughLiquidity
@@ -264,18 +306,55 @@ fn test_remove_liquidity_should_work() {
 	new_test_ext().execute_with(|| {
 		let (exchange_id, asset_id, lp_token) = create_exchange_test();
 		let account_id: u64 = 2;
-		pallet_assets::Module::<Test>::issue(&asset_id, &account_id, 101);
-		pallet_assets::Module::<Test>::issue(&asset_id, &SocialSwap::account_id(), 20000);
-		pallet_assets::Module::<Test>::issue(&lp_token, &account_id, 100);
+		let intial_supply = 20000;
+		pallet_assets::Module::<Test>::issue(&asset_id, &account_id, intial_supply);
+		assert_eq!(
+			SocialSwap::add_liquidity(
+				Origin::signed(account_id),
+				exchange_id,
+				ETH_RESERVE,
+				0,
+				HAY_RESERVE,
+				1
+			),
+			Ok(())
+		);
 		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
-		exchange.native_token_amount = 400;
-		exchange.trade_token_amount = 400;
+		exchange.native_token_amount = ETH_RESERVE;
+		exchange.trade_token_amount = 0;
 		<Exchanges<Test>>::mutate(&exchange_id, |e| *e = Some(exchange));
+
+
+		assert_eq!(
+			SocialSwap::add_liquidity(
+				Origin::signed(account_id),
+				exchange_id,
+				ETH_ADDED,
+				1,
+				15*10^18,
+				1
+			),
+			Ok(())
+		);
+
+		assert_eq!(
+			pallet_assets::Module::<Test>::total_supply(lp_token),
+			ETH_RESERVE + ETH_ADDED
+		);
+
+		assert_eq!(Balances::total_balance(&SocialSwap::account_id()),
+				   INITIAL_BALANCE + ETH_RESERVE + ETH_ADDED);
+
+		let mut exchange = Exchanges::<Test>::get(exchange_id).unwrap();
+		exchange.native_token_amount = 1*10^24;
+		exchange.trade_token_amount = 1*10^18;
+		<Exchanges<Test>>::mutate(&exchange_id, |e| *e = Some(exchange));
+
 		assert_eq!(
 			SocialSwap::remove_liquidity(
 				Origin::signed(account_id),
 				exchange_id,
-				10,
+				ETH_RESERVE,
 				1,
 				1,
 				1
@@ -283,6 +362,22 @@ fn test_remove_liquidity_should_work() {
 			Ok(())
 		);
 
+		assert_eq!(
+			SocialSwap::remove_liquidity(
+				Origin::signed(account_id),
+				exchange_id,
+				ETH_ADDED - 1*10^18,
+				1,
+				1,
+				1
+			),
+			Ok(())
+		);
+
+		assert_eq!(
+			pallet_assets::Module::<Test>::total_supply(lp_token),
+			0
+		);
 	});
 }
 
@@ -433,5 +528,3 @@ fn test_trade_to_native_token_output_should_work() {
 		);
 	});
 }
-
-

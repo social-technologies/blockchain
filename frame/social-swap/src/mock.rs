@@ -115,13 +115,16 @@ pub const ASSET_ID:u32 = 2;
 pub const OWNER:u64 = 1;
 pub const MAX_ZOMBIES:u32 = 3;
 pub const MIN_BALANCE:u64 = 1;
-
+pub const INITIAL_BALANCE:u64 = 100_000_0;
+pub const ETH_RESERVE: u64 = 5*10^18;
+pub const HAY_RESERVE:u64 = 10*10^18;
+pub const ETH_ADDED:u64 = 25*10^17;
 
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(1, 100_000_0), (2, 100_000_0), (SocialSwap::account_id(), 100_000_0)],
+		balances: vec![(1, INITIAL_BALANCE), (2, INITIAL_BALANCE), (SocialSwap::account_id(), INITIAL_BALANCE)],
 	}.assimilate_storage(&mut t).unwrap();
 
 	pallet_assets::GenesisConfig::<Test> {
