@@ -19,6 +19,9 @@ pub type BalanceOf<T> = <<T as Config>::FungibleToken as Fungible<
     <T as frame_system::Config>::AccountId,
 >>::Balance;
 
+#[cfg(test)]
+mod mock;
+
 pub trait Config:
     frame_system::Config + pallet_assets::Config + pallet_timestamp::Config
 {
