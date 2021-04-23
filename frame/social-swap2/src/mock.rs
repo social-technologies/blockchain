@@ -20,7 +20,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		Assets: pallet_assets::{Module, Call, Storage, Event<T>},
-		SocialSwap: pallet_social_swap2::{Module, Call, Storage, Event<T>},
+		SocialSwap2: pallet_social_swap2::{Module, Call, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
 	}
 );
@@ -28,7 +28,7 @@ frame_support::construct_runtime!(
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
-pub type Balance = u64;
+pub type Balance = u128;
 
 impl system::Config for Test {
 	type BaseCallFilter = ();
@@ -48,7 +48,7 @@ impl system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -71,7 +71,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Test {
 	type MaxLocks = ();
-	type Balance = u64;
+	type Balance = u128;
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -90,7 +90,7 @@ parameter_types! {
 impl pallet_assets::Config for Test {
 	type Currency = Balances;
 	type Event = Event;
-	type Balance = u64;
+	type Balance = u128;
 	type AssetId = u32;
 	type ForceOrigin = frame_system::EnsureRoot<u64>;
 	type AssetDepositBase = AssetDepositBase;
@@ -100,9 +100,10 @@ impl pallet_assets::Config for Test {
 	type MetadataDepositPerByte = MetadataDepositPerByte;
 	type WeightInfo = ();
 }
+pub const MINIMUM_LIQUIDITY:u64 = 1000;
 
 parameter_types! {
-    pub const MinimumLiquidity: u64 = 1000;
+    pub const MinimumLiquidity: u64 = MINIMUM_LIQUIDITY;
 }
 
 impl pallet_social_swap2::Config for Test {
@@ -111,11 +112,17 @@ impl pallet_social_swap2::Config for Test {
 	type FungibleToken = Assets;
 	type MinimumLiquidity = MinimumLiquidity;
 }
-pub const ASSET_ID:u32 = 2;
+pub const ASSET_ID:u32 = 1;
 pub const OWNER:u64 = 1;
 pub const MAX_ZOMBIES:u32 = 3;
-pub const MIN_BALANCE:u64 = 1;
-pub const INITIAL_BALANCE:u64 = 100_000_0;
+pub const MIN_BALANCE:u128 = 1;
+pub const INITIAL_BALANCE:u128 = 100_000_0;
+pub const TOKEN0:u64 = 10;
+pub const TOKEN1:u64 = 11;
+pub const FEE_TO:u64 = 12;
+pub const ADDRESS0:u64 = 13;
+pub const TREASURY:u64 = 14;
+pub const INITIAL_SUPPLY: u128  = 1_000_000_000_000_000_000_0000;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
@@ -125,6 +132,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	pallet_assets::GenesisConfig::<Test> {
 		assets: vec![(ASSET_ID, OWNER, OWNER, MAX_ZOMBIES, MIN_BALANCE)],
+		accounts: vec![(ASSET_ID, OWNER, INITIAL_SUPPLY)],
 	}.assimilate_storage(&mut t).unwrap();
 
 	t.into()

@@ -21,6 +21,8 @@ pub type BalanceOf<T> = <<T as Config>::FungibleToken as Fungible<
 
 #[cfg(test)]
 mod mock;
+#[cfg(test)]
+mod tests;
 
 pub trait Config:
     frame_system::Config + pallet_assets::Config + pallet_timestamp::Config
@@ -101,7 +103,6 @@ decl_module! {
 
         #[weight = 10_000 + T::DbWeight::get().writes(1)]
         fn mint(origin, to: T::AccountId) -> Result<(), DispatchError> {
-            ensure_root(origin.clone())?;
             let sender = ensure_signed(origin)?;
             let social_token_id = Self::social_token_id();
             let reserve0 = Self::reserve0();
@@ -115,12 +116,13 @@ decl_module! {
             let fee_on = Self::mint_fee(reserve0, reserve1)?;
             let total_supply = T::FungibleToken::total_supply(&social_token_id);
             let liquidity = if total_supply == 0u32.into() {
-                let minimum_liquidity = amount0
+				let min_liquidity = T::MinimumLiquidity::get().saturated_into::<u128>().saturated_into();
+                let liquidity = amount0
                     .saturating_mul(amount1)
                     .integer_sqrt()
-                    .saturating_sub(T::MinimumLiquidity::get().saturated_into::<u128>().saturated_into());
-                T::FungibleToken::issue(&social_token_id, &Self::address0(), minimum_liquidity)?;
-                amount0.saturating_mul(amount1).saturating_sub(minimum_liquidity)
+                    .saturating_sub(min_liquidity);
+                T::FungibleToken::issue(&social_token_id, &Self::address0(), min_liquidity)?;
+                liquidity
             } else {
                 (amount0.saturating_mul(total_supply) / reserve0).min(amount1.saturating_mul(total_supply) / reserve1)
             };
@@ -322,7 +324,6 @@ impl<T: Config> Module<T> {
             amount.saturated_into::<u128>().saturated_into(),
             ExistenceRequirement::AllowDeath,
         )?;
-
         Ok(())
     }
 }
