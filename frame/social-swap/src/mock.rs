@@ -129,6 +129,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	pallet_assets::GenesisConfig::<Test> {
 		assets: vec![(ASSET_ID, OWNER, OWNER, MAX_ZOMBIES, MIN_BALANCE)],
+		accounts: vec![(ASSET_ID, OWNER, INITIAL_BALANCE)],
 	}.assimilate_storage(&mut t).unwrap();
 
 	t.into()

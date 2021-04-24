@@ -141,7 +141,6 @@ decl_module! {
 
         #[weight = 10_000 + T::DbWeight::get().writes(1)]
         fn burn(origin, to: T::AccountId) -> Result<(), DispatchError> {
-            ensure_root(origin.clone())?;
             let sender = ensure_signed(origin)?;
             let social_token_id = Self::social_token_id();
             let reserve0 = Self::reserve0();
@@ -155,16 +154,19 @@ decl_module! {
             let fee_on = Self::mint_fee(reserve0, reserve1)?;
             let total_supply = T::FungibleToken::total_supply(&social_token_id);
 
+
             let amount0 = liquidity.saturating_mul(balance0) / total_supply;
             let amount1 = liquidity.saturating_mul(balance1) / total_supply;
             ensure!(amount0 > 0u32.into() && amount1 > 0u32.into(),  Error::<T>::InsufficientLiquidityBurned);
-
             T::FungibleToken::burn(&social_token_id, &to, liquidity)?;
-            let _ = Self::safe_transfer(&Self::token0(), &to, amount0);
-            let _ = Self::safe_transfer(&Self::token1(), &to, amount1);
+
+			T::FungibleToken::transfer(&social_token_id, &Self::token0(), &to, amount0);
+			T::FungibleToken::transfer(&social_token_id, &Self::token1(), &to, amount1);
+
 
             let balance0 = T::FungibleToken::balances(&social_token_id, &Self::token0());
             let balance1 = T::FungibleToken::balances(&social_token_id, &Self::token1());
+
             let _ = Self::update(balance0, balance1, reserve0, reserve1);
             if fee_on {
                 <KLast<T>>::put(reserve0.saturating_mul(reserve1));

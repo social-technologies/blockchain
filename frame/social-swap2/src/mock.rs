@@ -113,7 +113,9 @@ impl pallet_social_swap2::Config for Test {
 	type MinimumLiquidity = MinimumLiquidity;
 }
 pub const ASSET_ID:u32 = 1;
-pub const OWNER:u64 = 1;
+pub const ACCOUNT1:u64 = 1;
+pub const ACCOUNT2:u64 = 2;
+pub const ACCOUNT3:u64 = 3;
 pub const MAX_ZOMBIES:u32 = 3;
 pub const MIN_BALANCE:u128 = 1;
 pub const INITIAL_BALANCE:u128 = 100_000_0;
@@ -127,12 +129,12 @@ pub const INITIAL_SUPPLY: u128  = 1_000_000_000_000_000_000_0000;
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(1, INITIAL_BALANCE), (2, INITIAL_BALANCE)],
+		balances: vec![(ACCOUNT1, INITIAL_BALANCE), (ACCOUNT2, INITIAL_BALANCE)],
 	}.assimilate_storage(&mut t).unwrap();
 
 	pallet_assets::GenesisConfig::<Test> {
-		assets: vec![(ASSET_ID, OWNER, OWNER, MAX_ZOMBIES, MIN_BALANCE)],
-		accounts: vec![(ASSET_ID, OWNER, INITIAL_SUPPLY)],
+		assets: vec![(ASSET_ID, ACCOUNT1, ACCOUNT1, MAX_ZOMBIES, MIN_BALANCE)],
+		accounts: vec![(ASSET_ID, ACCOUNT1, INITIAL_SUPPLY), (ASSET_ID, TREASURY, 0u128)],
 	}.assimilate_storage(&mut t).unwrap();
 
 	t.into()
