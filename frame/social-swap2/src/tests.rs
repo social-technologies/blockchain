@@ -1,6 +1,7 @@
 use crate::{mock::*, Error};
 use super::*;
 use frame_support::assert_noop;
+use codec::Encode;
 
 #[test]
 fn test_mint_should_not_work() {
@@ -144,6 +145,54 @@ fn test_burn_should_work() {
 			pallet_assets::Module::<Test>::balance(ASSET_ID, ACCOUNT2),
 			token_0_amount + token_1_amount - 2000u128
 		);
+
+	});
+}
+
+#[test]
+fn test_swap_should_not_work() {
+	new_test_ext().execute_with(|| {
+
+		assert_noop!(SocialSwap2::swap(
+			Origin::signed(ACCOUNT1),
+			0,
+			0,
+			ACCOUNT3,
+			"0x".encode()
+		),
+		Error::<Test>::InsufficientOutputAmount);
+
+		assert_noop!(SocialSwap2::swap(
+			Origin::signed(ACCOUNT1),
+			1,
+			2,
+			ACCOUNT3,
+			"0x".encode()
+		),
+		Error::<Test>::InsufficientLiquidity);
+
+		<Reserve0<Test>>::put(2);
+		<Reserve1<Test>>::put(2);
+
+		assert_noop!(SocialSwap2::swap(
+			Origin::signed(ACCOUNT1),
+			3,
+			3,
+			ACCOUNT3,
+			"0x".encode()
+		),
+		Error::<Test>::InsufficientLiquidity);
+
+		SocialSwap2::initialize(Origin::root(), FEE_TO, ADDRESS0, TREASURY, TOKEN0, TOKEN0);
+
+		assert_noop!(SocialSwap2::swap(
+			Origin::signed(ACCOUNT1),
+			1,
+			1,
+			TOKEN0,
+			"0x".encode()
+		),
+		Error::<Test>::InvalidTo);
 
 	});
 }
