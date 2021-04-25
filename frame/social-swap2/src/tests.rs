@@ -197,6 +197,56 @@ fn test_swap_should_not_work() {
 	});
 }
 
+#[test]
+fn test_swap_should_work() {
+	new_test_ext().execute_with(|| {
+		let token_0_amount: u128  = 5_000_000_000_000_000_000;
+		let token_1_amount: u128  = 10_000_000_000_000_000_000;
+		add_liquidity(token_0_amount, token_1_amount);
+		let expected_output_amount: u128 = 1662497915624478906u128;
+		let sawp_amount: u128  = 1_000_000_000_000_000_000;
+
+		pallet_assets::Module::<Test>::transfer(&ASSET_ID, &ACCOUNT1, &TOKEN0, sawp_amount);
+
+		assert_eq!(SocialSwap2::swap(
+			Origin::signed(ACCOUNT1),
+			0,
+			expected_output_amount,
+			ACCOUNT2,
+			"0x".encode()
+		),
+				   Ok(())
+		);
+
+		assert_eq!(
+			SocialSwap2::reserve0(),
+			token_0_amount + sawp_amount
+		);
+
+		assert_eq!(
+			SocialSwap2::reserve1(),
+			token_1_amount - expected_output_amount
+		);
+
+		assert_eq!(
+			pallet_assets::Module::<Test>::balance(ASSET_ID, TOKEN0),
+			token_0_amount + sawp_amount
+		);
+
+		assert_eq!(
+			pallet_assets::Module::<Test>::balance(ASSET_ID, TOKEN1),
+			token_1_amount - expected_output_amount
+		);
+
+		assert_eq!(
+			pallet_assets::Module::<Test>::balance(ASSET_ID, ACCOUNT2),
+			pallet_assets::Module::<Test>::total_supply(ASSET_ID) + expected_output_amount
+			- MINIMUM_LIQUIDITY as u128
+		);
+	});
+}
+
+
 fn add_liquidity(token_0_amount: u128, token_1_amount: u128) {
 	SocialSwap2::initialize(Origin::root(), FEE_TO, ADDRESS0, TREASURY, TOKEN0, TOKEN1);
 	pallet_assets::Module::<Test>::transfer(&ASSET_ID, &ACCOUNT1, &TOKEN0, token_0_amount);

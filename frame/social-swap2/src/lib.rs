@@ -163,7 +163,6 @@ decl_module! {
 			T::FungibleToken::transfer(&social_token_id, &Self::token0(), &to, amount0);
 			T::FungibleToken::transfer(&social_token_id, &Self::token1(), &to, amount1);
 
-
             let balance0 = T::FungibleToken::balances(&social_token_id, &Self::token0());
             let balance1 = T::FungibleToken::balances(&social_token_id, &Self::token1());
 
@@ -190,11 +189,12 @@ decl_module! {
             ensure!(to != token0 && to != token1, Error::<T>::InvalidTo);
 
             if amount0_out > 0u32.into() {
-                Self::safe_transfer(&token0, &to, amount0_out)?
+				T::FungibleToken::transfer(&social_token_id, &token0, &to, amount0_out);
             }
             if amount1_out > 0u32.into() {
-                Self::safe_transfer(&token1, &to, amount1_out)?
+				T::FungibleToken::transfer(&social_token_id, &token1, &to, amount1_out);
             }
+			//assert_eq!(true, false);
             // TODO:
             // if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
             let balance0 = T::FungibleToken::balances(&social_token_id, &Self::token0());
