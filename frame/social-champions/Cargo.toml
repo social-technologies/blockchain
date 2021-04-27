@@ -23,15 +23,21 @@ serde = { version = "1.0.101", optional = true, features = ["derive"] }
 frame-support = { default-features = false, version = '3.0.0', path = '../support' }
 frame-system = { default-features = false, version = '3.0.0', path = '../system' }
 pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
+pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
 sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
 
 [dev-dependencies]
 pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
 pallet-balances = { version = "3.0.0", path = "../balances" }
+pallet-session = { default-features = false, version = "3.0.0", path = "../session" }
+pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
+pallet-staking-reward-curve = { version = "3.0.0", path = "../staking/reward-curve" }
+pallet-timestamp = { default-features = false, version = "3.0.0", path = "../timestamp" }
 sp-core = { default-features = false, version = '3.0.0', path = '../../primitives/core' }
 sp-io = { default-features = false, version = '3.0.0', path = '../../primitives/io' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
+sp-staking = { default-features = false, version = "3.0.0", path = "../../primitives/staking" }
 sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
 
 [features]
@@ -41,5 +47,6 @@ std = [
     'frame-support/std',
     'frame-system/std',
     'pallet-assets/std',
+    'pallet-staking/std',
     'serde',
 ]
