@@ -1054,34 +1054,8 @@ impl pallet_did::Config for Runtime {
 }
 
 impl pallet_social_treasury::Config for Runtime {
-	type ApproveOrigin = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureMembers<_4, AccountId, CouncilCollective>
-	>;
-	type RejectOrigin = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureMembers<_2, AccountId, CouncilCollective>
-	>;
-	type Tippers = Elections;
-	type TipCountdown = TipCountdown;
-	type TipFindersFee = TipFindersFee;
-	type TipReportDepositBase = TipReportDepositBase;
-	type DataDepositPerByte = DataDepositPerByte;
 	type Event = Event;
-	type OnSlash = ();
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type SpendPeriod = SpendPeriod;
-	type Burn = Burn;
-	type BountyDepositBase = BountyDepositBase;
-	type BountyDepositPayoutDelay = BountyDepositPayoutDelay;
-	type BountyUpdatePeriod = BountyUpdatePeriod;
-	type BountyCuratorDeposit = BountyCuratorDeposit;
-	type BountyValueMinimum = BountyValueMinimum;
-	type MaximumReasonLength = MaximumReasonLength;
-	type BurnDestination = ();
+	type FungibleToken = Assets;
 	type WeightInfo = pallet_social_treasury::weights::SubstrateWeight<Runtime>;
 }
 

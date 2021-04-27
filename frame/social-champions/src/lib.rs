@@ -20,7 +20,7 @@ pub trait Config: frame_system::Config + pallet_assets::Config + pallet_staking:
 decl_storage! {
     trait Store for Module<T: Config> as ValidatorRegistry {
         /// Map from the controller account to the social token id.
-        pub ChampionOf get(fn champion_of): map hasher(blake2_128_concat) T::AccountId => T::AssetId;
+        ChampionOf get(fn champion_of): map hasher(blake2_128_concat) T::AccountId => T::AssetId;
         /// Map from the social token id to the vector of controller accounts.
         ChampionsOfSocialToken get(fn champions_of_social_token): map hasher(blake2_128_concat) T::AssetId => Vec<T::AccountId>;
         /// Current champions (controller accounts).
@@ -28,7 +28,7 @@ decl_storage! {
         /// Map from the era index to the vector of controller accounts.
         ChampionHistory get(fn champion_history): map hasher(blake2_128_concat) EraIndex => Vec<T::AccountId>;
         /// Map from (era index, controller account) to the social token id.
-        ChampionDetailHistory get(fn champion_detail_history): double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId => T::AssetId;
+        pub ChampionDetailHistory get(fn champion_detail_history): double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId => T::AssetId;
         /// Number of eras to keep in history.
         HistoryDepth get(fn history_depth): u32 = 84;
     }
