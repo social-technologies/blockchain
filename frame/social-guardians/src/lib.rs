@@ -29,8 +29,6 @@ decl_storage! {
         GuardianHistory get(fn champion_history): map hasher(blake2_128_concat) EraIndex => Vec<T::AccountId>;
         /// Map from (era index, controller account) to the social token id.
         pub GuardianDetailHistory get(fn champion_detail_history): double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId => T::AssetId;
-        /// Number of eras to keep in history.
-        HistoryDepth get(fn history_depth): u32 = 84;
     }
 }
 
@@ -106,7 +104,7 @@ decl_module! {
 
 impl<T: Config> Module<T> {
     fn clean_history(current_era: EraIndex) {
-        let history_depth = HistoryDepth::get();
+        let history_depth = pallet_staking::Module::<T>::history_depth();
         match current_era.checked_sub(history_depth) {
             Some(era) => {
                 <GuardianHistory<T>>::remove(era);

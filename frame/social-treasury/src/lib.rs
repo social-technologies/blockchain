@@ -116,10 +116,8 @@ impl<T: Config> Module<T> {
             pallet_staking::CurrentEra::get().ok_or(Error::<T>::InvalidEraToReward)?;
         ensure!(era <= current_era, Error::<T>::InvalidEraToReward);
         let history_depth = <pallet_staking::Module<T>>::history_depth();
-        let guardians_history_depth = <pallet_social_guardians::Module<T>>::history_depth();
         ensure!(
-            era >= current_era.saturating_sub(history_depth)
-                && era >= current_era.saturating_sub(guardians_history_depth),
+            era >= current_era.saturating_sub(history_depth),
             Error::<T>::InvalidEraToReward
         );
 
