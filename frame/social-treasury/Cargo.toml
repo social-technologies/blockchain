@@ -24,9 +24,8 @@ serde = { version = "1.0.101", optional = true, features = ["derive"] }
 frame-support = { default-features = false, version = '3.0.0', path = '../support' }
 frame-system = { default-features = false, version = '3.0.0', path = '../system' }
 pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
-pallet-treasury = { default-features = false, version = '3.0.0', path = '../treasury' }
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
-pallet-social-champions = { default-features = false, version = '0.1.0', path = '../social-champions' }
+pallet-social-guardians = { default-features = false, version = '0.1.0', path = '../social-guardians' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
 sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
 
@@ -35,11 +34,10 @@ pallet-balances = { default-features = false, version = '3.0.0', path = '../bala
 pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
 pallet-offences = { default-features = false, version = '3.0.0', path = '../offences' }
 pallet-timestamp = { default-features = false, version = '3.0.0', path = '../timestamp' }
-pallet-treasury = { default-features = false, version = '3.0.0', path = '../treasury' }
 pallet-session = { default-features = false, version = '3.0.0', path = '../session' }
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
 pallet-staking-reward-curve = { version = '3.0.0',  path = "../staking/reward-curve" }
-pallet-social-champions = { default-features = false, version = '0.1.0', path = '../social-champions' }
+pallet-social-guardians = { default-features = false, version = '0.1.0', path = '../social-guardians' }
 sp-core = { default-features = false, version = '3.0.0', path = '../../primitives/core' }
 sp-io = { default-features = false, version = '3.0.0', path = '../../primitives/io' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
@@ -52,6 +50,5 @@ std = [
     'codec/std',
     'frame-support/std',
     'frame-system/std',
-    'pallet-treasury/std',
     'pallet-staking/std',
 ]
