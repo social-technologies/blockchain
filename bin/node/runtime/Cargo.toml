@@ -79,7 +79,7 @@ pallet-staking = { version = "3.0.0", default-features = false, path = "../../..
 pallet-staking-reward-curve = { version = "3.0.0", default-features = false, path = "../../../frame/staking/reward-curve" }
 pallet-scheduler = { version = "3.0.0", default-features = false, path = "../../../frame/scheduler" }
 pallet-social-bridge = { version = "0.1.0", default-features = false, path = "../../../frame/social-bridge" }
-pallet-social-champions = { version = "0.1.0", default-features = false, path = "../../../frame/social-champions" }
+pallet-social-guardians = { version = "0.1.0", default-features = false, path = "../../../frame/social-guardians" }
 pallet-social-nft = { version = "0.0.1", default-features = false, path = "../../../frame/social-nft" }
 pallet-social-swap = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap" }
 pallet-social-swap2 = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap2" }
@@ -166,7 +166,7 @@ std = [
 	"pallet-vesting/std",
     "pallet-evm/std",
     "pallet-social-treasury/std",
-    "pallet-social-champions/std",
+    "pallet-social-guardians/std",
     "pallet-social-usernames/std",
     "pallet-chainbridge/std",
     "pallet-social-bridge/std",

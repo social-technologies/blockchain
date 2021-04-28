@@ -98,7 +98,7 @@ members = [
 	"frame/session",
 	"frame/session/benchmarking",
 	"frame/social-bridge",
-	"frame/social-champions",
+	"frame/social-guardians",
 	"frame/social-nft",
 	"frame/social-swap",
 	"frame/social-treasury",

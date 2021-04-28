@@ -20,15 +20,15 @@ pub trait Config: frame_system::Config + pallet_assets::Config + pallet_staking:
 decl_storage! {
     trait Store for Module<T: Config> as ValidatorRegistry {
         /// Map from the controller account to the social token id.
-        ChampionOf get(fn champion_of): map hasher(blake2_128_concat) T::AccountId => T::AssetId;
+        GuardianOf get(fn champion_of): map hasher(blake2_128_concat) T::AccountId => T::AssetId;
         /// Map from the social token id to the vector of controller accounts.
-        ChampionsOfSocialToken get(fn champions_of_social_token): map hasher(blake2_128_concat) T::AssetId => Vec<T::AccountId>;
-        /// Current champions (controller accounts).
-        Champions get(fn champions): Vec<T::AccountId>;
+        GuardiansOfSocialToken get(fn guardians_of_social_token): map hasher(blake2_128_concat) T::AssetId => Vec<T::AccountId>;
+        /// Current guardians (controller accounts).
+        Guardians get(fn guardians): Vec<T::AccountId>;
         /// Map from the era index to the vector of controller accounts.
-        ChampionHistory get(fn champion_history): map hasher(blake2_128_concat) EraIndex => Vec<T::AccountId>;
+        GuardianHistory get(fn champion_history): map hasher(blake2_128_concat) EraIndex => Vec<T::AccountId>;
         /// Map from (era index, controller account) to the social token id.
-        pub ChampionDetailHistory get(fn champion_detail_history): double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId => T::AssetId;
+        pub GuardianDetailHistory get(fn champion_detail_history): double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId => T::AssetId;
         /// Number of eras to keep in history.
         HistoryDepth get(fn history_depth): u32 = 84;
     }
@@ -63,13 +63,13 @@ decl_module! {
             let validator = ensure_signed(origin)?;
 
             <pallet_assets::Module<T>>::validate_asset_id(social_token_id)?;
-            ensure!(!<ChampionOf<T>>::contains_key(&validator), Error::<T>::AlreadyRegistered);
+            ensure!(!<GuardianOf<T>>::contains_key(&validator), Error::<T>::AlreadyRegistered);
 
-            <ChampionOf<T>>::insert(&validator, social_token_id);
-            <ChampionsOfSocialToken<T>>::mutate(social_token_id, |validators| {
+            <GuardianOf<T>>::insert(&validator, social_token_id);
+            <GuardiansOfSocialToken<T>>::mutate(social_token_id, |validators| {
                 validators.push(validator.clone())
             });
-            <Champions<T>>::mutate(|validators| {
+            <Guardians<T>>::mutate(|validators| {
                 validators.push(validator.clone())
             });
 
@@ -80,14 +80,14 @@ decl_module! {
         #[weight = 10_000 + T::DbWeight::get().writes(1)]
         pub fn unregister(origin) -> dispatch::DispatchResult {
             let validator = ensure_signed(origin)?;
-            let social_token_id = <ChampionOf<T>>::try_get(&validator)
+            let social_token_id = <GuardianOf<T>>::try_get(&validator)
                 .map_err(|_| Error::<T>::NotFound)?;
 
-            <ChampionOf<T>>::remove(&validator);
-            <ChampionsOfSocialToken<T>>::mutate(social_token_id, |validators| {
+            <GuardianOf<T>>::remove(&validator);
+            <GuardiansOfSocialToken<T>>::mutate(social_token_id, |validators| {
                 validators.retain(|account_id| account_id != &validator)
             });
-            <Champions<T>>::mutate(|validators| {
+            <Guardians<T>>::mutate(|validators| {
                 validators.retain(|account_id| account_id != &validator)
             });
 
@@ -109,19 +109,19 @@ impl<T: Config> Module<T> {
         let history_depth = HistoryDepth::get();
         match current_era.checked_sub(history_depth) {
             Some(era) => {
-                <ChampionHistory<T>>::remove(era);
-                <ChampionDetailHistory<T>>::remove_prefix(era);
+                <GuardianHistory<T>>::remove(era);
+                <GuardianDetailHistory<T>>::remove_prefix(era);
             }
             None => (),
         }
     }
 
     fn update_history(current_era: EraIndex) {
-        let champions = <Champions<T>>::get();
-        champions.iter().for_each(|champion| {
-            let social_token_id = <ChampionOf<T>>::get(champion);
-            <ChampionDetailHistory<T>>::insert(current_era, champion, social_token_id)
+        let guardians = <Guardians<T>>::get();
+        guardians.iter().for_each(|champion| {
+            let social_token_id = <GuardianOf<T>>::get(champion);
+            <GuardianDetailHistory<T>>::insert(current_era, champion, social_token_id)
         });
-        <ChampionHistory<T>>::insert(current_era, champions);
+        <GuardianHistory<T>>::insert(current_era, guardians);
     }
 }

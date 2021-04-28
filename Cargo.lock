@@ -4255,7 +4255,7 @@ dependencies = [
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-social-bridge",
- "pallet-social-champions",
+ "pallet-social-guardians",
  "pallet-social-nft",
  "pallet-social-swap",
  "pallet-social-swap2",
@@ -5273,7 +5273,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-social-champions"
+name = "pallet-social-guardians"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -5353,7 +5353,7 @@ dependencies = [
  "pallet-balances",
  "pallet-offences",
  "pallet-session",
- "pallet-social-champions",
+ "pallet-social-guardians",
  "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-timestamp",

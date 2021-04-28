@@ -19,7 +19,7 @@ pub trait Config:
     frame_system::Config
     + pallet_staking::Config
     + pallet_assets::Config
-    + pallet_social_champions::Config
+    + pallet_social_guardians::Config
 {
     /// The overarching event type.
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
@@ -62,7 +62,7 @@ decl_error! {
         InvalidEraToReward,
         /// Rewards for this era have already been claimed for this validator.
         AlreadyClaimed,
-        IsNotChampion,
+        IsNotGuardian,
     }
 }
 
@@ -116,10 +116,10 @@ impl<T: Config> Module<T> {
             pallet_staking::CurrentEra::get().ok_or(Error::<T>::InvalidEraToReward)?;
         ensure!(era <= current_era, Error::<T>::InvalidEraToReward);
         let history_depth = <pallet_staking::Module<T>>::history_depth();
-        let champions_history_depth = <pallet_social_champions::Module<T>>::history_depth();
+        let guardians_history_depth = <pallet_social_guardians::Module<T>>::history_depth();
         ensure!(
             era >= current_era.saturating_sub(history_depth)
-                && era >= current_era.saturating_sub(champions_history_depth),
+                && era >= current_era.saturating_sub(guardians_history_depth),
             Error::<T>::InvalidEraToReward
         );
 
@@ -133,8 +133,8 @@ impl<T: Config> Module<T> {
         let ledger = <pallet_staking::Ledger<T>>::get(&controller)
             .ok_or_else(|| Error::<T>::NotController)?;
         let asset_id =
-            <pallet_social_champions::ChampionDetailHistory<T>>::try_get(&era, &controller)
-                .map_err(|_| Error::<T>::IsNotChampion)?;
+            <pallet_social_guardians::GuardianDetailHistory<T>>::try_get(&era, &controller)
+                .map_err(|_| Error::<T>::IsNotGuardian)?;
 
         let mut claimed_rewards = Self::claimed_rewards(&controller);
         match claimed_rewards.binary_search(&era) {

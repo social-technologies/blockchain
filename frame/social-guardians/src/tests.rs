@@ -6,28 +6,28 @@ fn registration_and_unregistration_should_work() {
     new_test_ext().execute_with(|| {
         assert_eq!(ValidatorRegistry::champion_of(1), 0);
         assert_eq!(
-            ValidatorRegistry::champions_of_social_token(10),
+            ValidatorRegistry::guardians_of_social_token(10),
             Vec::<u64>::new()
         );
-        assert_eq!(ValidatorRegistry::champions(), Vec::<u64>::new());
+        assert_eq!(ValidatorRegistry::guardians(), Vec::<u64>::new());
         assert_ok!(ValidatorRegistry::register(Origin::signed(1), 10));
         assert_eq!(ValidatorRegistry::champion_of(1), 10);
-        assert_eq!(ValidatorRegistry::champions_of_social_token(10), vec![1]);
-        assert_eq!(ValidatorRegistry::champions(), vec![1]);
+        assert_eq!(ValidatorRegistry::guardians_of_social_token(10), vec![1]);
+        assert_eq!(ValidatorRegistry::guardians(), vec![1]);
         assert_ok!(ValidatorRegistry::register(Origin::signed(2), 10));
         assert_eq!(ValidatorRegistry::champion_of(2), 10);
-        assert_eq!(ValidatorRegistry::champions_of_social_token(10), vec![1, 2]);
-        assert_eq!(ValidatorRegistry::champions(), vec![1, 2]);
+        assert_eq!(ValidatorRegistry::guardians_of_social_token(10), vec![1, 2]);
+        assert_eq!(ValidatorRegistry::guardians(), vec![1, 2]);
         assert_ok!(ValidatorRegistry::unregister(Origin::signed(2)));
-        assert_eq!(ValidatorRegistry::champions_of_social_token(10), vec![1]);
-        assert_eq!(ValidatorRegistry::champions(), vec![1]);
+        assert_eq!(ValidatorRegistry::guardians_of_social_token(10), vec![1]);
+        assert_eq!(ValidatorRegistry::guardians(), vec![1]);
         assert_ok!(ValidatorRegistry::unregister(Origin::signed(1)));
         assert_eq!(ValidatorRegistry::champion_of(1), 0);
         assert_eq!(
-            ValidatorRegistry::champions_of_social_token(10),
+            ValidatorRegistry::guardians_of_social_token(10),
             Vec::<u64>::new()
         );
-        assert_eq!(ValidatorRegistry::champions(), Vec::<u64>::new());
+        assert_eq!(ValidatorRegistry::guardians(), Vec::<u64>::new());
     });
 }
 
@@ -36,14 +36,14 @@ fn re_registration_should_not_work() {
     new_test_ext().execute_with(|| {
         assert_ok!(ValidatorRegistry::register(Origin::signed(1), 10));
         assert_eq!(ValidatorRegistry::champion_of(1), 10);
-        assert_eq!(ValidatorRegistry::champions_of_social_token(10), vec![1]);
-        assert_eq!(ValidatorRegistry::champions(), vec![1]);
+        assert_eq!(ValidatorRegistry::guardians_of_social_token(10), vec![1]);
+        assert_eq!(ValidatorRegistry::guardians(), vec![1]);
         assert_noop!(
             ValidatorRegistry::register(Origin::signed(1), 11),
             Error::<Test>::AlreadyRegistered
         );
-        assert_eq!(ValidatorRegistry::champions_of_social_token(10), vec![1]);
-        assert_eq!(ValidatorRegistry::champions(), vec![1]);
+        assert_eq!(ValidatorRegistry::guardians_of_social_token(10), vec![1]);
+        assert_eq!(ValidatorRegistry::guardians(), vec![1]);
     });
 }
 

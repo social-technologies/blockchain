@@ -1059,7 +1059,7 @@ impl pallet_social_treasury::Config for Runtime {
 	type WeightInfo = pallet_social_treasury::weights::SubstrateWeight<Runtime>;
 }
 
-impl pallet_social_champions::Config for Runtime {
+impl pallet_social_guardians::Config for Runtime {
 	type Event = Event;
 }
 
@@ -1186,7 +1186,7 @@ construct_runtime!(
 		Evm: pallet_evm::{Module, Call, Storage, Event<T>},
 		Did: pallet_did::{Module, Call, Storage, Event<T>},
 		SocialTreasury: pallet_social_treasury::{Module, Call, Storage, Event<T>},
-		SocialChampions: pallet_social_champions::{Module, Call, Storage, Event<T>},
+		SocialGuardians: pallet_social_guardians::{Module, Call, Storage, Event<T>},
 		SocialUsernames: pallet_social_usernames::{Module, Call, Storage, Event<T>},
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},
 		SocialBridge: pallet_social_bridge::{Module, Call, Event<T>},

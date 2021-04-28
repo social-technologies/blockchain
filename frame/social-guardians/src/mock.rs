@@ -1,4 +1,4 @@
-use crate as pallet_social_champions;
+use crate as pallet_social_guardians;
 use frame_support::parameter_types;
 use sp_core::H256;
 use sp_runtime::{
@@ -22,7 +22,7 @@ frame_support::construct_runtime!(
         Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
         Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
         Staking: pallet_staking::{Module, Call, Storage, Config<T>, Event<T>},
-        SocialChampions: pallet_social_champions::{Module, Call, Storage, Event<T>},
+        SocialGuardians: pallet_social_guardians::{Module, Call, Storage, Event<T>},
     }
 );
 
@@ -193,11 +193,11 @@ impl pallet_staking::Config for Test {
     type WeightInfo = ();
 }
 
-impl pallet_social_champions::Config for Test {
+impl pallet_social_guardians::Config for Test {
     type Event = Event;
 }
 
-pub type ValidatorRegistry = pallet_social_champions::Module<Test>;
+pub type ValidatorRegistry = pallet_social_guardians::Module<Test>;
 
 pub struct ExtBuilder;
 

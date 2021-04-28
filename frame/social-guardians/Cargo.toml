@@ -4,7 +4,7 @@ description = 'FRAME pallet to manage validator registry.'
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Apache-2.0'
-name = 'pallet-social-champions'
+name = 'pallet-social-guardians'
 repository = 'https://github.com/social-network/network/'
 version = '0.1.0'
 

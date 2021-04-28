@@ -25,7 +25,7 @@ frame-support = { default-features = false, version = '3.0.0', path = '../suppor
 frame-system = { default-features = false, version = '3.0.0', path = '../system' }
 pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
-pallet-social-champions = { default-features = false, version = '0.1.0', path = '../social-champions' }
+pallet-social-guardians = { default-features = false, version = '0.1.0', path = '../social-guardians' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
 sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
 
@@ -37,7 +37,7 @@ pallet-timestamp = { default-features = false, version = '3.0.0', path = '../tim
 pallet-session = { default-features = false, version = '3.0.0', path = '../session' }
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
 pallet-staking-reward-curve = { version = '3.0.0',  path = "../staking/reward-curve" }
-pallet-social-champions = { default-features = false, version = '0.1.0', path = '../social-champions' }
+pallet-social-guardians = { default-features = false, version = '0.1.0', path = '../social-guardians' }
 sp-core = { default-features = false, version = '3.0.0', path = '../../primitives/core' }
 sp-io = { default-features = false, version = '3.0.0', path = '../../primitives/io' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
