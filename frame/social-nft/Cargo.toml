@@ -16,6 +16,7 @@ sp-std = { version = '3.0.0', default-features = false, path = '../../primitives
 sp-runtime = { version = '3.0.0', default-features = false, path = '../../primitives/runtime' }
 sp-io = { version = '3.0.0', default-features = false, path = '../../primitives/io' }
 sp-core = { version = '3.0.0', default-features = false, path = '../../primitives/core' }
+pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
 
 [dev-dependencies]
 pallet-balances = { version = '3.0.0',default-features = false, path = '../balances' }
@@ -33,5 +34,6 @@ std = [
 	'sp-core/std',
 	'frame-support/std',
 	'frame-system/std',
-	'chainbridge/std'
+	'chainbridge/std',
+	'pallet-assets/std',
 ]

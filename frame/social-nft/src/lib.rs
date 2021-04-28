@@ -10,7 +10,7 @@ use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_core::U256;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
-
+use pallet_assets::{Fungible, IssueAndBurn};
 mod mock;
 mod tests;
 
@@ -22,9 +22,9 @@ pub struct Erc721Token {
     pub metadata: Vec<u8>,
 }
 
-pub trait Config: system::Config {
+pub trait Config: system::Config + pallet_assets::Config {
     type Event: From<Event<Self>> + Into<<Self as system::Config>::Event>;
-
+	type FungibleToken: IssueAndBurn<Self::AssetId, Self::AccountId>;
     /// Some identifier for this token type, possibly the originating ethereum address.
     /// This is not explicitly used for anything, but may reflect the bridge's notion of resource ID.
     type Identifier: Get<[u8; 32]>;

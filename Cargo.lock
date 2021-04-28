@@ -5297,6 +5297,7 @@ dependencies = [
  "chainbridge",
  "frame-support",
  "frame-system",
+ "pallet-assets",
  "pallet-balances",
  "parity-scale-codec",
  "serde",
