@@ -41,6 +41,8 @@ decl_event! {
         Transferred(AccountId, AccountId, NftId),
         /// Token removed from the system
         Burned(NftId),
+		/// Set Ask Amount
+		SetAskAmount(NftId),
     }
 }
 
@@ -65,6 +67,8 @@ decl_storage! {
         pub TokenCount get(fn token_count): U256 = U256::zero();
         /// Maximum token id
         pub MaxTokenId get(fn max_token_id): U256 = U256::zero();
+		/// Set ask amount for token id
+		pub TokenAmount get(fn amount_of): map hasher(opaque_blake2_256) NftId => T::Balance;
     }
 }
 
@@ -101,6 +105,17 @@ decl_module! {
             let owner = Self::owner_of(id).ok_or(Error::<T>::NftIdDoesNotExist)?;
 
             Self::burn_token(owner, id)?;
+
+            Ok(())
+        }
+
+		#[weight = 195_000_000]
+        pub fn set_ask(origin, id: NftId, amount: T::Balance) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+
+            let owner = Self::owner_of(id).ok_or(Error::<T>::NftIdDoesNotExist)?;
+			ensure!(owner == sender, Error::<T>::NotOwner);
+            Self::set_ask_token(owner, id, amount)?;
 
             Ok(())
         }
@@ -154,4 +169,11 @@ impl<T: Config> Module<T> {
 
         Ok(())
     }
+
+	pub fn set_ask_token(_owner: T::AccountId, id: NftId, amount: T::Balance) -> DispatchResult {
+
+		<TokenAmount<T>>::insert(&id, amount);
+		Self::deposit_event(RawEvent::SetAskAmount(id));
+		Ok(())
+	}
 }
