@@ -6,21 +6,24 @@ use frame_support::{
     decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
     traits::Get,
 };
-use frame_system::{self as system, ensure_root, ensure_signed};
+use frame_system::{self as system, ensure_signed};
 use sp_core::U256;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
-use sp_runtime::traits::Zero;
-
+use sp_runtime::traits::{Zero, One};
+use sp_runtime::{
+	traits::Saturating,
+};
 mod mock;
 mod tests;
 
 type NftId = U256;
 
 #[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
-pub struct Erc721Token {
+pub struct Erc721Token<T: Config> {
     pub id: NftId,
     pub metadata: Vec<u8>,
+	pub royalty: T::Balance,
 }
 
 pub trait Config: system::Config + pallet_assets::Config + pallet_timestamp::Config {
@@ -64,7 +67,7 @@ decl_error! {
 decl_storage! {
     trait Store for Module<T: Config> as SocialNFT {
         /// Maps tokenId to Erc721 object
-        pub Tokens get(fn tokens): map hasher(opaque_blake2_256) NftId => Option<Erc721Token>;
+        pub Tokens get(fn tokens): map hasher(opaque_blake2_256) NftId => Option<Erc721Token<T>>;
         /// Maps tokenId to owner
         pub TokenCreatorOwner get(fn owner_of): map hasher(opaque_blake2_256) NftId => (T::AccountId, T::AccountId);
         /// Total number of tokens in existence
@@ -87,10 +90,10 @@ decl_module! {
 
         /// Creates a new token with the given token ID and metadata, and gives ownership to owner
         #[weight = 195_000_000]
-        pub fn mint(origin, owner: T::AccountId, id: NftId, metadata: Vec<u8>) -> DispatchResult {
+        pub fn mint(origin, owner: T::AccountId, id: NftId, metadata: Vec<u8>, royalty: T::Balance) -> DispatchResult {
             let _sender = ensure_signed(origin)?;
 
-            Self::mint_token(owner, id, metadata)?;
+            Self::mint_token(owner, id, metadata, royalty)?;
 
             Ok(())
         }
@@ -135,7 +138,6 @@ decl_module! {
             let sender = ensure_signed(origin)?;
 
             ensure!(TokenCreatorOwner::<T>::contains_key(nft_id), Error::<T>::NftIdDoesNotExist);
-        	let (_, owner) = Self::owner_of(nft_id);
 
             Self::set_bid_token(sender, nft_id, token_id, amount, dead_line)?;
 
@@ -146,12 +148,12 @@ decl_module! {
 
 impl<T: Config> Module<T> {
     /// Creates a new token in the system.
-    pub fn mint_token(owner: T::AccountId, id: NftId, metadata: Vec<u8>) -> DispatchResult {
-        ensure!(!Tokens::contains_key(id), Error::<T>::TokenAlreadyExists);
+    pub fn mint_token(owner: T::AccountId, id: NftId, metadata: Vec<u8>, royalty: T::Balance) -> DispatchResult {
+        ensure!(!<Tokens<T>>::contains_key(id), Error::<T>::TokenAlreadyExists);
 
-        let new_token = Erc721Token { id, metadata };
+        let new_token = Erc721Token { id, metadata, royalty };
 
-        <Tokens>::insert(&id, new_token);
+		<Tokens<T>>::insert(&id, new_token);
         <TokenCreatorOwner<T>>::insert(&id, (owner.clone(), owner.clone()));
         let new_total = <TokenCount>::get().saturating_add(U256::one());
         <TokenCount>::put(new_total);
@@ -171,7 +173,7 @@ impl<T: Config> Module<T> {
         let (_, owner) = Self::owner_of(id);
         ensure!(owner == from, Error::<T>::NotOwner);
         // Update owner
-		TokenCreatorOwner::<T>::mutate(id, |(creator, owner)| *owner = to.clone());
+		TokenCreatorOwner::<T>::mutate(id, |(_, owner)| *owner = to.clone());
 
         Self::deposit_event(RawEvent::Transferred(from, to, id));
 
@@ -184,7 +186,7 @@ impl<T: Config> Module<T> {
 		let (_, owner) = Self::owner_of(id);
         ensure!(owner == from, Error::<T>::NotOwner);
 
-        <Tokens>::remove(&id);
+		<Tokens<T>>::remove(&id);
         <TokenCreatorOwner<T>>::remove(&id);
         let new_total = <TokenCount>::get().saturating_sub(U256::one());
         <TokenCount>::put(new_total);
@@ -209,7 +211,7 @@ impl<T: Config> Module<T> {
 		let now_timestamp = <pallet_timestamp::Module<T>>::now();
 
 		if amount > ask_token && dead_line >=now_timestamp {
-			Self::execute_trade();
+			Self::execute_trade(sender, id, token_id, amount);
 		} else {
 			<TokenBidAmount<T>>::insert(&sender, (amount, token_id, dead_line));
 			Self::deposit_event(RawEvent::SetBidAmount(id));
@@ -218,7 +220,14 @@ impl<T: Config> Module<T> {
 		Ok(())
 	}
 
-	fn execute_trade() -> DispatchResult {
+	fn execute_trade(sender: T::AccountId, id: NftId, token_id: T::AssetId, amount: T::Balance) -> DispatchResult {
+		let nft = Tokens::<T>::get(id).ok_or(Error::<T>::NftIdDoesNotExist)?;
+		let (creator, owner) = Self::owner_of(id);
+		if nft.royalty.is_zero() {
+			<pallet_assets::Module<T>>::do_transfer(token_id, sender.clone(), creator, amount.saturating_mul(nft.royalty));
+			<pallet_assets::Module<T>>::do_transfer(token_id, sender, owner, amount.saturating_mul(T::Balance::one().saturating_sub(nft.royalty)));
+			TokenCreatorOwner::<T>::mutate(id, |(_, owner)| *owner = sender.clone());
+		}
 		Ok(())
 	}
 }
