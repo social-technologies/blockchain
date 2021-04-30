@@ -10,7 +10,8 @@ use frame_system::{self as system, ensure_root, ensure_signed};
 use sp_core::U256;
 use sp_runtime::RuntimeDebug;
 use sp_std::prelude::*;
-use pallet_assets::{Fungible, IssueAndBurn};
+use sp_runtime::traits::Zero;
+
 mod mock;
 mod tests;
 
@@ -22,9 +23,8 @@ pub struct Erc721Token {
     pub metadata: Vec<u8>,
 }
 
-pub trait Config: system::Config + pallet_assets::Config {
+pub trait Config: system::Config + pallet_assets::Config + pallet_timestamp::Config {
     type Event: From<Event<Self>> + Into<<Self as system::Config>::Event>;
-	type FungibleToken: IssueAndBurn<Self::AssetId, Self::AccountId>;
     /// Some identifier for this token type, possibly the originating ethereum address.
     /// This is not explicitly used for anything, but may reflect the bridge's notion of resource ID.
     type Identifier: Get<[u8; 32]>;
@@ -43,6 +43,8 @@ decl_event! {
         Burned(NftId),
 		/// Set Ask Amount
 		SetAskAmount(NftId),
+		/// Set Ask Amount
+		SetBidAmount(NftId),
     }
 }
 
@@ -54,6 +56,8 @@ decl_error! {
         TokenAlreadyExists,
         /// Origin is not owner
         NotOwner,
+		/// Not For Sale
+        NotForSale,
     }
 }
 
@@ -68,7 +72,11 @@ decl_storage! {
         /// Maximum token id
         pub MaxTokenId get(fn max_token_id): U256 = U256::zero();
 		/// Set ask amount for token id
-		pub TokenAmount get(fn amount_of): map hasher(opaque_blake2_256) NftId => T::Balance;
+		pub TokenAskAmount get(fn ask_token): double_map hasher(opaque_blake2_256) NftId,
+		hasher(twox_64_concat) T::AssetId => (T::Balance, T::AccountId);
+		 /// Maps tokenId to owner
+        pub TokenBidAmount get(fn bid_token): map hasher(opaque_blake2_256) T::AccountId =>
+		(T::Balance, T::AssetId, T::Moment);
     }
 }
 
@@ -110,12 +118,23 @@ decl_module! {
         }
 
 		#[weight = 195_000_000]
-        pub fn set_ask(origin, id: NftId, amount: T::Balance) -> DispatchResult {
+        pub fn set_ask(origin, nft_id: NftId, token_id: T::AssetId, amount: T::Balance) -> DispatchResult {
             let sender = ensure_signed(origin)?;
 
-            let owner = Self::owner_of(id).ok_or(Error::<T>::NftIdDoesNotExist)?;
+            let owner = Self::owner_of(nft_id).ok_or(Error::<T>::NftIdDoesNotExist)?;
 			ensure!(owner == sender, Error::<T>::NotOwner);
-            Self::set_ask_token(owner, id, amount)?;
+            Self::set_ask_token(owner, nft_id, token_id, amount, sender)?;
+
+            Ok(())
+        }
+
+		#[weight = 195_000_000]
+        pub fn set_bid(origin, nft_id: NftId, token_id: T::AssetId, amount: T::Balance, dead_line: T::Moment) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+
+            let owner = Self::owner_of(nft_id).ok_or(Error::<T>::NftIdDoesNotExist)?;
+
+            Self::set_bid_token(owner, nft_id, token_id, amount, dead_line, sender)?;
 
             Ok(())
         }
@@ -170,10 +189,31 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-	pub fn set_ask_token(_owner: T::AccountId, id: NftId, amount: T::Balance) -> DispatchResult {
+	pub fn set_ask_token(_owner: T::AccountId, id: NftId, token_id: T::AssetId, amount: T::Balance, sender: T::AccountId) -> DispatchResult {
 
-		<TokenAmount<T>>::insert(&id, amount);
+		<TokenAskAmount<T>>::insert(&id, token_id, (amount, sender));
 		Self::deposit_event(RawEvent::SetAskAmount(id));
+		Ok(())
+	}
+
+	pub fn set_bid_token(_owner: T::AccountId, id: NftId, token_id: T::AssetId, amount: T::Balance, dead_line: T::Moment, sender: T::AccountId) -> DispatchResult {
+
+		let (ask_token, _) = TokenAskAmount::<T>::get(id, token_id);
+
+		ensure!(ask_token.is_zero(), Error::<T>::NotForSale);
+		let now_timestamp = <pallet_timestamp::Module<T>>::now();
+
+		if amount > ask_token && dead_line >=now_timestamp {
+			Self::execute_trade();
+		} else {
+			<TokenBidAmount<T>>::insert(&sender, (amount, token_id, dead_line));
+			Self::deposit_event(RawEvent::SetBidAmount(id));
+		}
+
+		Ok(())
+	}
+
+	fn execute_trade() -> DispatchResult {
 		Ok(())
 	}
 }

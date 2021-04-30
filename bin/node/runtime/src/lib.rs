@@ -1134,7 +1134,6 @@ impl pallet_social_bridge::Config for Runtime {
 
 impl pallet_social_nft::Config for Runtime {
 	type Event = Event;
-	type FungibleToken = Assets;
 	type Identifier = Erc721Id;
 }
 
