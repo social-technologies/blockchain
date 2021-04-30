@@ -4,25 +4,25 @@ use frame_support::{assert_noop, assert_ok};
 #[test]
 fn registration_and_unregistration_should_work() {
     new_test_ext().execute_with(|| {
-        assert_eq!(ValidatorRegistry::champion_of(1), 0);
+        assert_eq!(ValidatorRegistry::guardian_of(1), 0);
         assert_eq!(
             ValidatorRegistry::guardians_of_social_token(10),
             Vec::<u64>::new()
         );
         assert_eq!(ValidatorRegistry::guardians(), Vec::<u64>::new());
         assert_ok!(ValidatorRegistry::register(Origin::signed(1), 10));
-        assert_eq!(ValidatorRegistry::champion_of(1), 10);
+        assert_eq!(ValidatorRegistry::guardian_of(1), 10);
         assert_eq!(ValidatorRegistry::guardians_of_social_token(10), vec![1]);
         assert_eq!(ValidatorRegistry::guardians(), vec![1]);
         assert_ok!(ValidatorRegistry::register(Origin::signed(2), 10));
-        assert_eq!(ValidatorRegistry::champion_of(2), 10);
+        assert_eq!(ValidatorRegistry::guardian_of(2), 10);
         assert_eq!(ValidatorRegistry::guardians_of_social_token(10), vec![1, 2]);
         assert_eq!(ValidatorRegistry::guardians(), vec![1, 2]);
         assert_ok!(ValidatorRegistry::unregister(Origin::signed(2)));
         assert_eq!(ValidatorRegistry::guardians_of_social_token(10), vec![1]);
         assert_eq!(ValidatorRegistry::guardians(), vec![1]);
         assert_ok!(ValidatorRegistry::unregister(Origin::signed(1)));
-        assert_eq!(ValidatorRegistry::champion_of(1), 0);
+        assert_eq!(ValidatorRegistry::guardian_of(1), 0);
         assert_eq!(
             ValidatorRegistry::guardians_of_social_token(10),
             Vec::<u64>::new()
@@ -35,7 +35,7 @@ fn registration_and_unregistration_should_work() {
 fn re_registration_should_not_work() {
     new_test_ext().execute_with(|| {
         assert_ok!(ValidatorRegistry::register(Origin::signed(1), 10));
-        assert_eq!(ValidatorRegistry::champion_of(1), 10);
+        assert_eq!(ValidatorRegistry::guardian_of(1), 10);
         assert_eq!(ValidatorRegistry::guardians_of_social_token(10), vec![1]);
         assert_eq!(ValidatorRegistry::guardians(), vec![1]);
         assert_noop!(

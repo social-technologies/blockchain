@@ -1,8 +1,8 @@
 [package]
-name = "pallet-social-swap2"
+name = "pallet-social-dex"
 version = "0.1.0"
-authors = ["hammeWang <dsw0602@foxmail.com>"]
-edition = "2018"
+authors = ["San Goku <sangoku@social.network>"]
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

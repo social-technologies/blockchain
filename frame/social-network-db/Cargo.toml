@@ -1,11 +1,11 @@
 [package]
-authors = ["Social Technologies <admin@social.network>"]
-description = 'FRAME pallet to manage guardian registry.'
-edition = '2020'
+authors = ["Social Technologies <developers@social.network>"]
+description = 'FRAME pallet to manage the social network database.'
+edition = '2018'
 homepage = 'https://social.network'
 license = 'Apache-2.0'
-name = 'pallet-social-guardians'
-repository = 'https://github.com/social-network/blockchain/'
+name = 'pallet-social-network-db'
+repository = 'https://github.com/social-network/v3/'
 version = '0.1.0'
 
 [package.metadata.docs.rs]
@@ -22,23 +22,13 @@ version = '2.0.0'
 serde = { version = "1.0.101", optional = true, features = ["derive"] }
 frame-support = { default-features = false, version = '3.0.0', path = '../support' }
 frame-system = { default-features = false, version = '3.0.0', path = '../system' }
-pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
-pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
 sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
 
 [dev-dependencies]
-pallet-assets = { default-features = false, version = '3.0.0', path = '../assets' }
-pallet-balances = { version = "3.0.0", path = "../balances" }
-pallet-session = { default-features = false, version = "3.0.0", path = "../session" }
-pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
-pallet-staking-reward-curve = { version = "3.0.0", path = "../staking/reward-curve" }
-pallet-timestamp = { default-features = false, version = "3.0.0", path = "../timestamp" }
 sp-core = { default-features = false, version = '3.0.0', path = '../../primitives/core' }
 sp-io = { default-features = false, version = '3.0.0', path = '../../primitives/io' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
-sp-staking = { default-features = false, version = "3.0.0", path = "../../primitives/staking" }
-sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
 
 [features]
 default = ['std']
@@ -46,7 +36,5 @@ std = [
     'codec/std',
     'frame-support/std',
     'frame-system/std',
-    'pallet-assets/std',
-    'pallet-staking/std',
     'serde',
 ]

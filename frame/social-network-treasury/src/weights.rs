@@ -47,7 +47,7 @@ pub trait WeightInfo {
     fn on_initialize_bounties(b: u32) -> Weight;
 }
 
-/// Weights for pallet_social_treasury using the Substrate node and recommended hardware.
+/// Weights for pallet_social_network_treasury using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
     fn propose_spend() -> Weight {

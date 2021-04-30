@@ -1,12 +1,12 @@
 [package]
 name = "node-runtime"
 version = "3.0.0"
-authors = ["Parity Technologies <admin@parity.io>"]
-edition = "2018"
+authors = ["Social Technologies <admin@social.network>"]
+edition = "2021"
 build = "build.rs"
 license = "Apache-2.0"
-homepage = "https://substrate.dev"
-repository = "https://github.com/paritytech/substrate/"
+homepage = "https://social.network"
+repository = "https://github.com/social-network/blockchain/"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -82,8 +82,8 @@ pallet-social-bridge = { version = "0.1.0", default-features = false, path = "..
 pallet-social-guardians = { version = "0.1.0", default-features = false, path = "../../../frame/social-guardians" }
 pallet-social-nft = { version = "0.0.1", default-features = false, path = "../../../frame/social-nft" }
 pallet-social-swap = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap" }
-pallet-social-swap2 = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap2" }
-pallet-social-treasury = { version = "0.1.0", default-features = false, path = "../../../frame/social-treasury" }
+pallet-social-dex = { version = "0.1.0", default-features = false, path = "../../../frame/social-dex" }
+pallet-social-network-treasury = { version = "0.1.0", default-features = false, path = "../../../frame/social-network-treasury" }
 pallet-social-usernames = { version = "0.1.0", default-features = false, path = "../../../frame/social-usernames" }
 
 pallet-society = { version = "3.0.0", default-features = false, path = "../../../frame/society" }
@@ -164,15 +164,15 @@ std = [
 	"pallet-society/std",
 	"pallet-recovery/std",
 	"pallet-vesting/std",
-    "pallet-evm/std",
-    "pallet-social-treasury/std",
-    "pallet-social-guardians/std",
-    "pallet-social-usernames/std",
-    "pallet-chainbridge/std",
-    "pallet-social-bridge/std",
-    "pallet-social-nft/std",
-    "pallet-social-swap/std",
-    "pallet-social-swap2/std",
+  "pallet-evm/std",
+  "pallet-social-network-treasury/std",
+  "pallet-social-guardians/std",
+  "pallet-social-usernames/std",
+  "pallet-chainbridge/std",
+  "pallet-social-bridge/std",
+  "pallet-social-nft/std",
+  "pallet-social-swap/std",
+  "pallet-social-dex/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",
