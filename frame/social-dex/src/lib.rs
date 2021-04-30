@@ -19,6 +19,11 @@ pub type BalanceOf<T> = <<T as Config>::FungibleToken as Fungible<
     <T as frame_system::Config>::AccountId,
 >>::Balance;
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 pub trait Config:
     frame_system::Config + pallet_assets::Config + pallet_timestamp::Config
 {
@@ -98,7 +103,6 @@ decl_module! {
 
         #[weight = 10_000 + T::DbWeight::get().writes(1)]
         fn mint(origin, to: T::AccountId) -> Result<(), DispatchError> {
-            ensure_root(origin.clone())?;
             let sender = ensure_signed(origin)?;
             let social_token_id = Self::social_token_id();
             let reserve0 = Self::reserve0();
@@ -112,12 +116,13 @@ decl_module! {
             let fee_on = Self::mint_fee(reserve0, reserve1)?;
             let total_supply = T::FungibleToken::total_supply(&social_token_id);
             let liquidity = if total_supply == 0u32.into() {
-                let minimum_liquidity = amount0
+				let min_liquidity = T::MinimumLiquidity::get().saturated_into::<u128>().saturated_into();
+                let liquidity = amount0
                     .saturating_mul(amount1)
                     .integer_sqrt()
-                    .saturating_sub(T::MinimumLiquidity::get().saturated_into::<u128>().saturated_into());
-                T::FungibleToken::issue(&social_token_id, &Self::address0(), minimum_liquidity)?;
-                amount0.saturating_mul(amount1).saturating_sub(minimum_liquidity)
+                    .saturating_sub(min_liquidity);
+                T::FungibleToken::issue(&social_token_id, &Self::address0(), min_liquidity)?;
+                liquidity
             } else {
                 (amount0.saturating_mul(total_supply) / reserve0).min(amount1.saturating_mul(total_supply) / reserve1)
             };
@@ -136,7 +141,6 @@ decl_module! {
 
         #[weight = 10_000 + T::DbWeight::get().writes(1)]
         fn burn(origin, to: T::AccountId) -> Result<(), DispatchError> {
-            ensure_root(origin.clone())?;
             let sender = ensure_signed(origin)?;
             let social_token_id = Self::social_token_id();
             let reserve0 = Self::reserve0();
@@ -150,16 +154,18 @@ decl_module! {
             let fee_on = Self::mint_fee(reserve0, reserve1)?;
             let total_supply = T::FungibleToken::total_supply(&social_token_id);
 
+
             let amount0 = liquidity.saturating_mul(balance0) / total_supply;
             let amount1 = liquidity.saturating_mul(balance1) / total_supply;
             ensure!(amount0 > 0u32.into() && amount1 > 0u32.into(),  Error::<T>::InsufficientLiquidityBurned);
-
             T::FungibleToken::burn(&social_token_id, &to, liquidity)?;
-            let _ = Self::safe_transfer(&Self::token0(), &to, amount0);
-            let _ = Self::safe_transfer(&Self::token1(), &to, amount1);
+
+			T::FungibleToken::transfer(&social_token_id, &Self::token0(), &to, amount0);
+			T::FungibleToken::transfer(&social_token_id, &Self::token1(), &to, amount1);
 
             let balance0 = T::FungibleToken::balances(&social_token_id, &Self::token0());
             let balance1 = T::FungibleToken::balances(&social_token_id, &Self::token1());
+
             let _ = Self::update(balance0, balance1, reserve0, reserve1);
             if fee_on {
                 <KLast<T>>::put(reserve0.saturating_mul(reserve1));
@@ -172,7 +178,6 @@ decl_module! {
 
         #[weight = 10_000 + T::DbWeight::get().writes(1)]
         fn swap(origin, amount0_out: BalanceOf<T>, amount1_out: BalanceOf<T>, to: T::AccountId, data: Vec<u8>) -> DispatchResult {
-            ensure_root(origin.clone())?;
             let sender = ensure_signed(origin)?;
             ensure!(amount0_out > 0u32.into() || amount1_out > 0u32.into(), Error::<T>::InsufficientOutputAmount);
             let social_token_id = Self::social_token_id();
@@ -184,10 +189,10 @@ decl_module! {
             ensure!(to != token0 && to != token1, Error::<T>::InvalidTo);
 
             if amount0_out > 0u32.into() {
-                Self::safe_transfer(&token0, &to, amount0_out)?
+				T::FungibleToken::transfer(&social_token_id, &token0, &to, amount0_out);
             }
             if amount1_out > 0u32.into() {
-                Self::safe_transfer(&token1, &to, amount1_out)?
+				T::FungibleToken::transfer(&social_token_id, &token1, &to, amount1_out);
             }
             // TODO:
             // if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
@@ -319,7 +324,6 @@ impl<T: Config> Module<T> {
             amount.saturated_into::<u128>().saturated_into(),
             ExistenceRequirement::AllowDeath,
         )?;
-
         Ok(())
     }
 }

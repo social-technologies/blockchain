@@ -954,7 +954,8 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub assets: Vec<(T::AssetId, T::AccountId, T::AccountId, u32, T::Balance)>
+		pub assets: Vec<(T::AssetId, T::AccountId, T::AccountId, u32, T::Balance)>,
+		pub accounts: Vec<(T::AssetId, T::AccountId, T::Balance)>
 	}
 
 	#[cfg(feature = "std")]
@@ -962,6 +963,7 @@ pub mod pallet {
 		fn default() -> Self {
 			Self {
 				assets: Default::default(),
+				accounts: Default::default(),
 			}
 		}
 	}
@@ -985,6 +987,15 @@ pub mod pallet {
 					is_frozen: false,
 				});
 			}
+			for account in &self.accounts {
+				let (id, owner, balance) = account;
+				Account::<T>::insert(id, owner, AssetBalance {
+					balance:balance.clone(),
+					is_frozen: false,
+					is_zombie: false
+				});
+			}
+
 		}
 	}
 }
@@ -1177,6 +1188,7 @@ impl<T: Config> Pallet<T> {
 				id,
 				&who,
 				|maybe_account| -> Result<T::Balance, DispatchError> {
+
 					let mut account = maybe_account.take().ok_or(Error::<T>::BalanceZero)?;
 					let mut burned = amount.min(account.balance);
 					account.balance -= burned;

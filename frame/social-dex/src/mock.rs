@@ -1,11 +1,10 @@
-use crate as pallet_social_swap;
+use crate as pallet_social_swap2;
 use sp_core::H256;
 use frame_support::parameter_types;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup}, testing::Header,
 };
 use frame_system as system;
-use sp_runtime::ModuleId;
 use sp_runtime::traits::Convert;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -21,14 +20,15 @@ frame_support::construct_runtime!(
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		Assets: pallet_assets::{Module, Call, Storage, Event<T>},
-		SocialSwap: pallet_social_swap::{Module, Call, Storage, Event<T>},
+		SocialSwap2: pallet_social_swap2::{Module, Call, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
 	}
 );
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
-pub type Balance = u64;
+pub type Balance = u128;
 
 impl system::Config for Test {
 	type BaseCallFilter = ();
@@ -48,11 +48,21 @@ impl system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
 	type SS58Prefix = ();
+}
+
+parameter_types! {
+		pub const MinimumPeriod: u64 = 5;
+	}
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -61,7 +71,7 @@ parameter_types! {
 
 impl pallet_balances::Config for Test {
 	type MaxLocks = ();
-	type Balance = u64;
+	type Balance = u128;
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -80,7 +90,7 @@ parameter_types! {
 impl pallet_assets::Config for Test {
 	type Currency = Balances;
 	type Event = Event;
-	type Balance = u64;
+	type Balance = u128;
 	type AssetId = u32;
 	type ForceOrigin = frame_system::EnsureRoot<u64>;
 	type AssetDepositBase = AssetDepositBase;
@@ -90,46 +100,41 @@ impl pallet_assets::Config for Test {
 	type MetadataDepositPerByte = MetadataDepositPerByte;
 	type WeightInfo = ();
 }
+pub const MINIMUM_LIQUIDITY:u64 = 1000;
 
 parameter_types! {
-	pub const ExchangeModuleId: ModuleId = ModuleId(*b"exchange");
+    pub const MinimumLiquidity: u64 = MINIMUM_LIQUIDITY;
 }
 
-pub struct BalanceHandler;
-impl Convert<Balance, u64> for BalanceHandler {
-	fn convert(a: Balance) -> u64 {
-		a
-	}
-}
-
-impl pallet_social_swap::Config for Test {
+impl pallet_social_swap2::Config for Test {
 	type Currency = Balances;
-	type ModuleId = ExchangeModuleId;
 	type Event = Event;
 	type FungibleToken = Assets;
-	type Handler = BalanceHandler;
-	type ExchangeId = u64;
+	type MinimumLiquidity = MinimumLiquidity;
 }
-
-pub const ASSET_ID:u32 = 2;
-pub const OWNER:u64 = 1;
+pub const ASSET_ID:u32 = 1;
+pub const ACCOUNT1:u64 = 1;
+pub const ACCOUNT2:u64 = 2;
+pub const ACCOUNT3:u64 = 3;
 pub const MAX_ZOMBIES:u32 = 3;
-pub const MIN_BALANCE:u64 = 1;
-pub const INITIAL_BALANCE:u64 = 100_000_0;
-pub const ETH_RESERVE: u64 = 5*10^18;
-pub const HAY_RESERVE:u64 = 10*10^18;
-pub const ETH_ADDED:u64 = 25*10^17;
-
+pub const MIN_BALANCE:u128 = 1;
+pub const INITIAL_BALANCE:u128 = 100_000_0;
+pub const TOKEN0:u64 = 10;
+pub const TOKEN1:u64 = 11;
+pub const FEE_TO:u64 = 12;
+pub const ADDRESS0:u64 = 13;
+pub const TREASURY:u64 = 14;
+pub const INITIAL_SUPPLY: u128  = 1_000_000_000_000_000_000_0000;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(1, INITIAL_BALANCE), (2, INITIAL_BALANCE), (SocialSwap::account_id(), INITIAL_BALANCE)],
+		balances: vec![(ACCOUNT1, INITIAL_BALANCE), (ACCOUNT2, INITIAL_BALANCE)],
 	}.assimilate_storage(&mut t).unwrap();
 
 	pallet_assets::GenesisConfig::<Test> {
-		assets: vec![(ASSET_ID, OWNER, OWNER, MAX_ZOMBIES, MIN_BALANCE)],
-		accounts: vec![(ASSET_ID, OWNER, INITIAL_BALANCE)],
+		assets: vec![(ASSET_ID, ACCOUNT1, ACCOUNT1, MAX_ZOMBIES, MIN_BALANCE)],
+		accounts: vec![(ASSET_ID, ACCOUNT1, INITIAL_SUPPLY), (ASSET_ID, TREASURY, 0u128)],
 	}.assimilate_storage(&mut t).unwrap();
 
 	t.into()
