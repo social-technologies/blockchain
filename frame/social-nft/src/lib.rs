@@ -26,6 +26,14 @@ pub struct Erc721Token<T: Config> {
 	pub royalty: T::Balance,
 }
 
+#[derive(PartialEq, Eq, Clone, Encode, Decode, RuntimeDebug)]
+pub struct BidToken<T: Config> {
+	pub amount: T::Balance,
+	pub token_id: T::AssetId,
+	pub dead_line: T::Moment,
+	pub is_active: bool
+}
+
 pub trait Config: system::Config + pallet_assets::Config + pallet_timestamp::Config {
     type Event: From<Event<Self>> + Into<<Self as system::Config>::Event>;
     /// Some identifier for this token type, possibly the originating ethereum address.
@@ -78,8 +86,9 @@ decl_storage! {
 		pub TokenAskAmount get(fn ask_token): double_map hasher(opaque_blake2_256) NftId,
 		hasher(twox_64_concat) T::AssetId => (T::Balance, T::AccountId);
 		 /// Maps tokenId to owner
-        pub TokenBidAmount get(fn bid_token): map hasher(opaque_blake2_256) T::AccountId =>
-		(T::Balance, T::AssetId, T::Moment);
+        pub TokenBidAmount get(fn bid_token): double_map hasher(opaque_blake2_256) NftId,
+		hasher(twox_64_concat) T::AccountId =>
+		Option<BidToken<T>>;
     }
 }
 
@@ -140,6 +149,17 @@ decl_module! {
             ensure!(TokenCreatorOwner::<T>::contains_key(nft_id), Error::<T>::NftIdDoesNotExist);
 
             Self::set_bid_token(sender, nft_id, token_id, amount, dead_line)?;
+
+            Ok(())
+        }
+
+		#[weight = 195_000_000]
+        pub fn remove_bid(origin, nft_id: NftId) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+
+            ensure!(TokenCreatorOwner::<T>::contains_key(nft_id), Error::<T>::NftIdDoesNotExist);
+
+            Self::remove_bid_token(sender, nft_id)?;
 
             Ok(())
         }
@@ -213,9 +233,26 @@ impl<T: Config> Module<T> {
 		if amount > ask_token && dead_line >=now_timestamp {
 			Self::execute_trade(sender, id, token_id, amount);
 		} else {
-			<TokenBidAmount<T>>::insert(&sender, (amount, token_id, dead_line));
+			let bid = BidToken{
+				amount,
+				token_id,
+				dead_line,
+				is_active: true
+			};
+			<TokenBidAmount<T>>::insert(&id, &sender, bid);
 			Self::deposit_event(RawEvent::SetBidAmount(id));
 		}
+
+		Ok(())
+	}
+
+	pub fn remove_bid_token(sender: T::AccountId, id: NftId) -> DispatchResult {
+		ensure!(TokenBidAmount::<T>::contains_key(id, sender.clone()), Error::<T>::NftIdDoesNotExist);
+		TokenBidAmount::<T>::mutate(id, &sender, |bid|
+			if let Some(b) = bid {
+				b.is_active = false
+			}
+		);
 
 		Ok(())
 	}
@@ -225,8 +262,8 @@ impl<T: Config> Module<T> {
 		let (creator, owner) = Self::owner_of(id);
 		if nft.royalty.is_zero() {
 			<pallet_assets::Module<T>>::do_transfer(token_id, sender.clone(), creator, amount.saturating_mul(nft.royalty));
-			<pallet_assets::Module<T>>::do_transfer(token_id, sender, owner, amount.saturating_mul(T::Balance::one().saturating_sub(nft.royalty)));
-			TokenCreatorOwner::<T>::mutate(id, |(_, owner)| *owner = sender.clone());
+			<pallet_assets::Module<T>>::do_transfer(token_id, sender.clone(), owner, amount.saturating_mul(T::Balance::one().saturating_sub(nft.royalty)));
+			TokenCreatorOwner::<T>::mutate(id, |(_, owner)| *owner = sender);
 		}
 		Ok(())
 	}
