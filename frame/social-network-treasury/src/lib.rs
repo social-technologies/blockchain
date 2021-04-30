@@ -31,7 +31,7 @@ pub trait Config:
 }
 
 decl_storage! {
-    trait Store for Module<T: Config> as SocialTreasury {
+    trait Store for Module<T: Config> as SocialNetworkTreasury {
         /// List of eras for which the stakers behind a validator have claimed rewards. Only updated
         /// for validators.
         pub ClaimedRewards get(fn claimed_rewards): map hasher(blake2_128_concat) T::AccountId => Vec<EraIndex>;

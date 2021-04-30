@@ -1053,10 +1053,10 @@ impl pallet_did::Config for Runtime {
 	type Signature = Signature;
 }
 
-impl pallet_social_treasury::Config for Runtime {
+impl pallet_social_network_treasury::Config for Runtime {
 	type Event = Event;
-	type FungibleToken = Assets;
-	type WeightInfo = pallet_social_treasury::weights::SubstrateWeight<Runtime>;
+	type FungibleToken = Assets;network_
+	type WeightInfo = pallet_social_network_treasury::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_social_guardians::Config for Runtime {
@@ -1185,7 +1185,7 @@ construct_runtime!(
 		Lottery: pallet_lottery::{Module, Call, Storage, Event<T>},
 		Evm: pallet_evm::{Module, Call, Storage, Event<T>},
 		Did: pallet_did::{Module, Call, Storage, Event<T>},
-		SocialTreasury: pallet_social_treasury::{Module, Call, Storage, Event<T>},
+		SocialNetworkTreasury: pallet_social_network_treasury::{Module, Call, Storage, Event<T>},
 		SocialGuardians: pallet_social_guardians::{Module, Call, Storage, Event<T>},
 		SocialUsernames: pallet_social_usernames::{Module, Call, Storage, Event<T>},
 		ChainBridge: pallet_chainbridge::{Module, Call, Storage, Event<T>},

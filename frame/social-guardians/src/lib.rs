@@ -20,15 +20,15 @@ pub trait Config: frame_system::Config + pallet_assets::Config + pallet_staking:
 decl_storage! {
     trait Store for Module<T: Config> as ValidatorRegistry {
         /// Map from the controller account to the social token id.
-        GuardianOf get(fn champion_of): map hasher(blake2_128_concat) T::AccountId => T::AssetId;
+        GuardianOf get(fn guardian_of): map hasher(blake2_128_concat) T::AccountId => T::AssetId;
         /// Map from the social token id to the vector of controller accounts.
         GuardiansOfSocialToken get(fn guardians_of_social_token): map hasher(blake2_128_concat) T::AssetId => Vec<T::AccountId>;
         /// Current guardians (controller accounts).
         Guardians get(fn guardians): Vec<T::AccountId>;
         /// Map from the era index to the vector of controller accounts.
-        GuardianHistory get(fn champion_history): map hasher(blake2_128_concat) EraIndex => Vec<T::AccountId>;
+        GuardianHistory get(fn guardian_history): map hasher(blake2_128_concat) EraIndex => Vec<T::AccountId>;
         /// Map from (era index, controller account) to the social token id.
-        pub GuardianDetailHistory get(fn champion_detail_history): double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId => T::AssetId;
+        pub GuardianDetailHistory get(fn guardian_detail_history): double_map hasher(twox_64_concat) EraIndex, hasher(twox_64_concat) T::AccountId => T::AssetId;
     }
 }
 
@@ -116,9 +116,9 @@ impl<T: Config> Module<T> {
 
     fn update_history(current_era: EraIndex) {
         let guardians = <Guardians<T>>::get();
-        guardians.iter().for_each(|champion| {
-            let social_token_id = <GuardianOf<T>>::get(champion);
-            <GuardianDetailHistory<T>>::insert(current_era, champion, social_token_id)
+        guardians.iter().for_each(|guardian| {
+            let social_token_id = <GuardianOf<T>>::get(guardian);
+            <GuardianDetailHistory<T>>::insert(current_era, guardian, social_token_id)
         });
         <GuardianHistory<T>>::insert(current_era, guardians);
     }

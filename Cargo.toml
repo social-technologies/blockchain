@@ -101,7 +101,7 @@ members = [
 	"frame/social-guardians",
 	"frame/social-nft",
 	"frame/social-swap",
-	"frame/social-treasury",
+	"frame/social-network-treasury",
 	"frame/social-usernames",
 	"frame/society",
 	"frame/staking",

@@ -4261,7 +4261,7 @@ dependencies = [
  "pallet-social-nft",
  "pallet-social-swap",
  "pallet-social-swap2",
- "pallet-social-treasury",
+ "pallet-social-network-treasury",
  "pallet-social-usernames",
  "pallet-society",
  "pallet-staking",
@@ -5332,7 +5332,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-social-swap2"
+name = "pallet-social-dex"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -5350,7 +5350,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-social-treasury"
+name = "pallet-social-network-treasury"
 version = "0.1.0"
 dependencies = [
  "frame-support",
