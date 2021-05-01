@@ -14,7 +14,9 @@ use sp_runtime::traits::{Zero, One};
 use sp_runtime::{
 	traits::Saturating,
 };
+#[cfg(test)]
 mod mock;
+#[cfg(test)]
 mod tests;
 
 type NftId = U256;
