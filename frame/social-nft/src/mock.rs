@@ -10,7 +10,7 @@ use sp_runtime::{
     BuildStorage,
 };
 
-use crate::{self as erc721, Config};
+use crate::{self as pallet_social_nft, Config};
 use chainbridge as bridge;
 pub use pallet_balances as balances;
 
@@ -27,7 +27,7 @@ frame_support::construct_runtime!(
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
 		Assets: pallet_assets::{Module, Call, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
-        Erc721: erc721::{Module, Call, Storage, Event<T>},
+        Social_NFT: pallet_social_nft::{Module, Call, Storage, Event<T>},
     }
 );
 
