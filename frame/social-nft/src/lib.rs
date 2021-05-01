@@ -229,7 +229,7 @@ impl<T: Config> Module<T> {
 
 		let (ask_token, _) = TokenAskAmount::<T>::get(id, token_id);
 
-		ensure!(ask_token.is_zero(), Error::<T>::NotForSale);
+		ensure!(!ask_token.is_zero(), Error::<T>::NotForSale);
 		let now_timestamp = <pallet_timestamp::Module<T>>::now();
 
 		if amount > ask_token && dead_line >=now_timestamp {
