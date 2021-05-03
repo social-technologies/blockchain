@@ -116,17 +116,20 @@ decl_module! {
             let fee_on = Self::mint_fee(reserve0, reserve1)?;
             let total_supply = T::FungibleToken::total_supply(&social_token_id);
             let liquidity = if total_supply == 0u32.into() {
-				let min_liquidity = T::MinimumLiquidity::get().saturated_into::<u128>().saturated_into();
-                let liquidity = amount0
+                let min_liquidity = T::MinimumLiquidity::get().saturated_into::<u128>().saturated_into();
+                amount0
                     .saturating_mul(amount1)
                     .integer_sqrt()
-                    .saturating_sub(min_liquidity);
-                T::FungibleToken::issue(&social_token_id, &Self::address0(), min_liquidity)?;
-                liquidity
+                    .saturating_sub(min_liquidity)
             } else {
                 (amount0.saturating_mul(total_supply) / reserve0).min(amount1.saturating_mul(total_supply) / reserve1)
             };
             ensure!(liquidity > 0u32.into(), Error::<T>::InsufficientLiquidityMinted);
+
+            if total_supply == 0u32.into() {
+                let min_liquidity = T::MinimumLiquidity::get().saturated_into::<u128>().saturated_into();
+                T::FungibleToken::issue(&social_token_id, &Self::address0(), min_liquidity)?;
+            }
             T::FungibleToken::issue(&social_token_id, &to, liquidity)?;
 
             let _ = Self::update(balance0, balance1, reserve0, reserve1);

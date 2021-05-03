@@ -73,14 +73,15 @@ fn test_mint_should_work() {
 
 #[test]
 fn test_burn_should_not_work() {
-	new_test_ext().execute_with(|| {
-
-		assert_ne!(SocialSwap2::mint(
-				Origin::signed(ACCOUNT1),
-				ACCOUNT3
-			),Ok(()));
-
-	});
+    new_test_ext().execute_with(|| {
+        assert_noop!(
+            SocialSwap2::mint(
+                Origin::signed(ACCOUNT1),
+                ACCOUNT3
+            ),
+            Error::<Test>::InsufficientLiquidityMinted
+        );
+    });
 }
 
 #[test]
