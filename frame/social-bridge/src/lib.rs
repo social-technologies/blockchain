@@ -7,7 +7,6 @@ use frame_support::{
     decl_error, decl_event, decl_module, dispatch::DispatchResult, ensure,
 };
 use frame_system::{self as system, ensure_signed};
-use pallet_social_nft as erc721;
 use sp_arithmetic::traits::SaturatedConversion;
 use sp_core::U256;
 use sp_std::prelude::*;
@@ -21,7 +20,7 @@ type BalanceOf<T> =
     <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
 pub trait Config:
-    system::Config + bridge::Config + pallet_assets::Config + erc721::Config
+    system::Config + bridge::Config + pallet_assets::Config + pallet_social_nft::Config
 {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
     /// Specifies the origin check provided by the bridge for calls that can only be called by the bridge pallet
@@ -100,14 +99,14 @@ decl_module! {
             <bridge::Module<T>>::transfer_fungible(dest_id, resource_id, recipient, U256::from(value.saturated_into::<u128>()))
         }
 
-        /// Transfer a non-fungible token (erc721) to a (whitelisted) destination chain.
+        /// Transfer a non-fungible token (pallet_social_nft) to a (whitelisted) destination chain.
         #[weight = 195_000_000]
         pub fn transfer_erc721(origin, recipient: Vec<u8>, token_id: U256, dest_id: bridge::ChainId) -> DispatchResult {
             let source = ensure_signed(origin)?;
             ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
-            match <erc721::Module<T>>::tokens(&token_id) {
+            match <pallet_social_nft::Module<T>>::tokens(&token_id) {
                 Some(token) => {
-                    <erc721::Module<T>>::burn_token(source, token_id)?;
+                    <pallet_social_nft::Module<T>>::burn_token(source, token_id)?;
                     let resource_id = T::Erc721Id::get();
                     let tid: &mut [u8] = &mut[0; 32];
                     token_id.to_big_endian(tid);
@@ -137,11 +136,11 @@ decl_module! {
             Ok(())
         }
 
-        /// Allows the bridge to issue new erc721 tokens
+        /// Allows the bridge to issue new pallet_social_nft tokens
         #[weight = 195_000_000]
-        pub fn mint_erc721(origin, recipient: T::AccountId, id: U256, metadata: Vec<u8>, r_id: ResourceId) -> DispatchResult {
+        pub fn mint_erc721(origin, recipient: T::AccountId, id: U256, metadata: Vec<u8>, royalty: T::Balance, r_id: ResourceId) -> DispatchResult {
             T::BridgeOrigin::ensure_origin(origin)?;
-            <erc721::Module<T>>::mint_token(recipient, id, metadata)?;
+            <pallet_social_nft::Module<T>>::mint_token(recipient, id, metadata, royalty)?;
             Ok(())
         }
     }

@@ -6,16 +6,16 @@ use sp_core::hashing::blake2_128;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
-    traits::{BlakeTwo256, Block as BlockT, IdentityLookup},
+    traits::{BlakeTwo256, IdentityLookup},
     BuildStorage,
 };
 
-use crate::{self as erc721, Config};
+use crate::{self as pallet_social_nft, Config};
 use chainbridge as bridge;
 pub use pallet_balances as balances;
 
-pub type Block = sp_runtime::generic::Block<Header, UncheckedExtrinsic>;
-pub type UncheckedExtrinsic = sp_runtime::generic::UncheckedExtrinsic<u32, u64, Call, ()>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
 
 frame_support::construct_runtime!(
     pub enum Test where
@@ -25,15 +25,11 @@ frame_support::construct_runtime!(
     {
         System: system::{Module, Call, Event<T>},
         Balances: balances::{Module, Call, Storage, Config<T>, Event<T>},
-        Erc721: erc721::{Module, Call, Storage, Event<T>},
+		Assets: pallet_assets::{Module, Call, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Module, Call, Storage, Inherent},
+        SocialNft: pallet_social_nft::{Module, Call, Storage, Event<T>},
     }
 );
-
-pub const USER_A: u64 = 0x1;
-pub const USER_B: u64 = 0x2;
-pub const USER_C: u64 = 0x3;
-pub const ENDOWED_BALANCE: u64 = 100_000_000;
-
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -83,6 +79,40 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 
+type Moment = u128;
+
+parameter_types! {
+		pub const MinimumPeriod: Moment = 5;
+	}
+impl pallet_timestamp::Config for Test {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+		pub const AssetDepositBase: u64 = 1;
+		pub const AssetDepositPerZombie: u64 = 1;
+		pub const StringLimit: u32 = 50;
+		pub const MetadataDepositBase: u64 = 1;
+		pub const MetadataDepositPerByte: u64 = 1;
+	}
+
+impl pallet_assets::Config for Test {
+	type Currency = Balances;
+	type Event = Event;
+	type Balance = u128;
+	type AssetId = u32;
+	type ForceOrigin = frame_system::EnsureRoot<u64>;
+	type AssetDepositBase = AssetDepositBase;
+	type AssetDepositPerZombie = AssetDepositPerZombie;
+	type StringLimit = StringLimit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type WeightInfo = ();
+}
+
 parameter_types! {
     pub Erc721Id: bridge::ResourceId = bridge::derive_resource_id(1, &blake2_128(b"NFT"));
 }
@@ -92,13 +122,17 @@ impl Config for Test {
     type Identifier = Erc721Id;
 }
 
+pub const USER_A: u64 = 0x1;
+pub const USER_B: u64 = 0x2;
+pub const USER_C: u64 = 0x3;
+pub const ENDOWED_BALANCE: u64 = 100_000_000;
+pub const ROYALTY:u128 = 2;
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    GenesisConfig {
-        balances: Some(balances::GenesisConfig {
-            balances: vec![(USER_A, ENDOWED_BALANCE)],
-        }),
-    }
-    .build_storage()
-    .unwrap()
-    .into()
+	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	pallet_balances::GenesisConfig::<Test> {
+		balances: vec![(USER_A, ENDOWED_BALANCE)],
+	}.assimilate_storage(&mut t).unwrap();
+
+	t.into()
 }
