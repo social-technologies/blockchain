@@ -1055,7 +1055,7 @@ impl pallet_did::Config for Runtime {
 
 impl pallet_social_network_treasury::Config for Runtime {
 	type Event = Event;
-	type FungibleToken = Assets;network_
+	type FungibleToken = Assets;
 	type WeightInfo = pallet_social_network_treasury::weights::SubstrateWeight<Runtime>;
 }
 

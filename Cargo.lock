@@ -4257,11 +4257,12 @@ dependencies = [
  "pallet-session",
  "pallet-session-benchmarking",
  "pallet-social-bridge",
+ "pallet-social-dex",
  "pallet-social-guardians",
+ "pallet-social-network-treasury",
  "pallet-social-nft",
  "pallet-social-swap",
  "pallet-social-swap2",
- "pallet-social-network-treasury",
  "pallet-social-usernames",
  "pallet-society",
  "pallet-staking",
@@ -5275,6 +5276,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-social-dex"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "serde",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-social-guardians"
 version = "0.1.0"
 dependencies = [
@@ -5296,15 +5315,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-social-network-treasury"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-offences",
+ "pallet-session",
+ "pallet-social-guardians",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-social-nft"
 version = "0.0.1"
 dependencies = [
  "chainbridge",
  "frame-support",
  "frame-system",
- "pallet-assets",
  "pallet-balances",
- "pallet-timestamp",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -5332,7 +5372,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-social-dex"
+name = "pallet-social-swap2"
 version = "0.1.0"
 dependencies = [
  "frame-support",
@@ -5346,29 +5386,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-social-network-treasury"
-version = "0.1.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-assets",
- "pallet-balances",
- "pallet-offences",
- "pallet-session",
- "pallet-social-guardians",
- "pallet-staking",
- "pallet-staking-reward-curve",
- "pallet-timestamp",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-staking",
  "sp-std",
 ]
 
