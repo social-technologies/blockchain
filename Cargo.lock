@@ -4325,7 +4325,7 @@ dependencies = [
 
 [[package]]
 name = "node-runtime"
-version = "3.0.0"
+version = "3.1.0"
 dependencies = [
  "chainbridge",
  "frame-benchmarking 3.0.0",
