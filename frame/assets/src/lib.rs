@@ -142,7 +142,7 @@ pub enum CheckAssetIssuer {
 	No,
 }
 
-type Symbol = [u8; 8];
+pub type Symbol = [u8; 8];
 const NET_V1: Symbol = *b"NETSWAP1";
 
 /// TODO: consider if there need to be more fields

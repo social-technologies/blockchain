@@ -100,6 +100,7 @@ members = [
 	"frame/social-bridge",
 	"frame/social-guardians",
 	"frame/social-nft",
+  "frame/social-orbit-db-manifests",
 	"frame/social-swap",
 	"frame/social-network-treasury",
 	"frame/social-usernames",
