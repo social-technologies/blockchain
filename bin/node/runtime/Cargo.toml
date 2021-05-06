@@ -82,6 +82,7 @@ pallet-social-bridge = { version = "0.1.0", default-features = false, path = "..
 pallet-social-guardians = { version = "0.1.0", default-features = false, path = "../../../frame/social-guardians" }
 pallet-social-nft = { version = "0.0.1", default-features = false, path = "../../../frame/social-nft" }
 pallet-social-network-dao = { version = "3.0.0", default-features = false, path = "../../../frame/social-network-dao" }
+pallet-social-orbit-db-manifests = { version = "0.1.0", default-features = false, path = "../../../frame/social-orbit-db-manifests" }
 pallet-social-swap = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap" }
 pallet-social-swap2 = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap2" }
 pallet-social-dex = { version = "0.1.0", default-features = false, path = "../../../frame/social-dex" }
