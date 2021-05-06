@@ -5495,13 +5495,13 @@ name = "pallet-social-orbit-db-manifests"
 version = "0.1.0"
 dependencies = [
  "frame-benchmarking 3.1.0",
- "frame-support 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "frame-system 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pallet-society",
+ "frame-support 3.0.0",
+ "frame-system 3.0.0",
+ "pallet-assets",
  "parity-scale-codec",
  "serde",
- "sp-core 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-io 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 3.0.0",
+ "sp-io 3.0.0",
  "sp-runtime 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
