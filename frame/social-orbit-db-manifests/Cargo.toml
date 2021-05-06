@@ -14,16 +14,16 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = '2.0.0' }
-frame-system = { default-features = false, version = '3.0.0' }
-frame-support = { default-features = false, version = '3.0.0' }
+frame-system = { version = "3.0.0", default-features = false, path = "../system" }
+frame-support = { version = "3.0.0", default-features = false, path = "../support" }
 frame-benchmarking = { default-features = false, optional = true, version = '3.1.0' }
 sp-std = { default-features = false, version = '3.0.0' }
-pallet-society = { version = '3.0.0', path = "../society", default-features = false }
+pallet-assets = { version = '3.0.0', path = "../assets", default-features = false }
 
 [dev-dependencies]
 serde = { version = "1.0.119", default-features = false }
-sp-core = { default-features = false, version = '3.0.0' }
-sp-io = { default-features = false, version = '3.0.0' }
+sp-io = { version = "3.0.0", path = "../../primitives/io", default-features = false }
+sp-core = { path = "../../primitives/core", default-features = false, version = '3.0.0' }
 sp-runtime = { default-features = false, version = '3.0.0' }
 
 [features]

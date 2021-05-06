@@ -5,6 +5,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+    use pallet_assets::Symbol;
     use frame_support::Blake2_128Concat;
     use frame_support::pallet_prelude::{
         IsType, Hooks, StorageMap, DispatchResultWithPostInfo
@@ -15,9 +16,6 @@ pub mod pallet {
 
     // e.g. bafybeig4mpb4myby5gy6n2tfwpsmlykug35ny7v3bdz5qboa5v5on2zmry
     pub type OrbitDBManifestHash = [u8; 58];
-
-    // TODO: use this from pallet_assets
-    pub type Symbol = [u8; 8];
 
     #[pallet::error]
     pub enum Error<T> {
