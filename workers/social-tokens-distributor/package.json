@@ -1,0 +1,10 @@
+{
+  "name": "social-tokens-distributor",
+  "version": "0.1.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@polkadot/api": "^4.7.2",
+    "@polkadot/types": "^4.7.2"
+  }
+}
