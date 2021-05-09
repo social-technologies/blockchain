@@ -4259,6 +4259,7 @@ dependencies = [
  "pallet-social-bridge",
  "pallet-social-dex",
  "pallet-social-guardians",
+ "pallet-social-network-dao",
  "pallet-social-network-treasury",
  "pallet-social-nft",
  "pallet-social-swap",
@@ -5311,6 +5312,28 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-social-network-dao"
+version = "3.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-social-guardians",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rand_chacha 0.2.2",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
