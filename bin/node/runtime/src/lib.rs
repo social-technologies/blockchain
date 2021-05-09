@@ -1141,6 +1141,23 @@ impl pallet_social_swap2::Config for Runtime {
 	type MinimumLiquidity = MinimumLiquidity;
 }
 
+impl pallet_social_network_dao::Config for Runtime {
+	type Event = Event;
+	type ModuleId = SocietyModuleId;
+	type Currency = Balances;
+	type Randomness = RandomnessCollectiveFlip;
+	type CandidateDeposit = CandidateDeposit;
+	type WrongSideDeduction = WrongSideDeduction;
+	type MaxStrikes = MaxStrikes;
+	type PeriodSpend = PeriodSpend;
+	type MembershipChanged = ();
+	type RotationPeriod = RotationPeriod;
+	type MaxLockDuration = MaxLockDuration;
+	type FounderSetOrigin = pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type SuspensionJudgementOrigin = pallet_society::EnsureFounder<Runtime>;
+	type ChallengePeriod = ChallengePeriod;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1193,6 +1210,7 @@ construct_runtime!(
 		SocialNFT: pallet_social_nft::{Module, Call, Storage, Event<T>},
 		SocialSwap: pallet_social_swap::{Module, Call, Storage, Event<T>},
 		SocialSwap2: pallet_social_swap2::{Module, Call, Storage, Event<T>},
+		SocialNetworkDao: pallet_social_network_dao::{Module, Call, Storage, Event<T>},
 	}
 );
 

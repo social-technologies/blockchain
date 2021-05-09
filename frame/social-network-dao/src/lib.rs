@@ -254,10 +254,10 @@ mod tests;
 use rand_chacha::{rand_core::{RngCore, SeedableRng}, ChaChaRng};
 use sp_std::prelude::*;
 use codec::{Encode, Decode};
-use sp_runtime::{Percent, ModuleId, RuntimeDebug,
+use sp_runtime::{Percent, ModuleId, RuntimeDebug, Perbill,
 	traits::{
 		StaticLookup, AccountIdConversion, Saturating, Zero, IntegerSquareRoot, Hash,
-		TrailingZeroInput, CheckedSub
+		TrailingZeroInput, CheckedSub, SaturatedConversion
 	}
 };
 use frame_support::{decl_error, decl_module, decl_storage, decl_event, ensure, dispatch::DispatchResult};
@@ -267,12 +267,13 @@ use frame_support::traits::{
 	ExistenceRequirement::AllowDeath, EnsureOrigin, OnUnbalanced, Imbalance
 };
 use frame_system::{self as system, ensure_signed, ensure_root};
+use pallet_staking::EraIndex;
 
 type BalanceOf<T, I> = <<T as Config<I>>::Currency as Currency<<T as system::Config>::AccountId>>::Balance;
 type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 /// The module's configuration trait.
-pub trait Config<I=DefaultInstance>: system::Config {
+pub trait Config<I=DefaultInstance>: system::Config + pallet_assets::Config + pallet_staking::Config + pallet_social_guardians::Config {
 	/// The overarching event type.
 	type Event: From<Event<Self, I>> + Into<<Self as system::Config>::Event>;
 
@@ -463,6 +464,13 @@ decl_storage! {
 
 		/// The max number of members for the society at one time.
 		MaxMembers get(fn max_members) config(): u32;
+
+		/// Society DAO addresses to payouts
+		SocietyDaoAddresses get(fn society_dao_address): map hasher(twox_64_concat) T::AssetId => T::AccountId;
+
+		/// List of eras for which the stakers behind a validator have claimed rewards. Only updated
+		/// for validators.
+		ClaimedRewards get(fn claimed_rewards): map hasher(blake2_128_concat) T::AccountId => Vec<EraIndex>;
 	}
 	add_extra_genesis {
 		config(members): Vec<T::AccountId>;
@@ -546,7 +554,7 @@ decl_module! {
 			ensure!(!Self::is_member(&members ,&who), Error::<T, I>::AlreadyMember);
 
 			let deposit = T::CandidateDeposit::get();
-			T::Currency::reserve(&who, deposit)?;
+			<T as Config<I>>::Currency::reserve(&who, deposit)?;
 
 			Self::put_bid(bids, &who, value.clone(), BidKind::Deposit(deposit));
 			Self::deposit_event(RawEvent::Bid(who, value));
@@ -584,7 +592,7 @@ decl_module! {
 					// no reason that either should fail.
 					match b.remove(pos).kind {
 						BidKind::Deposit(deposit) => {
-							let _ = T::Currency::unreserve(&who, deposit);
+							let _ = <T as Config<I>>::Currency::unreserve(&who, deposit);
 						}
 						BidKind::Vouch(voucher, _) => {
 							<Vouching<T, I>>::remove(&voucher);
@@ -794,7 +802,7 @@ decl_module! {
 			let mut payouts = <Payouts<T, I>>::get(&who);
 			if let Some((when, amount)) = payouts.first() {
 				if when <= &<system::Module<T>>::block_number() {
-					T::Currency::transfer(&Self::payouts(), &who, *amount, AllowDeath)?;
+					<T as Config<I>>::Currency::transfer(&Self::payouts(), &who, *amount, AllowDeath)?;
 					payouts.remove(0);
 					if payouts.is_empty() {
 						<Payouts<T, I>>::remove(&who);
@@ -990,7 +998,7 @@ decl_module! {
 						match kind {
 							BidKind::Deposit(deposit) => {
 								// Slash deposit and move it to the society account
-								let _ = T::Currency::repatriate_reserved(&who, &Self::account_id(), deposit, BalanceStatus::Free);
+								let _ = <T as Config<I>>::Currency::repatriate_reserved(&who, &Self::account_id(), deposit, BalanceStatus::Free);
 							}
 							BidKind::Vouch(voucher, _) => {
 								// Ban the voucher from vouching again
@@ -1032,6 +1040,55 @@ decl_module! {
 			ensure!(max > 1, Error::<T, I>::MaxMembers);
 			MaxMembers::<I>::put(max);
 			Self::deposit_event(RawEvent::NewMaxMembers(max));
+		}
+
+		/// Allows root origin to update society DAO address.
+		/// Max membership count must be greater than 1.
+		///
+		/// The dispatch origin for this call must be from _ROOT_.
+		///
+		/// Parameters:
+		/// - `asset_id` - The asset_id.
+		/// - `society_dao_address` - The society DAO address.
+		///
+		/// # <weight>
+		/// Key: A (number of assets)
+		/// - One storage read to validate asset id. O(1)
+		/// - One storage write with O(log A) binary search to update society DAO Address.
+		/// - One event.
+		///
+		/// Total Complexity: O(1 + logA)
+		/// # </weight>
+		#[weight = T::BlockWeights::get().max_block / 10]
+		fn update_society_dao_address(origin, asset_id: T::AssetId, society_dao_address: T::AccountId) {
+			// TODO: only society governor can call it
+			ensure_root(origin)?;
+
+			<pallet_assets::Module<T>>::validate_asset_id(asset_id)?;
+			<SocietyDaoAddresses<T, I>>::insert(asset_id, &society_dao_address);
+
+
+			Self::deposit_event(RawEvent::SocietyDaoAddressUpdated(asset_id, society_dao_address));
+		}
+
+		/// Pay out the society for a single era.
+		///
+		/// - `validator_stash` is the stash account of the validator. The society
+		///   that the guardian support receives a reward.
+		/// - `era` may be any era between `[current_era - history_depth; current_era]`.
+		///
+		/// The origin of this call must be _Signed_. Any account can call this function, even if
+		/// it is not one of the stakers.
+		///
+		/// This can only be called when [`EraElectionStatus`] is `Closed`.
+		#[weight = T::BlockWeights::get().max_block / 10]
+		fn payout_society(origin, validator_stash: T::AccountId, era: EraIndex) -> DispatchResult {
+			ensure!(
+				<pallet_staking::Module<T>>::era_election_status().is_closed(),
+				pallet_staking::Error::<T>::CallNotAllowed
+			);
+			ensure_signed(origin)?;
+			Self::do_payout_society(validator_stash, era)
 		}
 
 		fn on_initialize(n: T::BlockNumber) -> Weight {
@@ -1103,6 +1160,12 @@ decl_error! {
 		NotFounder,
 		/// The caller is not the head.
 		NotHead,
+		/// Rewards for this era have already been claimed for this validator.
+		AlreadyClaimed,
+		/// The Validator isn't a guardian
+		IsNotGuardian,
+		/// The society DAO address doesn't exist
+		SocietyDaoAddressDoesNotExist,
 	}
 }
 
@@ -1110,6 +1173,7 @@ decl_event! {
 	/// Events for this module.
 	pub enum Event<T, I=DefaultInstance> where
 		AccountId = <T as system::Config>::AccountId,
+		AssetId = <T as pallet_assets::Config>::AssetId,
 		Balance = BalanceOf<T, I>
 	{
 		/// The society is founded by the given identity. \[founder\]
@@ -1147,6 +1211,10 @@ decl_event! {
 		Unfounded(AccountId),
 		/// Some funds were deposited into the society account. \[value\]
 		Deposit(Balance),
+		/// Society DAO address updated. \[asset_id, society_dao_address\]
+		SocietyDaoAddressUpdated(AssetId, AccountId),
+		/// The staker has been rewarded by this amount. \[asset_id, stash, amount\]
+		Reward(AssetId, AccountId, Balance),
 	}
 }
 
@@ -1235,7 +1303,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			let Bid { who: popped, kind, .. } = bids.pop().expect("b.len() > 1000; qed");
 			match kind {
 				BidKind::Deposit(deposit) => {
-					let _ = T::Currency::unreserve(&popped, deposit);
+					let _ = <T as Config<I>>::Currency::unreserve(&popped, deposit);
 				}
 				BidKind::Vouch(voucher, _) => {
 					<Vouching<T, I>>::remove(&voucher);
@@ -1400,7 +1468,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 					Self::bump_payout(winner, maturity, total_slash);
 				} else {
 					// Move the slashed amount back from payouts account to local treasury.
-					let _ = T::Currency::transfer(&Self::payouts(), &Self::account_id(), total_slash, AllowDeath);
+					let _ = <T as Config<I>>::Currency::transfer(&Self::payouts(), &Self::account_id(), total_slash, AllowDeath);
 				}
 			}
 
@@ -1411,7 +1479,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 				// this should never fail since we ensure we can afford the payouts in a previous
 				// block, but there's not much we can do to recover if it fails anyway.
-				let _ = T::Currency::transfer(&Self::account_id(), &Self::payouts(), total_payouts, AllowDeath);
+				let _ = <T as Config<I>>::Currency::transfer(&Self::account_id(), &Self::payouts(), total_payouts, AllowDeath);
 			}
 
 			// if at least one candidate was accepted...
@@ -1440,7 +1508,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 			// Bump the pot by at most PeriodSpend, but less if there's not very much left in our
 			// account.
-			let unaccounted = T::Currency::free_balance(&Self::account_id()).saturating_sub(pot);
+			let unaccounted = <T as Config<I>>::Currency::free_balance(&Self::account_id()).saturating_sub(pot);
 			pot += T::PeriodSpend::get().min(unaccounted / 2u8.into());
 
 			<Pot<T, I>>::put(&pot);
@@ -1512,7 +1580,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			BidKind::Deposit(deposit) => {
 				// In the case that a normal deposit bid is accepted we unreserve
 				// the deposit.
-				let _ = T::Currency::unreserve(candidate, deposit);
+				let _ = <T as Config<I>>::Currency::unreserve(candidate, deposit);
 				value
 			}
 			BidKind::Vouch(voucher, tip) => {
@@ -1668,6 +1736,88 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 			vec![]
 		}
 	}
+
+	fn do_payout_society(validator_stash: T::AccountId, era: EraIndex) -> DispatchResult {
+		// Validate input data
+		let current_era = <pallet_staking::CurrentEra>::get()
+			.ok_or(pallet_staking::Error::<T>::InvalidEraToReward)?;
+		ensure!(era <= current_era, pallet_staking::Error::<T>::InvalidEraToReward);
+		let history_depth = <pallet_staking::Module<T>>::history_depth();
+		ensure!(era >= current_era.saturating_sub(history_depth), pallet_staking::Error::<T>::InvalidEraToReward);
+
+		// Note: if era has no reward to be claimed, era may be future. better not to update
+		// `ledger.claimed_rewards` in this case.
+		let era_payout = <pallet_staking::ErasValidatorReward<T>>::get(&era)
+			.ok_or_else(|| pallet_staking::Error::<T>::InvalidEraToReward)?;
+
+		let controller = <pallet_staking::Module<T>>::bonded(&validator_stash)
+			.ok_or(pallet_staking::Error::<T>::NotStash)?;
+		let ledger = <pallet_staking::Ledger<T>>::get(&controller)
+			.ok_or_else(|| pallet_staking::Error::<T>::NotController)?;
+		let asset_id =
+			<pallet_social_guardians::GuardianDetailHistory<T>>::try_get(&era, &controller)
+				.map_err(|_| Error::<T, I>::IsNotGuardian)?;
+
+		let mut claimed_rewards = Self::claimed_rewards(&controller);
+		claimed_rewards.retain(|&x| x >= current_era.saturating_sub(history_depth));
+		match ledger.claimed_rewards.binary_search(&era) {
+			Ok(_) => Err(pallet_staking::Error::<T>::AlreadyClaimed)?,
+			Err(pos) => claimed_rewards.insert(pos, era),
+		}
+
+		let exposure = <pallet_staking::ErasStakersClipped<T>>::get(&era, &ledger.stash);
+
+		let society_dao_address = <SocietyDaoAddresses<T, I>>::try_get(asset_id)
+			.map_err(|_| Error::<T, I>::SocietyDaoAddressDoesNotExist)?;
+
+		/* Input data seems good, no errors allowed after this point */
+
+		<ClaimedRewards<T, I>>::insert(&controller, &claimed_rewards);
+
+		// Get Era reward points. It has TOTAL and INDIVIDUAL
+		// Find the fraction of the era reward that belongs to the validator
+		// Take that fraction of the eras rewards to split to nominator and validator
+		//
+		// Then look at the validator, figure out the proportion of their reward
+		// which goes to them and each of their nominators.
+
+		let era_reward_points = <pallet_staking::ErasRewardPoints<T>>::get(&era);
+		let total_reward_points = era_reward_points.total;
+		let validator_reward_points = era_reward_points.individual.get(&ledger.stash)
+			.map(|points| *points)
+			.unwrap_or_else(|| Zero::zero());
+
+		// Nothing to do if they have no reward points.
+		if validator_reward_points.is_zero() { return Ok(())}
+
+		// This is the fraction of the total reward that the validator and the
+		// nominators will get.
+		let validator_total_reward_part = Perbill::from_rational_approximation(
+			validator_reward_points,
+			total_reward_points,
+		);
+
+		// This is how much validator + nominators are entitled to.
+		let validator_total_payout = validator_total_reward_part * era_payout;
+
+		let validator_prefs = <pallet_staking::ErasValidatorPrefs<T>>::get(&era, &validator_stash);
+		// Validator first gets a cut off the top.
+		let validator_commission = validator_prefs.commission;
+		let validator_commission_payout = validator_commission * validator_total_payout;
+
+		let validator_leftover_payout = validator_total_payout - validator_commission_payout;
+
+		// Lets now calculate how this is split to the nominators.
+		let society_reward = ((exposure.total - exposure.own) * validator_leftover_payout)
+			.saturated_into::<u128>();
+		let imbalance = <T as Config<I>>::Currency::deposit_creating(
+			&society_dao_address,
+			society_reward.saturated_into(),
+		);
+		Self::deposit_event(RawEvent::Reward(asset_id, society_dao_address, imbalance.peek()));
+
+		Ok(())
+	}
 }
 
 impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Module<T> {
@@ -1675,7 +1825,7 @@ impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Module<T> {
 		let numeric_amount = amount.peek();
 
 		// Must resolve into existing but better to be safe.
-		let _ = T::Currency::resolve_creating(&Self::account_id(), amount);
+		let _ = <T as Config>::Currency::resolve_creating(&Self::account_id(), amount);
 
 		Self::deposit_event(RawEvent::Deposit(numeric_amount));
 	}

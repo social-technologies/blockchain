@@ -81,6 +81,7 @@ pallet-scheduler = { version = "3.0.0", default-features = false, path = "../../
 pallet-social-bridge = { version = "0.1.0", default-features = false, path = "../../../frame/social-bridge" }
 pallet-social-guardians = { version = "0.1.0", default-features = false, path = "../../../frame/social-guardians" }
 pallet-social-nft = { version = "0.0.1", default-features = false, path = "../../../frame/social-nft" }
+pallet-social-network-dao = { version = "3.0.0", default-features = false, path = "../../../frame/social-network-dao" }
 pallet-social-swap = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap" }
 pallet-social-swap2 = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap2" }
 pallet-social-dex = { version = "0.1.0", default-features = false, path = "../../../frame/social-dex" }
@@ -165,15 +166,16 @@ std = [
 	"pallet-society/std",
 	"pallet-recovery/std",
 	"pallet-vesting/std",
-  "pallet-evm/std",
-  "pallet-social-network-treasury/std",
-  "pallet-social-guardians/std",
-  "pallet-social-usernames/std",
-  "pallet-chainbridge/std",
-  "pallet-social-bridge/std",
-  "pallet-social-nft/std",
-  "pallet-social-swap/std",
-  "pallet-social-dex/std",
+	"pallet-evm/std",
+	"pallet-social-network-treasury/std",
+	"pallet-social-guardians/std",
+	"pallet-social-usernames/std",
+	"pallet-chainbridge/std",
+	"pallet-social-bridge/std",
+	"pallet-social-nft/std",
+	"pallet-social-swap/std",
+	"pallet-social-dex/std",
+	"pallet-social-network-dao/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",
