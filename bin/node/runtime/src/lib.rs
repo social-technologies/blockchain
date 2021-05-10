@@ -1141,9 +1141,13 @@ impl pallet_social_swap2::Config for Runtime {
 	type MinimumLiquidity = MinimumLiquidity;
 }
 
+parameter_types! {
+	pub const SocialNetworkDaoModuleId: ModuleId = ModuleId(*b"st/sndao");
+}
+
 impl pallet_social_network_dao::Config for Runtime {
 	type Event = Event;
-	type ModuleId = SocietyModuleId;
+	type ModuleId = SocialNetworkDaoModuleId;
 	type Currency = Balances;
 	type Randomness = RandomnessCollectiveFlip;
 	type CandidateDeposit = CandidateDeposit;

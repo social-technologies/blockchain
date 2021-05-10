@@ -19,6 +19,7 @@
 
 use super::*;
 use crate as pallet_society;
+use std::cell::RefCell;
 
 use frame_support::{
 	parameter_types, ord_parameter_types,
@@ -26,6 +27,7 @@ use frame_support::{
 };
 use sp_core::H256;
 use sp_runtime::{
+	Permill,
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
@@ -49,6 +51,7 @@ frame_support::construct_runtime!(
 		Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
 		Staking: pallet_staking::{Module, Call, Storage, Config<T>, Event<T>},
 		Society: pallet_society::{Module, Call, Storage, Event<T>, Config<T>},
+		Treasury: pallet_treasury::{Module, Call, Storage, Event<T>},
 	}
 );
 
@@ -232,6 +235,35 @@ impl pallet_staking::Config for Test {
 	type MinSolutionScoreBump = ();
 	type OffchainSolutionWeightLimit = ();
 	type WeightInfo = ();
+}
+
+thread_local! {
+	static TEN_TO_FOURTEEN: RefCell<Vec<u128>> = RefCell::new(vec![10,11,12,13,14]);
+}
+parameter_types! {
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub const ProposalBondMinimum: u64 = 1;
+	pub const SpendPeriod: u64 = 2;
+	pub const Burn: Permill = Permill::from_percent(50);
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
+	pub const BountyUpdatePeriod: u32 = 20;
+	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
+	pub const BountyValueMinimum: u64 = 1;
+}
+impl pallet_treasury::Config for Test {
+	type ModuleId = TreasuryModuleId;
+	type Currency = pallet_balances::Module<Test>;
+	type ApproveOrigin = frame_system::EnsureRoot<u128>;
+	type RejectOrigin = frame_system::EnsureRoot<u128>;
+	type Event = Event;
+	type OnSlash = ();
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type BurnDestination = ();  // Just gets burned.
+	type WeightInfo = ();
+	type SpendFunds = ();
 }
 
 impl Config for Test {

@@ -264,7 +264,7 @@ use frame_support::{decl_error, decl_module, decl_storage, decl_event, ensure, d
 use frame_support::weights::Weight;
 use frame_support::traits::{
 	Currency, ReservableCurrency, Randomness, Get, ChangeMembers, BalanceStatus,
-	ExistenceRequirement::AllowDeath, EnsureOrigin, OnUnbalanced, Imbalance
+	ExistenceRequirement::{AllowDeath, KeepAlive}, EnsureOrigin, OnUnbalanced, Imbalance
 };
 use frame_system::{self as system, ensure_signed, ensure_root};
 use pallet_staking::EraIndex;
@@ -273,7 +273,13 @@ type BalanceOf<T, I> = <<T as Config<I>>::Currency as Currency<<T as system::Con
 type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 /// The module's configuration trait.
-pub trait Config<I=DefaultInstance>: system::Config + pallet_assets::Config + pallet_staking::Config + pallet_social_guardians::Config {
+pub trait Config<I=DefaultInstance>:
+	system::Config
+	+ pallet_assets::Config
+	+ pallet_social_guardians::Config
+	+ pallet_staking::Config
+	+ pallet_treasury::Config
+{
 	/// The overarching event type.
 	type Event: From<Event<Self, I>> + Into<<Self as system::Config>::Event>;
 
@@ -465,9 +471,6 @@ decl_storage! {
 		/// The max number of members for the society at one time.
 		MaxMembers get(fn max_members) config(): u32;
 
-		/// Society DAO addresses to payouts
-		SocietyDaoAddresses get(fn society_dao_address): map hasher(twox_64_concat) T::AssetId => T::AccountId;
-
 		/// List of eras for which the stakers behind a validator have claimed rewards. Only updated
 		/// for validators.
 		ClaimedRewards get(fn claimed_rewards): map hasher(blake2_128_concat) T::AccountId => Vec<EraIndex>;
@@ -503,7 +506,7 @@ decl_module! {
 		const ChallengePeriod: T::BlockNumber = T::ChallengePeriod::get();
 
 		/// The societies's module id
-		const ModuleId: ModuleId = T::ModuleId::get();
+		const ModuleId: ModuleId = <T as Config<I>>::ModuleId::get();
 
 		// Used for handling module events.
 		fn deposit_event() = default;
@@ -1042,35 +1045,6 @@ decl_module! {
 			Self::deposit_event(RawEvent::NewMaxMembers(max));
 		}
 
-		/// Allows root origin to update society DAO address.
-		/// Max membership count must be greater than 1.
-		///
-		/// The dispatch origin for this call must be from _ROOT_.
-		///
-		/// Parameters:
-		/// - `asset_id` - The asset_id.
-		/// - `society_dao_address` - The society DAO address.
-		///
-		/// # <weight>
-		/// Key: A (number of assets)
-		/// - One storage read to validate asset id. O(1)
-		/// - One storage write with O(log A) binary search to update society DAO Address.
-		/// - One event.
-		///
-		/// Total Complexity: O(1 + logA)
-		/// # </weight>
-		#[weight = T::BlockWeights::get().max_block / 10]
-		fn update_society_dao_address(origin, asset_id: T::AssetId, society_dao_address: T::AccountId) {
-			// TODO: only society governor can call it
-			ensure_root(origin)?;
-
-			<pallet_assets::Module<T>>::validate_asset_id(asset_id)?;
-			<SocietyDaoAddresses<T, I>>::insert(asset_id, &society_dao_address);
-
-
-			Self::deposit_event(RawEvent::SocietyDaoAddressUpdated(asset_id, society_dao_address));
-		}
-
 		/// Pay out the society for a single era.
 		///
 		/// - `validator_stash` is the stash account of the validator. The society
@@ -1164,8 +1138,6 @@ decl_error! {
 		AlreadyClaimed,
 		/// The Validator isn't a guardian
 		IsNotGuardian,
-		/// The society DAO address doesn't exist
-		SocietyDaoAddressDoesNotExist,
 	}
 }
 
@@ -1211,8 +1183,6 @@ decl_event! {
 		Unfounded(AccountId),
 		/// Some funds were deposited into the society account. \[value\]
 		Deposit(Balance),
-		/// Society DAO address updated. \[asset_id, society_dao_address\]
-		SocietyDaoAddressUpdated(AssetId, AccountId),
 		/// The staker has been rewarded by this amount. \[asset_id, stash, amount\]
 		Reward(AssetId, AccountId, Balance),
 	}
@@ -1653,7 +1623,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
 	pub fn account_id() -> T::AccountId {
-		T::ModuleId::get().into_account()
+		<T as Config<I>>::ModuleId::get().into_account()
 	}
 
 	/// The account ID of the payouts pot. This is where payouts are made from.
@@ -1661,7 +1631,14 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
 	/// value and only call this once.
 	pub fn payouts() -> T::AccountId {
-		T::ModuleId::get().into_sub_account(b"payouts")
+		<T as Config<I>>::ModuleId::get().into_sub_account(b"payouts")
+	}
+
+	/// Society account ID
+	pub fn society_account(asset_id: T::AssetId) -> T::AccountId {
+		// only use two byte prefix to support 16 byte account id (used by test)
+		// "modl" ++ "st/sndao" ++ "so" is 14 bytes, and two bytes remaining for asset ID
+		<T as Config<I>>::ModuleId::get().into_sub_account(("so", asset_id))
 	}
 
 	/// Return the duration of the lock, in blocks, with the given number of members.
@@ -1767,8 +1744,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 		let exposure = <pallet_staking::ErasStakersClipped<T>>::get(&era, &ledger.stash);
 
-		let society_dao_address = <SocietyDaoAddresses<T, I>>::try_get(asset_id)
-			.map_err(|_| Error::<T, I>::SocietyDaoAddressDoesNotExist)?;
+		let society_dao_address = Self::society_account(asset_id);
 
 		/* Input data seems good, no errors allowed after this point */
 
@@ -1810,11 +1786,13 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		// Lets now calculate how this is split to the nominators.
 		let society_reward = ((exposure.total - exposure.own) * validator_leftover_payout)
 			.saturated_into::<u128>();
-		let imbalance = <T as Config<I>>::Currency::deposit_creating(
+		let _ = <T as Config<I>>::Currency::transfer(
+			&<pallet_treasury::Module<T>>::account_id(),
 			&society_dao_address,
 			society_reward.saturated_into(),
+			KeepAlive
 		);
-		Self::deposit_event(RawEvent::Reward(asset_id, society_dao_address, imbalance.peek()));
+		Self::deposit_event(RawEvent::Reward(asset_id, society_dao_address, society_reward.saturated_into()));
 
 		Ok(())
 	}
