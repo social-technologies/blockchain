@@ -4375,10 +4375,10 @@ dependencies = [
  "pallet-social-network-treasury",
  "pallet-social-nft",
  "pallet-social-orbit-db-manifests",
+ "pallet-social-society",
  "pallet-social-swap",
  "pallet-social-swap2",
  "pallet-social-usernames",
- "pallet-society",
  "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-sudo",
@@ -5504,6 +5504,30 @@ dependencies = [
  "sp-io 3.0.0",
  "sp-runtime 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "pallet-social-society"
+version = "0.1.0"
+dependencies = [
+ "frame-support 3.0.0",
+ "frame-system 3.0.0",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-offences",
+ "pallet-session",
+ "pallet-social-guardians",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-timestamp",
+ "pallet-treasury",
+ "parity-scale-codec",
+ "serde",
+ "sp-core 3.0.0",
+ "sp-io 3.0.0",
+ "sp-runtime 3.0.0",
+ "sp-staking 3.0.0",
+ "sp-std 3.0.0",
 ]
 
 [[package]]
