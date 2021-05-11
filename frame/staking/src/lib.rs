@@ -2408,6 +2408,10 @@ impl<T: Config> Module<T> {
 			Self::deposit_event(RawEvent::Reward(ledger.stash, imbalance.peek()));
 		}
 
+		/*
+		// We don't pay out a reward to nominators because society gets its reward.
+		// (see pallet-socail-network-dao::payout_society)
+
 		// Lets now calculate how this is split to the nominators.
 		// Reward only the clipped exposures. Note this is not necessarily sorted.
 		for nominator in exposure.others.iter() {
@@ -2422,6 +2426,7 @@ impl<T: Config> Module<T> {
 				Self::deposit_event(RawEvent::Reward(nominator.who.clone(), imbalance.peek()));
 			}
 		}
+		*/
 
 		Ok(())
 	}
