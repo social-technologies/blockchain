@@ -73,10 +73,10 @@ use codec::{Encode, Decode};
 use frame_system::{self as system, ensure_signed};
 pub use weights::WeightInfo;
 
-pub type BalanceOf<T> = pallet_treasury::BalanceOf<T>;
-pub type NegativeImbalanceOf<T> = pallet_treasury::NegativeImbalanceOf<T>;
+pub type BalanceOf<T> = pallet_social_network_dao::BalanceOf<T>;
+pub type NegativeImbalanceOf<T> = pallet_social_network_dao::NegativeImbalanceOf<T>;
 
-pub trait Config: frame_system::Config + pallet_treasury::Config {
+pub trait Config: frame_system::Config + pallet_social_network_dao::Config {
 	/// Maximum acceptable reason length.
 	type MaximumReasonLength: Get<u32>;
 
@@ -247,7 +247,7 @@ decl_module! {
 
 			let deposit = T::TipReportDepositBase::get()
 				+ T::DataDepositPerByte::get() * (reason.len() as u32).into();
-			T::Currency::reserve(&finder, deposit)?;
+			<T as pallet_social_network_dao::Config>::Currency::reserve(&finder, deposit)?;
 
 			Reasons::<T>::insert(&reason_hash, &reason);
 			let tip = OpenTip {
@@ -291,7 +291,7 @@ decl_module! {
 			Reasons::<T>::remove(&tip.reason);
 			Tips::<T>::remove(&hash);
 			if !tip.deposit.is_zero() {
-				let _ = T::Currency::unreserve(&who, tip.deposit);
+				let _ = <T as pallet_social_network_dao::Config>::Currency::unreserve(&who, tip.deposit);
 			}
 			Self::deposit_event(RawEvent::TipRetracted(hash));
 		}
@@ -427,7 +427,7 @@ decl_module! {
 			let tip = Tips::<T>::take(hash).ok_or(Error::<T>::UnknownTip)?;
 
 			if !tip.deposit.is_zero() {
-				let imbalance = T::Currency::slash_reserved(&tip.finder, tip.deposit).0;
+				let imbalance = <T as pallet_social_network_dao::Config>::Currency::slash_reserved(&tip.finder, tip.deposit).0;
 				T::OnSlash::on_unbalanced(imbalance);
 			}
 			Reasons::<T>::remove(&tip.reason);
@@ -501,11 +501,11 @@ impl<T: Config> Module<T> {
 		tips.sort_by_key(|i| i.1);
 
 		let treasury = Self::account_id();
-		let max_payout = pallet_treasury::Module::<T>::pot();
+		let max_payout = pallet_social_network_dao::Module::<T>::treasury_pot();
 
 		let mut payout = tips[tips.len() / 2].1.min(max_payout);
 		if !tip.deposit.is_zero() {
-			let _ = T::Currency::unreserve(&tip.finder, tip.deposit);
+			let _ = <T as pallet_social_network_dao::Config>::Currency::unreserve(&tip.finder, tip.deposit);
 		}
 
 		if tip.finders_fee && tip.finder != tip.who {
@@ -514,11 +514,11 @@ impl<T: Config> Module<T> {
 			payout -= finders_fee;
 			// this should go through given we checked it's at most the free balance, but still
 			// we only make a best-effort.
-			let _ = T::Currency::transfer(&treasury, &tip.finder, finders_fee, KeepAlive);
+			let _ = <T as pallet_social_network_dao::Config>::Currency::transfer(&treasury, &tip.finder, finders_fee, KeepAlive);
 		}
 
 		// same as above: best-effort only.
-		let _ = T::Currency::transfer(&treasury, &tip.who, payout, KeepAlive);
+		let _ = <T as pallet_social_network_dao::Config>::Currency::transfer(&treasury, &tip.who, payout, KeepAlive);
 		Self::deposit_event(RawEvent::TipClosed(hash, tip.who, payout));
 	}
 

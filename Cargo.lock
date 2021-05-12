@@ -4259,6 +4259,7 @@ dependencies = [
  "pallet-social-bridge",
  "pallet-social-dex",
  "pallet-social-guardians",
+ "pallet-social-network-dao",
  "pallet-social-network-treasury",
  "pallet-social-nft",
  "pallet-social-swap",
@@ -4272,7 +4273,6 @@ dependencies = [
  "pallet-tips",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
- "pallet-treasury",
  "pallet-utility",
  "pallet-vesting",
  "parity-scale-codec",
@@ -4314,11 +4314,11 @@ dependencies = [
  "pallet-grandpa",
  "pallet-indices",
  "pallet-session",
+ "pallet-social-network-dao",
  "pallet-society",
  "pallet-staking",
  "pallet-timestamp",
  "pallet-transaction-payment",
- "pallet-treasury",
  "parity-scale-codec",
  "sc-block-builder",
  "sc-cli",
@@ -4632,7 +4632,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
- "pallet-treasury",
+ "pallet-social-network-dao",
  "parity-scale-codec",
  "serde",
  "sp-core",
@@ -5315,6 +5315,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-social-network-dao"
+version = "3.0.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "impl-trait-for-tuples 0.2.1",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-social-guardians",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rand_chacha 0.2.2",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-social-network-treasury"
 version = "0.1.0"
 dependencies = [
@@ -5522,7 +5545,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
- "pallet-treasury",
+ "pallet-social-network-dao",
  "parity-scale-codec",
  "serde",
  "sp-core",

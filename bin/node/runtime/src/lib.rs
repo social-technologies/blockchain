@@ -139,13 +139,13 @@ pub struct DealWithFees;
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item=NegativeImbalance>) {
 		if let Some(fees) = fees_then_tips.next() {
-			// for fees, 30% to treasury, 70% to author
+			// for fees, 30% to social-network-dao, 70% to author
 			let mut split = fees.ration(30, 70);
 			if let Some(tips) = fees_then_tips.next() {
-				// for tips, if any, 80% to treasury, 20% to author (though this can be anything)
+				// for tips, if any, 80% to social-network-dao, 20% to author (though this can be anything)
 				tips.ration_merge_into(80, 20, &mut split);
 			}
-			Treasury::on_unbalanced(split.0);
+			SocialNetworkDao::on_unbalanced(split.0);
 			Author::on_unbalanced(split.1);
 		}
 	}
@@ -274,7 +274,7 @@ impl InstanceFilter<Call> for ProxyType {
 				Call::Society(..) |
 				Call::TechnicalCommittee(..) |
 				Call::Elections(..) |
-				Call::Treasury(..)
+				Call::SocialNetworkDao(..)
 			),
 			ProxyType::Staking => matches!(c, Call::Staking(..)),
 		}
@@ -480,9 +480,9 @@ impl pallet_staking::Config for Runtime {
 	type Currency = Balances;
 	type UnixTime = Timestamp;
 	type CurrencyToVote = U128CurrencyToVote;
-	type RewardRemainder = Treasury;
+	type RewardRemainder = SocialNetworkDao;
 	type Event = Event;
-	type Slash = Treasury; // send the slashed funds to the treasury.
+	type Slash = SocialNetworkDao; // send the slashed funds to the social-network-dao.
 	type Reward = (); // rewards are minted from the void
 	type SessionsPerEra = SessionsPerEra;
 	type BondingDuration = BondingDuration;
@@ -559,7 +559,7 @@ impl pallet_democracy::Config for Runtime {
 	type CooloffPeriod = CooloffPeriod;
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type OperationalPreimageOrigin = pallet_collective::EnsureMember<AccountId, CouncilCollective>;
-	type Slash = Treasury;
+	type Slash = SocialNetworkDao;
 	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
 	type MaxVotes = MaxVotes;
@@ -652,48 +652,6 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 	type PrimeOrigin = EnsureRootOrHalfCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
-}
-
-parameter_types! {
-	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 1 * NET;
-	pub const SpendPeriod: BlockNumber = 7 * DAYS;
-	pub const Burn: Permill = Permill::from_percent(50);
-	pub const TipCountdown: BlockNumber = 1 * DAYS;
-	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * MILLINET;
-	pub const DataDepositPerByte: Balance = 1 * MILLINET;
-	pub const BountyDepositBase: Balance = 1 * NET;
-	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
-	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
-	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
-	pub const MaximumReasonLength: u32 = 16384;
-	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-	pub const BountyValueMinimum: Balance = 1 * NET;
-}
-
-impl pallet_treasury::Config for Runtime {
-	type ModuleId = TreasuryModuleId;
-	type Currency = Balances;
-	type ApproveOrigin = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>
-	>;
-	type RejectOrigin = EnsureOneOf<
-		AccountId,
-		EnsureRoot<AccountId>,
-		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>
-	>;
-	type Event = Event;
-	type OnSlash = ();
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type SpendPeriod = SpendPeriod;
-	type Burn = Burn;
-	type BurnDestination = ();
-	type SpendFunds = Bounties;
-	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_bounties::Config for Runtime {
@@ -897,7 +855,7 @@ impl pallet_identity::Config for Runtime {
 	type MaxSubAccounts = MaxSubAccounts;
 	type MaxAdditionalFields = MaxAdditionalFields;
 	type MaxRegistrars = MaxRegistrars;
-	type Slashed = Treasury;
+	type Slashed = SocialNetworkDao;
 	type ForceOrigin = EnsureRootOrHalfCouncil;
 	type RegistrarOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
@@ -1056,7 +1014,6 @@ impl pallet_did::Config for Runtime {
 impl pallet_social_network_treasury::Config for Runtime {
 	type Event = Event;
 	type FungibleToken = Assets;
-	type WeightInfo = pallet_social_network_treasury::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_social_guardians::Config for Runtime {
@@ -1141,6 +1098,63 @@ impl pallet_social_swap2::Config for Runtime {
 	type MinimumLiquidity = MinimumLiquidity;
 }
 
+parameter_types! {
+	pub const SocialNetworkDaoModuleId: ModuleId = ModuleId(*b"st/sndao");
+}
+parameter_types! {
+	pub const ProposalBond: Permill = Permill::from_percent(5);
+	pub const ProposalBondMinimum: Balance = 1 * NET;
+	pub const SpendPeriod: BlockNumber = 7 * DAYS;
+	pub const Burn: Permill = Permill::from_percent(50);
+	pub const TipCountdown: BlockNumber = 1 * DAYS;
+	pub const TipFindersFee: Percent = Percent::from_percent(20);
+	pub const TipReportDepositBase: Balance = 1 * MILLINET;
+	pub const DataDepositPerByte: Balance = 1 * MILLINET;
+	pub const BountyDepositBase: Balance = 1 * NET;
+	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
+	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
+	pub const MaximumReasonLength: u32 = 16384;
+	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
+	pub const BountyValueMinimum: Balance = 1 * NET;
+}
+
+impl pallet_social_network_dao::Config for Runtime {
+	type Event = Event;
+	type ModuleId = SocialNetworkDaoModuleId;
+	type Currency = Balances;
+	type Randomness = RandomnessCollectiveFlip;
+	type CandidateDeposit = CandidateDeposit;
+	type WrongSideDeduction = WrongSideDeduction;
+	type MaxStrikes = MaxStrikes;
+	type PeriodSpend = PeriodSpend;
+	type MembershipChanged = ();
+	type RotationPeriod = RotationPeriod;
+	type MaxLockDuration = MaxLockDuration;
+	type FounderSetOrigin = pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>;
+	type SuspensionJudgementOrigin = pallet_society::EnsureFounder<Runtime>;
+	type ChallengePeriod = ChallengePeriod;
+
+	type ApproveOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureProportionAtLeast<_3, _5, AccountId, CouncilCollective>
+	>;
+	type RejectOrigin = EnsureOneOf<
+		AccountId,
+		EnsureRoot<AccountId>,
+		pallet_collective::EnsureProportionMoreThan<_1, _2, AccountId, CouncilCollective>
+	>;
+	type OnSlash = ();
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type BurnDestination = ();
+	type SpendFunds = Bounties;
+	type WeightInfo = pallet_social_network_dao::weights::SubstrateWeight<Runtime>;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1163,7 +1177,6 @@ construct_runtime!(
 		Elections: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
 		TechnicalMembership: pallet_membership::<Instance1>::{Module, Call, Storage, Event<T>, Config<T>},
 		Grandpa: pallet_grandpa::{Module, Call, Storage, Config, Event, ValidateUnsigned},
-		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
 		Contracts: pallet_contracts::{Module, Call, Config<T>, Storage, Event<T>},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		ImOnline: pallet_im_online::{Module, Call, Storage, Event<T>, ValidateUnsigned, Config<T>},
@@ -1193,6 +1206,7 @@ construct_runtime!(
 		SocialNFT: pallet_social_nft::{Module, Call, Storage, Event<T>},
 		SocialSwap: pallet_social_swap::{Module, Call, Storage, Event<T>},
 		SocialSwap2: pallet_social_swap2::{Module, Call, Storage, Event<T>},
+		SocialNetworkDao: pallet_social_network_dao::{Module, Call, Storage, Event<T>},
 	}
 );
 
