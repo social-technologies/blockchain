@@ -99,11 +99,11 @@ use codec::{Encode, Decode};
 use frame_system::{self as system, ensure_signed};
 pub use weights::WeightInfo;
 
-type BalanceOf<T> = pallet_treasury::BalanceOf<T>;
+type BalanceOf<T> = pallet_social_network_dao::BalanceOf<T>;
 
-type PositiveImbalanceOf<T> = pallet_treasury::PositiveImbalanceOf<T>;
+type PositiveImbalanceOf<T> = pallet_social_network_dao::PositiveImbalanceOf<T>;
 
-pub trait Config: frame_system::Config + pallet_treasury::Config {
+pub trait Config: frame_system::Config + pallet_social_network_dao::Config {
 
 	/// The amount held on deposit for placing a bounty proposal.
 	type BountyDepositBase: Get<BalanceOf<Self>>;
@@ -397,7 +397,7 @@ decl_module! {
 				let mut bounty = maybe_bounty.as_mut().ok_or(Error::<T>::InvalidIndex)?;
 
 				let slash_curator = |curator: &T::AccountId, curator_deposit: &mut BalanceOf<T>| {
-					let imbalance = T::Currency::slash_reserved(curator, *curator_deposit).0;
+					let imbalance = <T as pallet_social_network_dao::Config>::Currency::slash_reserved(curator, *curator_deposit).0;
 					T::OnSlash::on_unbalanced(imbalance);
 					*curator_deposit = Zero::zero();
 				};
@@ -435,7 +435,7 @@ decl_module! {
 								} else {
 									// Else this is the curator, willingly giving up their role.
 									// Give back their deposit.
-									let _ = T::Currency::unreserve(&curator, bounty.curator_deposit);
+									let _ = <T as pallet_social_network_dao::Config>::Currency::unreserve(&curator, bounty.curator_deposit);
 									// Continue to change bounty status below...
 								}
 							},
@@ -476,7 +476,7 @@ decl_module! {
 						ensure!(signer == *curator, Error::<T>::RequireCurator);
 
 						let deposit = T::BountyCuratorDeposit::get() * bounty.fee;
-						T::Currency::reserve(curator, deposit)?;
+						<T as pallet_social_network_dao::Config>::Currency::reserve(curator, deposit)?;
 						bounty.curator_deposit = deposit;
 
 						let update_due = system::Module::<T>::block_number() + T::BountyUpdatePeriod::get();
@@ -545,12 +545,12 @@ decl_module! {
 				if let BountyStatus::PendingPayout { curator, beneficiary, unlock_at } = bounty.status {
 					ensure!(system::Module::<T>::block_number() >= unlock_at, Error::<T>::Premature);
 					let bounty_account = Self::bounty_account_id(bounty_id);
-					let balance = T::Currency::free_balance(&bounty_account);
+					let balance = <T as pallet_social_network_dao::Config>::Currency::free_balance(&bounty_account);
 					let fee = bounty.fee.min(balance); // just to be safe
 					let payout = balance.saturating_sub(fee);
-					let _ = T::Currency::unreserve(&curator, bounty.curator_deposit);
-					let _ = T::Currency::transfer(&bounty_account, &curator, fee, AllowDeath); // should not fail
-					let _ = T::Currency::transfer(&bounty_account, &beneficiary, payout, AllowDeath); // should not fail
+					let _ = <T as pallet_social_network_dao::Config>::Currency::unreserve(&curator, bounty.curator_deposit);
+					let _ = <T as pallet_social_network_dao::Config>::Currency::transfer(&bounty_account, &curator, fee, AllowDeath); // should not fail
+					let _ = <T as pallet_social_network_dao::Config>::Currency::transfer(&bounty_account, &beneficiary, payout, AllowDeath); // should not fail
 					*maybe_bounty = None;
 
 					BountyDescriptions::remove(bounty_id);
@@ -585,7 +585,7 @@ decl_module! {
 						// The reject origin would like to cancel a proposed bounty.
 						BountyDescriptions::remove(bounty_id);
 						let value = bounty.bond;
-						let imbalance = T::Currency::slash_reserved(&bounty.proposer, value).0;
+						let imbalance = <T as pallet_social_network_dao::Config>::Currency::slash_reserved(&bounty.proposer, value).0;
 						T::OnSlash::on_unbalanced(imbalance);
 						*maybe_bounty = None;
 
@@ -604,7 +604,7 @@ decl_module! {
 					},
 					BountyStatus::Active { curator, .. } => {
 						// Cancelled by council, refund deposit of the working curator.
-						let _ = T::Currency::unreserve(&curator, bounty.curator_deposit);
+						let _ = <T as pallet_social_network_dao::Config>::Currency::unreserve(&curator, bounty.curator_deposit);
 						// Then execute removal of the bounty below.
 					},
 					BountyStatus::PendingPayout { .. } => {
@@ -620,8 +620,8 @@ decl_module! {
 
 				BountyDescriptions::remove(bounty_id);
 
-				let balance = T::Currency::free_balance(&bounty_account);
-				let _ = T::Currency::transfer(&bounty_account, &Self::account_id(), balance, AllowDeath); // should not fail
+				let balance = <T as pallet_social_network_dao::Config>::Currency::free_balance(&bounty_account);
+				let _ = <T as pallet_social_network_dao::Config>::Currency::transfer(&bounty_account, &Self::account_id(), balance, AllowDeath); // should not fail
 				*maybe_bounty = None;
 
 				Self::deposit_event(Event::<T>::BountyCanceled(bounty_id));
@@ -693,7 +693,7 @@ impl<T: Config> Module<T> {
 		// reserve deposit for new bounty
 		let bond = T::BountyDepositBase::get()
 			+ T::DataDepositPerByte::get() * (description.len() as u32).into();
-		T::Currency::reserve(&proposer, bond)
+		<T as pallet_social_network_dao::Config>::Currency::reserve(&proposer, bond)
 			.map_err(|_| Error::<T>::InsufficientProposersBalance)?;
 
 		BountyCount::put(index + 1);
@@ -717,7 +717,7 @@ impl<T: Config> Module<T> {
 
 }
 
-impl<T: Config> pallet_treasury::SpendFunds<T> for Module<T> {
+impl<T: Config> pallet_social_network_dao::SpendFunds<T> for Module<T> {
 	fn spend_funds(
 		budget_remaining: &mut BalanceOf<T>,
 		imbalance: &mut PositiveImbalanceOf<T>,
@@ -736,10 +736,10 @@ impl<T: Config> pallet_treasury::SpendFunds<T> for Module<T> {
 							bounty.status = BountyStatus::Funded;
 
 							// return their deposit.
-							let _ = T::Currency::unreserve(&bounty.proposer, bounty.bond);
+							let _ = <T as pallet_social_network_dao::Config>::Currency::unreserve(&bounty.proposer, bounty.bond);
 
 							// fund the bounty account
-							imbalance.subsume(T::Currency::deposit_creating(&Self::bounty_account_id(index), bounty.value));
+							imbalance.subsume(<T as pallet_social_network_dao::Config>::Currency::deposit_creating(&Self::bounty_account_id(index), bounty.value));
 
 							Self::deposit_event(RawEvent::BountyBecameActive(index));
 							false

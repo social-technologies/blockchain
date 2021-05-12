@@ -92,7 +92,6 @@ pallet-society = { version = "3.0.0", default-features = false, path = "../../..
 pallet-sudo = { version = "3.0.0", default-features = false, path = "../../../frame/sudo" }
 pallet-timestamp = { version = "3.0.0", default-features = false, path = "../../../frame/timestamp" }
 pallet-tips = { version = "3.0.0", default-features = false, path = "../../../frame/tips" }
-pallet-treasury = { version = "3.0.0", default-features = false, path = "../../../frame/treasury" }
 pallet-utility = { version = "3.0.0", default-features = false, path = "../../../frame/utility" }
 pallet-transaction-payment = { version = "3.0.0", default-features = false, path = "../../../frame/transaction-payment" }
 pallet-transaction-payment-rpc-runtime-api = { version = "3.0.0", default-features = false, path = "../../../frame/transaction-payment/rpc/runtime-api/" }
@@ -159,7 +158,6 @@ std = [
 	"pallet-tips/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
-	"pallet-treasury/std",
 	"sp-transaction-pool/std",
 	"pallet-utility/std",
 	"sp-version/std",
@@ -203,7 +201,6 @@ runtime-benchmarks = [
 	"pallet-staking/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-tips/runtime-benchmarks",
-	"pallet-treasury/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-vesting/runtime-benchmarks",
 	"pallet-offences-benchmarking",

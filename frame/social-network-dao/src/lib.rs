@@ -251,26 +251,37 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub mod weights;
+
+#[cfg(feature = "std")]
+use serde::{Serialize, Deserialize};
 use rand_chacha::{rand_core::{RngCore, SeedableRng}, ChaChaRng};
 use sp_std::prelude::*;
 use codec::{Encode, Decode};
-use sp_runtime::{Percent, ModuleId, RuntimeDebug, Perbill,
+use sp_runtime::{Percent, ModuleId, RuntimeDebug, Perbill, Permill,
 	traits::{
 		StaticLookup, AccountIdConversion, Saturating, Zero, IntegerSquareRoot, Hash,
 		TrailingZeroInput, CheckedSub, SaturatedConversion
 	}
 };
-use frame_support::{decl_error, decl_module, decl_storage, decl_event, ensure, dispatch::DispatchResult};
-use frame_support::weights::Weight;
+use frame_support::{
+	decl_error, decl_module, decl_storage, decl_event, ensure, dispatch::DispatchResult, print
+};
+use frame_support::weights::{Weight, DispatchClass};
 use frame_support::traits::{
 	Currency, ReservableCurrency, Randomness, Get, ChangeMembers, BalanceStatus,
-	ExistenceRequirement::{AllowDeath, KeepAlive}, EnsureOrigin, OnUnbalanced, Imbalance
+	ExistenceRequirement::{AllowDeath, KeepAlive}, EnsureOrigin, OnUnbalanced, Imbalance,
+	WithdrawReasons,
 };
 use frame_system::{self as system, ensure_signed, ensure_root};
 use pallet_staking::EraIndex;
+pub use weights::WeightInfo;
 
-type BalanceOf<T, I> = <<T as Config<I>>::Currency as Currency<<T as system::Config>::AccountId>>::Balance;
-type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+pub type BalanceOf<T, I=DefaultInstance> = <<T as Config<I>>::Currency as Currency<<T as system::Config>::AccountId>>::Balance;
+pub type PositiveImbalanceOf<T, I=DefaultInstance> =
+	<<T as Config<I>>::Currency as Currency<<T as frame_system::Config>::AccountId>>::PositiveImbalance;
+pub type NegativeImbalanceOf<T, I=DefaultInstance> =
+	<<T as Config<I>>::Currency as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 /// The module's configuration trait.
 pub trait Config<I=DefaultInstance>:
@@ -278,7 +289,6 @@ pub trait Config<I=DefaultInstance>:
 	+ pallet_assets::Config
 	+ pallet_social_guardians::Config
 	+ pallet_staking::Config
-	+ pallet_treasury::Config
 {
 	/// The overarching event type.
 	type Event: From<Event<Self, I>> + Into<<Self as system::Config>::Event>;
@@ -323,6 +333,37 @@ pub trait Config<I=DefaultInstance>:
 
 	/// The number of blocks between membership challenges.
 	type ChallengePeriod: Get<Self::BlockNumber>;
+
+	/// Origin from which approvals must come.
+	type ApproveOrigin: EnsureOrigin<Self::Origin>;
+
+	/// Origin from which rejections must come.
+	type RejectOrigin: EnsureOrigin<Self::Origin>;
+
+	/// Handler for the unbalanced decrease when slashing for a rejected proposal or bounty.
+	type OnSlash: OnUnbalanced<NegativeImbalanceOf<Self, I>>;
+
+	/// Fraction of a proposal's value that should be bonded in order to place the proposal.
+	/// An accepted proposal gets these back. A rejected proposal does not.
+	type ProposalBond: Get<Permill>;
+
+	/// Minimum amount of funds that should be placed in a deposit for making a proposal.
+	type ProposalBondMinimum: Get<BalanceOf<Self, I>>;
+
+	/// Period between successive spends.
+	type SpendPeriod: Get<Self::BlockNumber>;
+
+	/// Percentage of spare funds (if any) that are burnt per spend period.
+	type Burn: Get<Permill>;
+
+	/// Handler for the unbalanced decrease when treasury funds are burned.
+	type BurnDestination: OnUnbalanced<NegativeImbalanceOf<Self, I>>;
+
+	/// Weight information for extrinsics in this pallet.
+	type WeightInfo: WeightInfo;
+
+	/// Runtime hooks to external pallet using treasury to compute spend funds.
+	type SpendFunds: SpendFunds<Self, I>;
 }
 
 /// A vote by a member on a candidate application.
@@ -408,6 +449,48 @@ impl<AccountId: PartialEq, Balance> BidKind<AccountId, Balance> {
 	}
 }
 
+/// A trait to allow the Treasury Pallet to spend it's funds for other purposes.
+/// There is an expectation that the implementer of this trait will correctly manage
+/// the mutable variables passed to it:
+/// * `budget_remaining`: How much available funds that can be spent by the treasury.
+///    As funds are spent, you must correctly deduct from this value.
+/// * `imbalance`: Any imbalances that you create should be subsumed in here to
+///    maximize efficiency of updating the total issuance. (i.e. `deposit_creating`)
+/// * `total_weight`: Track any weight that your `spend_fund` implementation uses by
+///    updating this value.
+/// * `missed_any`: If there were items that you want to spend on, but there were
+///    not enough funds, mark this value as `true`. This will prevent the treasury
+///    from burning the excess funds.
+#[impl_trait_for_tuples::impl_for_tuples(30)]
+pub trait SpendFunds<T: Config<I>, I=DefaultInstance> {
+	fn spend_funds(
+		budget_remaining: &mut BalanceOf<T, I>,
+		imbalance: &mut PositiveImbalanceOf<T, I>,
+		total_weight: &mut Weight,
+		missed_any: &mut bool,
+	);
+}
+
+/// An index of a proposal. Just a `u32`.
+pub type ProposalIndex = u32;
+
+/// A spending proposal.
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
+pub struct Proposal<AccountId, Balance> {
+	/// The account proposing it.
+	proposer: AccountId,
+	/// The (total) amount that should be paid if the proposal is accepted.
+	value: Balance,
+	/// The account to whom the payment should be made if the proposal is accepted.
+	beneficiary: AccountId,
+	/// The amount held on deposit (reserved) for making this proposal.
+	bond: Balance,
+}
+
+/// An index of a bounty. Just a `u32`.
+pub type BountyIndex = u32;
+
 // This module's storage items.
 decl_storage! {
 	trait Store for Module<T: Config<I>, I: Instance=DefaultInstance> as Society {
@@ -474,9 +557,31 @@ decl_storage! {
 		/// List of eras for which the stakers behind a validator have claimed rewards. Only updated
 		/// for validators.
 		ClaimedRewards get(fn claimed_rewards): map hasher(blake2_128_concat) T::AccountId => Vec<EraIndex>;
+
+		/// Number of proposals that have been made.
+		ProposalCount get(fn proposal_count): ProposalIndex;
+
+		/// Proposals that have been made.
+		pub Proposals get(fn proposals):
+			map hasher(twox_64_concat) ProposalIndex
+			=> Option<Proposal<T::AccountId, BalanceOf<T, I>>>;
+
+		/// Proposal indices that have been approved but not yet awarded.
+		pub Approvals get(fn approvals): Vec<ProposalIndex>;
 	}
 	add_extra_genesis {
 		config(members): Vec<T::AccountId>;
+		build(|_config| {
+			// Create Treasury account
+			let account_id = <Module<T, I>>::account_id();
+			let min = <T as Config<I>>::Currency::minimum_balance();
+			if <T as Config<I>>::Currency::free_balance(&account_id) < min {
+				let _ = <T as Config<I>>::Currency::make_free_balance_be(
+					&account_id,
+					min,
+				);
+			}
+		});
 	}
 }
 
@@ -507,6 +612,19 @@ decl_module! {
 
 		/// The societies's module id
 		const ModuleId: ModuleId = <T as Config<I>>::ModuleId::get();
+
+		/// Fraction of a proposal's value that should be bonded in order to place the proposal.
+		/// An accepted proposal gets these back. A rejected proposal does not.
+		const ProposalBond: Permill = <T as Config<I>>::ProposalBond::get();
+
+		/// Minimum amount of funds that should be placed in a deposit for making a proposal.
+		const ProposalBondMinimum: BalanceOf<T, I> = <T as Config<I>>::ProposalBondMinimum::get();
+
+		/// Period between successive spends.
+		const SpendPeriod: T::BlockNumber = <T as Config<I>>::SpendPeriod::get();
+
+		/// Percentage of spare funds (if any) that are burnt per spend period.
+		const Burn: Permill = <T as Config<I>>::Burn::get();
 
 		// Used for handling module events.
 		fn deposit_event() = default;
@@ -1045,6 +1163,74 @@ decl_module! {
 			Self::deposit_event(RawEvent::NewMaxMembers(max));
 		}
 
+		/// Put forward a suggestion for spending. A deposit proportional to the value
+		/// is reserved and slashed if the proposal is rejected. It is returned once the
+		/// proposal is awarded.
+		///
+		/// # <weight>
+		/// - Complexity: O(1)
+		/// - DbReads: `ProposalCount`, `origin account`
+		/// - DbWrites: `ProposalCount`, `Proposals`, `origin account`
+		/// # </weight>
+		#[weight = <T as Config<I>>::WeightInfo::propose_spend()]
+		pub fn propose_spend(
+			origin,
+			#[compact] value: BalanceOf<T, I>,
+			beneficiary: <T::Lookup as StaticLookup>::Source
+		) {
+			let proposer = ensure_signed(origin)?;
+			let beneficiary = T::Lookup::lookup(beneficiary)?;
+
+			let bond = Self::calculate_bond(value);
+			<T as Config<I>>::Currency::reserve(&proposer, bond)
+				.map_err(|_| Error::<T, I>::InsufficientProposersBalance)?;
+
+			let c = Self::proposal_count();
+			<ProposalCount<I>>::put(c + 1);
+			<Proposals<T, I>>::insert(c, Proposal { proposer, value, beneficiary, bond });
+
+			Self::deposit_event(RawEvent::Proposed(c));
+		}
+
+		/// Reject a proposed spend. The original deposit will be slashed.
+		///
+		/// May only be called from `T::RejectOrigin`.
+		///
+		/// # <weight>
+		/// - Complexity: O(1)
+		/// - DbReads: `Proposals`, `rejected proposer account`
+		/// - DbWrites: `Proposals`, `rejected proposer account`
+		/// # </weight>
+		#[weight = (<T as Config<I>>::WeightInfo::reject_proposal(), DispatchClass::Operational)]
+		pub fn reject_proposal(origin, #[compact] proposal_id: ProposalIndex) {
+			T::RejectOrigin::ensure_origin(origin)?;
+
+			let proposal = <Proposals<T, I>>::take(&proposal_id).ok_or(Error::<T, I>::InvalidIndex)?;
+			let value = proposal.bond;
+			let imbalance = <T as Config<I>>::Currency::slash_reserved(&proposal.proposer, value).0;
+			T::OnSlash::on_unbalanced(imbalance);
+
+			Self::deposit_event(Event::<T, I>::Rejected(proposal_id, value));
+		}
+
+		/// Approve a proposal. At a later time, the proposal will be allocated to the beneficiary
+		/// and the original deposit will be returned.
+		///
+		/// May only be called from `T::ApproveOrigin`.
+		///
+		/// # <weight>
+		/// - Complexity: O(1).
+		/// - DbReads: `Proposals`, `Approvals`
+		/// - DbWrite: `Approvals`
+		/// # </weight>
+		#[weight = (<T as Config<I>>::WeightInfo::approve_proposal(), DispatchClass::Operational)]
+		pub fn approve_proposal(origin, #[compact] proposal_id: ProposalIndex) {
+			T::ApproveOrigin::ensure_origin(origin)?;
+
+			ensure!(<Proposals<T, I>>::contains_key(proposal_id), Error::<T, I>::InvalidIndex);
+			Approvals::<I>::append(proposal_id);
+		}
+
 		/// Pay out the society for a single era.
 		///
 		/// - `validator_stash` is the stash account of the validator. The society
@@ -1090,6 +1276,15 @@ decl_module! {
 				weight += weights.max_block / 20;
 			}
 
+			/*
+			// Auto spending funds disabled
+
+			// Check to see if we should spend some funds!
+			if weight == 0 && (n % T::SpendPeriod::get()).is_zero() {
+				weight = Self::spend_funds()
+			}
+			*/
+
 			weight
 		}
 	}
@@ -1134,6 +1329,10 @@ decl_error! {
 		NotFounder,
 		/// The caller is not the head.
 		NotHead,
+		/// Proposer's balance is too low.
+		InsufficientProposersBalance,
+		/// No proposal or bounty at that index.
+		InvalidIndex,
 		/// Rewards for this era have already been claimed for this validator.
 		AlreadyClaimed,
 		/// The Validator isn't a guardian
@@ -1185,6 +1384,20 @@ decl_event! {
 		Deposit(Balance),
 		/// The staker has been rewarded by this amount. \[asset_id, stash, amount\]
 		Reward(AssetId, AccountId, Balance),
+
+		/// New proposal. \[proposal_index\]
+		Proposed(ProposalIndex),
+		/// We have ended a spend period and will now allocate funds. \[budget_remaining\]
+		Spending(Balance),
+		/// Some funds have been allocated. \[proposal_index, award, beneficiary\]
+		Awarded(ProposalIndex, Balance, AccountId),
+		/// A proposal was rejected; funds were slashed. \[proposal_index, slashed\]
+		Rejected(ProposalIndex, Balance),
+		/// Some of our funds have been burnt. \[burn\]
+		Burnt(Balance),
+		/// Spending has finished; this is the amount that rolls over until next spend.
+		/// \[budget_remaining\]
+		Rollover(Balance),
 	}
 }
 
@@ -1787,7 +2000,7 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 		let society_reward = ((exposure.total - exposure.own) * validator_leftover_payout)
 			.saturated_into::<u128>();
 		let _ = <T as Config<I>>::Currency::transfer(
-			&<pallet_treasury::Module<T>>::account_id(),
+			&Self::account_id(),
 			&society_dao_address,
 			society_reward.saturated_into(),
 			KeepAlive
@@ -1796,14 +2009,108 @@ impl<T: Config<I>, I: Instance> Module<T, I> {
 
 		Ok(())
 	}
+
+	/// The account ID of a bounty account
+	pub fn bounty_account_id(id: BountyIndex) -> T::AccountId {
+		// only use two byte prefix to support 16 byte account id (used by test)
+		// "modl" ++ "st/sndao" ++ "bt" is 14 bytes, and two bytes remaining for bounty index
+		T::ModuleId::get().into_sub_account(("bt", id))
+	}
+
+	/// The needed bond for a proposal whose spend is `value`.
+	fn calculate_bond(value: BalanceOf<T, I>) -> BalanceOf<T, I> {
+		T::ProposalBondMinimum::get().max(T::ProposalBond::get() * value)
+	}
+
+	/// Spend some money! returns number of approvals before spend.
+	pub fn spend_funds() -> Weight {
+		let mut total_weight: Weight = Zero::zero();
+
+		let mut budget_remaining = Self::treasury_pot();
+		Self::deposit_event(RawEvent::Spending(budget_remaining));
+		let account_id = Self::account_id();
+
+		let mut missed_any = false;
+		let mut imbalance = <PositiveImbalanceOf<T, I>>::zero();
+		let proposals_len = Approvals::<I>::mutate(|v| {
+			let proposals_approvals_len = v.len() as u32;
+			v.retain(|&index| {
+				// Should always be true, but shouldn't panic if false or we're screwed.
+				if let Some(p) = Self::proposals(index) {
+					if p.value <= budget_remaining {
+						budget_remaining -= p.value;
+						<Proposals<T, I>>::remove(index);
+
+						// return their deposit.
+						let _ = <T as Config<I>>::Currency::unreserve(&p.proposer, p.bond);
+
+						// provide the allocation.
+						imbalance.subsume(<T as Config<I>>::Currency::deposit_creating(&p.beneficiary, p.value));
+
+						Self::deposit_event(RawEvent::Awarded(index, p.value, p.beneficiary));
+						false
+					} else {
+						missed_any = true;
+						true
+					}
+				} else {
+					false
+				}
+			});
+			proposals_approvals_len
+		});
+
+		total_weight += <T as Config<I>>::WeightInfo::on_initialize_proposals(proposals_len);
+
+		// Call Runtime hooks to external pallet using treasury to compute spend funds.
+		T::SpendFunds::spend_funds( &mut budget_remaining, &mut imbalance, &mut total_weight, &mut missed_any);
+
+		if !missed_any {
+			// burn some proportion of the remaining budget if we run a surplus.
+			let burn = (T::Burn::get() * budget_remaining).min(budget_remaining);
+			budget_remaining -= burn;
+
+			let (debit, credit) = <T as Config<I>>::Currency::pair(burn);
+			imbalance.subsume(debit);
+			T::BurnDestination::on_unbalanced(credit);
+			Self::deposit_event(RawEvent::Burnt(burn))
+		}
+
+		// Must never be an error, but better to be safe.
+		// proof: budget_remaining is account free balance minus ED;
+		// Thus we can't spend more than account free balance minus ED;
+		// Thus account is kept alive; qed;
+		if let Err(problem) = <T as Config<I>>::Currency::settle(
+			&account_id,
+			imbalance,
+			WithdrawReasons::TRANSFER,
+			KeepAlive
+		) {
+			print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");
+			// Nothing else to do here.
+			drop(problem);
+		}
+
+		Self::deposit_event(RawEvent::Rollover(budget_remaining));
+
+		total_weight
+	}
+
+	/// Return the amount of money in the pot.
+	// The existential deposit is not part of the pot so treasury account never gets deleted.
+	pub fn treasury_pot() -> BalanceOf<T, I> {
+		<T as Config<I>>::Currency::free_balance(&Self::account_id())
+			// Must never be less than 0 but better be safe.
+			.saturating_sub(<T as Config<I>>::Currency::minimum_balance())
+	}
 }
 
-impl<T: Config> OnUnbalanced<NegativeImbalanceOf<T>> for Module<T> {
-	fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T>) {
+impl<T: Config<I>, I: Instance> OnUnbalanced<NegativeImbalanceOf<T, I>> for Module<T, I> {
+	fn on_nonzero_unbalanced(amount: NegativeImbalanceOf<T, I>) {
 		let numeric_amount = amount.peek();
 
 		// Must resolve into existing but better to be safe.
-		let _ = <T as Config>::Currency::resolve_creating(&Self::account_id(), amount);
+		let _ = <T as Config<I>>::Currency::resolve_creating(&Self::account_id(), amount);
 
 		Self::deposit_event(RawEvent::Deposit(numeric_amount));
 	}

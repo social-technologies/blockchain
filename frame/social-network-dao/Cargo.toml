@@ -22,8 +22,8 @@ frame-system = { version = "3.0.0", default-features = false, path = "../system"
 pallet-assets = { version = "3.0.0", default-features = false, path = "../assets" }
 pallet-staking = { version = "3.0.0", default-features = false, path = "../staking" }
 pallet-social-guardians = { version = "0.1.0", default-features = false, path = "../social-guardians" }
-pallet-treasury = { version = "3.0.0", default-features = false, path = "../treasury" }
 rand_chacha = { version = "0.2", default-features = false }
+impl-trait-for-tuples = "0.2.1"
 
 [dev-dependencies]
 sp-core = { version = "3.0.0", path = "../../primitives/core" }
@@ -45,7 +45,6 @@ std = [
 	"frame-system/std",
 	"pallet-assets/std",
 	"pallet-social-guardians/std",
-	"pallet-treasury/std",
 ]
 runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
