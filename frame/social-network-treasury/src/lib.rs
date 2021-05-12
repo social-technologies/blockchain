@@ -8,10 +8,6 @@ use pallet_staking::{EraIndex, WeightInfo as StakingWeightInfo};
 use sp_runtime::traits::SaturatedConversion;
 use sp_runtime::{traits::Zero, DispatchResult, Perbill};
 use sp_std::prelude::*;
-pub use weights::WeightInfo;
-
-mod default_weights;
-pub mod weights;
 
 type BalanceOf<T> = <T as pallet_assets::Config>::Balance;
 
@@ -25,9 +21,6 @@ pub trait Config:
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 
     type FungibleToken: IssueAndBurn<Self::AssetId, Self::AccountId>;
-
-    /// Weight information for extrinsics in this pallet.
-    type WeightInfo: WeightInfo;
 }
 
 decl_storage! {
@@ -135,6 +128,7 @@ impl<T: Config> Module<T> {
                 .map_err(|_| Error::<T>::IsNotGuardian)?;
 
         let mut claimed_rewards = Self::claimed_rewards(&controller);
+        claimed_rewards.retain(|&x| x >= current_era.saturating_sub(history_depth));
         match claimed_rewards.binary_search(&era) {
             Ok(_) => Err(Error::<T>::AlreadyClaimed)?,
             Err(pos) => claimed_rewards.insert(pos, era),

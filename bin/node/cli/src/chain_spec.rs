@@ -314,7 +314,6 @@ pub fn testnet_genesis(
 			authorities: vec![],
 		}),
 		pallet_membership_Instance1: Some(Default::default()),
-		pallet_treasury: Some(Default::default()),
 		pallet_society: Some(SocietyConfig {
 			members: endowed_accounts.iter()
 						.take((num_endowed_accounts + 1) / 2)

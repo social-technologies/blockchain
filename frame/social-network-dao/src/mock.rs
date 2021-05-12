@@ -18,7 +18,7 @@
 //! Test utilities
 
 use super::*;
-use crate as pallet_society;
+use crate as pallet_social_network_dao;
 use std::cell::RefCell;
 
 use frame_support::{
@@ -49,9 +49,8 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		SocialGuardians: pallet_social_guardians::{Module, Call, Storage, Event<T>},
 		Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+		SocialNetworkDao: pallet_social_network_dao::{Module, Call, Storage, Config<T>, Event<T>},
 		Staking: pallet_staking::{Module, Call, Storage, Config<T>, Event<T>},
-		Society: pallet_society::{Module, Call, Storage, Event<T>, Config<T>},
-		Treasury: pallet_treasury::{Module, Call, Storage, Event<T>},
 	}
 );
 
@@ -65,7 +64,7 @@ parameter_types! {
 	pub const ChallengePeriod: u64 = 8;
 	pub const BlockHashCount: u64 = 250;
 	pub const ExistentialDeposit: u64 = 1;
-	pub const SocietyModuleId: ModuleId = ModuleId(*b"py/socie");
+	pub const SocialNetworkDaoModuleId: ModuleId = ModuleId(*b"st/sndao");
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(1024);
 }
@@ -250,21 +249,6 @@ parameter_types! {
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
 	pub const BountyValueMinimum: u64 = 1;
 }
-impl pallet_treasury::Config for Test {
-	type ModuleId = TreasuryModuleId;
-	type Currency = pallet_balances::Module<Test>;
-	type ApproveOrigin = frame_system::EnsureRoot<u128>;
-	type RejectOrigin = frame_system::EnsureRoot<u128>;
-	type Event = Event;
-	type OnSlash = ();
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type SpendPeriod = SpendPeriod;
-	type Burn = Burn;
-	type BurnDestination = ();  // Just gets burned.
-	type WeightInfo = ();
-	type SpendFunds = ();
-}
 
 impl Config for Test {
 	type Event = Event;
@@ -280,7 +264,18 @@ impl Config for Test {
 	type FounderSetOrigin = EnsureSignedBy<FounderSetAccount, u128>;
 	type SuspensionJudgementOrigin = EnsureSignedBy<SuspensionJudgementSetAccount, u128>;
 	type ChallengePeriod = ChallengePeriod;
-	type ModuleId = SocietyModuleId;
+	type ModuleId = SocialNetworkDaoModuleId;
+
+	type ApproveOrigin = frame_system::EnsureRoot<u128>;
+	type RejectOrigin = frame_system::EnsureRoot<u128>;
+	type OnSlash = ();
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type BurnDestination = ();  // Just gets burned.
+	type WeightInfo = ();
+	type SpendFunds = ();
 }
 
 pub struct EnvBuilder {
@@ -314,11 +309,11 @@ impl EnvBuilder {
 
 	pub fn execute<R, F: FnOnce() -> R>(mut self, f: F) -> R {
 		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-		self.balances.push((Society::account_id(), self.balance.max(self.pot)));
+		self.balances.push((SocialNetworkDao::account_id(), self.balance.max(self.pot)));
 		pallet_balances::GenesisConfig::<Test> {
 			balances: self.balances,
 		}.assimilate_storage(&mut t).unwrap();
-		pallet_society::GenesisConfig::<Test>{
+		pallet_social_network_dao::GenesisConfig::<Test>{
 			members: self.members,
 			pot: self.pot,
 			max_members: self.max_members,
@@ -361,7 +356,7 @@ pub fn run_to_block(n: u64) {
 		}
 		System::set_block_number(System::block_number() + 1);
 		System::on_initialize(System::block_number());
-		Society::on_initialize(System::block_number());
+		SocialNetworkDao::on_initialize(System::block_number());
 	}
 }
 
