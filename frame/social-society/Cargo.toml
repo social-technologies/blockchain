@@ -23,7 +23,6 @@ serde = { version = "1.0.101", optional = true, features = ["derive"] }
 
 frame-support = { default-features = false, version = '3.0.0', path = '../support' }
 frame-system = { default-features = false, version = '3.0.0', path = '../system' }
-pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
 pallet-social-network-dao = { default-features = false, version = '3.0.0', path = '../social-network-dao' }
 pallet-assets = { default-features = false, version = "3.0.0", path = "../assets" }
 pallet-treasury = { default-features = false, version = '3.0.0', path = '../treasury' }

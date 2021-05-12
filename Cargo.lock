@@ -5517,6 +5517,7 @@ dependencies = [
  "pallet-offences",
  "pallet-session",
  "pallet-social-guardians",
+ "pallet-social-network-dao",
  "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-timestamp",
