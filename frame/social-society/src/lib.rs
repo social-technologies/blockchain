@@ -877,8 +877,9 @@ decl_module! {
                     ensure!(system::Module::<T>::block_number() >= unlock_at, Error::<T>::Premature);
                     let bounty_account = Self::bounty_account_id(bounty_id);
                     // let balance = <pallet_assets::Module<T>>::free_balance(&bounty_account, bounty.social_token_id);
-                    // let fee = bounty.fee.min(balance); // just to be safe
+                    // let fee = bounty.fee; // just to be safe
                     // let payout = balance.saturating_sub(fee);
+                    let payout = 0u32.into();
                     // let _ = <pallet_assets::Module<T>>::unreserve(&curator, bounty.social_token_id, bounty.curator_deposit);
                     // let _ = <pallet_assets::Module<T>>::do_transfer(&bounty_account, &curator, bounty.social_token_id, fee, AllowDeath); // should not fail
                     // let _ = <pallet_assets::Module<T>>::do_transfer(&bounty_account, &beneficiary, bounty.social_token_id, payout, AllowDeath); // should not fail
@@ -1118,7 +1119,7 @@ impl<T: Config> Module<T> {
         tips.sort_by_key(|i| i.1);
         let treasury = Self::account_id();
         // let max_payout = Balance::new(0); // Self::pot(tip.social_token_id);
-        // let mut payout = tips[tips.len() / 2].1.min(max_payout);
+        let mut payout = tips[tips.len() / 2].1;
         if !tip.deposit.is_zero() {
             // let _ = <pallet_assets::Module<T>>::unreserve(
             //     &tip.finder,
@@ -1126,22 +1127,22 @@ impl<T: Config> Module<T> {
             //     tip.deposit,
             // );
         }
-        if tip.finders_fee {
-            if tip.finder != tip.who {
-                // pay out the finder's fee.
-                let finders_fee = <T as Config>::TipFindersFee::get() * payout;
-                payout -= finders_fee;
-                // this should go through given we checked it's at most the free balance, but still
-                // we only make a best-effort.
-                // let _ = <pallet_assets::Module<T>>::do_transfer(
-                //     &treasury,
-                //     &tip.finder,
-                //     tip.social_token_id,
-                //     finders_fee,
-                //     KeepAlive,
-                // );
-            }
-        }
+        // if tip.finders_fee {
+        //     if tip.finder != tip.who {
+        //         // pay out the finder's fee.
+        //         // let finders_fee = <T as Config>::TipFindersFee::get() * payout;
+        //         // payout -= finders_fee;
+        //         // this should go through given we checked it's at most the free balance, but still
+        //         // we only make a best-effort.
+        //         // let _ = <pallet_assets::Module<T>>::do_transfer(
+        //         //     &treasury,
+        //         //     &tip.finder,
+        //         //     tip.social_token_id,
+        //         //     finders_fee,
+        //         //     KeepAlive,
+        //         // );
+        //     }
+        // }
         // same as above: best-effort only.
         // let _ = <pallet_assets::Module<T>>::do_transfer(
         //     &treasury,
@@ -1179,13 +1180,13 @@ impl<T: Config> Module<T> {
         let account_id = Self::account_id();
 
         let mut missed_any = vec![];
-        let mut imbalances = vec![];
+        // let mut imbalances = vec![];
         token_id = 0u32.into();
-        while token_id <= max_token_id {
-            missed_any.push(false);
-            imbalances.push(<PositiveImbalanceOf<T>>::zero());
-            token_id += 1u32.into();
-        }
+        // while token_id <= max_token_id {
+        //     missed_any.push(false);
+        //     imbalances.push(<PositiveImbalanceOf<T>>::zero());
+        //     token_id += 1u32.into();
+        // }
         let proposals_len = Approvals::mutate(|v| {
             let proposals_approvals_len = v.len() as u32;
             v.retain(|&index| {
@@ -1276,41 +1277,41 @@ impl<T: Config> Module<T> {
 
         total_weight += <T as Config>::WeightInfo::on_initialize_bounties(bounties_len);
 
-        token_id = min_token_id;
-        while token_id <= max_token_id {
-            let id: usize = token_id.unique_saturated_into();
-            if !missed_any[id] {
-                // burn some proportion of the remaining budget if we run a surplus.
-                let budget_remaining: BalanceOf<T> = budgets_remaining[id];
-                let burn = (<T as Config>::Burn::get() * budget_remaining).min(budget_remaining);
-                budgets_remaining[id] -= burn;
+        // token_id = min_token_id;
+        // while token_id <= max_token_id {
+        //     let id: usize = token_id.unique_saturated_into();
+        //     if !missed_any[id] {
+        //         // burn some proportion of the remaining budget if we run a surplus.
+        //         let budget_remaining: BalanceOf<T> = budgets_remaining[id];
+        //         let burn = (<T as Config>::Burn::get() * budget_remaining).min(budget_remaining);
+        //         budgets_remaining[id] -= burn;
 
-                // let (debit, credit) = <pallet_assets::Module<T>>::pair(token_id, burn);
-                // imbalances[id].subsume(debit);
-                // <T as Config>::BurnDestination::on_unbalanced(credit);
-                Self::deposit_event(RawEvent::Burnt(token_id, burn))
-            }
+        //         // let (debit, credit) = <pallet_assets::Module<T>>::pair(token_id, burn);
+        //         // imbalances[id].subsume(debit);
+        //         // <T as Config>::BurnDestination::on_unbalanced(credit);
+        //         Self::deposit_event(RawEvent::Burnt(token_id, burn))
+        //     }
 
-            // Must never be an error, but better to be safe.
-            // proof: budget_remaining is account free balance minus ED;
-            // Thus we can't spend more than account free balance minus ED;
-            // Thus account is kept alive; qed;
-            // if let Err(problem) = <pallet_assets::Module<T>>::settle(
-            //     &account_id,
-            //     token_id,
-            //     imbalances[id].clone(),
-            //     WithdrawReasons::TRANSFER,
-            //     KeepAlive,
-            // ) {
-            //     print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");
-            //     // Nothing else to do here.
-            //     drop(problem);
-            // }
+        //     // Must never be an error, but better to be safe.
+        //     // proof: budget_remaining is account free balance minus ED;
+        //     // Thus we can't spend more than account free balance minus ED;
+        //     // Thus account is kept alive; qed;
+        //     // if let Err(problem) = <pallet_assets::Module<T>>::settle(
+        //     //     &account_id,
+        //     //     token_id,
+        //     //     imbalances[id].clone(),
+        //     //     WithdrawReasons::TRANSFER,
+        //     //     KeepAlive,
+        //     // ) {
+        //     //     print("Inconsistent state - couldn't settle imbalance for funds spent by treasury");
+        //     //     // Nothing else to do here.
+        //     //     drop(problem);
+        //     // }
 
-            Self::deposit_event(RawEvent::Rollover(token_id, budgets_remaining[id]));
+        //     Self::deposit_event(RawEvent::Rollover(token_id, budgets_remaining[id]));
 
-            token_id += 1u32.into();
-        }
+        //     token_id += 1u32.into();
+        // }
 
         total_weight
     }
