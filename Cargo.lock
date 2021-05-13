@@ -4217,7 +4217,6 @@ dependencies = [
  "pallet-contracts-primitives",
  "pallet-contracts-rpc-runtime-api",
  "pallet-democracy",
- "pallet-did",
  "pallet-elections-phragmen",
  "pallet-evm",
  "pallet-evm-precompile-sha3fips",
@@ -4739,21 +4738,6 @@ dependencies = [
  "sp-std",
  "sp-storage",
  "substrate-test-utils",
-]
-
-[[package]]
-name = "pallet-did"
-version = "2.0.0"
-dependencies = [
- "frame-support",
- "frame-system",
- "pallet-timestamp",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]

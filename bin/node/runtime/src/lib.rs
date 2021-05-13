@@ -1005,12 +1005,6 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = ();
 }
 
-impl pallet_did::Config for Runtime {
-	type Event = Event;
-	type Public = MultiSigner;
-	type Signature = Signature;
-}
-
 impl pallet_social_network_treasury::Config for Runtime {
 	type Event = Event;
 	type FungibleToken = Assets;
@@ -1197,7 +1191,6 @@ construct_runtime!(
 		Mmr: pallet_mmr::{Module, Storage},
 		Lottery: pallet_lottery::{Module, Call, Storage, Event<T>},
 		Evm: pallet_evm::{Module, Call, Storage, Event<T>},
-		Did: pallet_did::{Module, Call, Storage, Event<T>},
 		SocialNetworkTreasury: pallet_social_network_treasury::{Module, Call, Storage, Event<T>},
 		SocialGuardians: pallet_social_guardians::{Module, Call, Storage, Event<T>},
 		SocialUsernames: pallet_social_usernames::{Module, Call, Storage, Event<T>},
