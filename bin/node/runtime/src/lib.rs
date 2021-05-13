@@ -53,13 +53,13 @@ use sp_api::impl_runtime_apis;
 use sp_runtime::{
 	Permill, Perbill, Perquintill, Percent, ApplyExtrinsicResult,
 	impl_opaque_keys, generic, create_runtime_str, ModuleId, FixedPointNumber,
-	MultiSigner, traits::Convert,
+	traits::Convert,
 };
 use sp_runtime::curve::PiecewiseLinear;
 use sp_runtime::transaction_validity::{TransactionValidity, TransactionSource, TransactionPriority};
 use sp_runtime::traits::{
 	self, BlakeTwo256, Block as BlockT, StaticLookup, SaturatedConversion,
-	ConvertInto, OpaqueKeys, NumberFor,
+	ConvertInto, OpaqueKeys, NumberFor
 };
 use sp_version::RuntimeVersion;
 #[cfg(any(feature = "std", test))]
@@ -75,8 +75,7 @@ use sp_inherents::{InherentData, CheckInherentsResult};
 use static_assertions::const_assert;
 use pallet_contracts::WeightInfo;
 use pallet_evm::{
-	FeeCalculator, HashedAddressMapping,
-	EnsureAddressTruncated, Runner,
+	FeeCalculator, HashedAddressMapping, EnsureAddressTruncated,
 };
 
 #[cfg(any(feature = "std", test))]

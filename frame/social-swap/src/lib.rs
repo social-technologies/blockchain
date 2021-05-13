@@ -7,21 +7,18 @@
 use codec::{Decode, Encode};
 
 use frame_support::{
-    debug, decl_error, decl_event, decl_module, decl_storage, ensure,
-    traits::{Currency, ExistenceRequirement, Get},
-    IterableStorageDoubleMap, IterableStorageMap, Parameter,
+    decl_error, decl_event, decl_module, decl_storage, ensure,
+    traits::{Currency, ExistenceRequirement, Get}, Parameter,
 };
 use frame_system::ensure_signed;
 use pallet_assets::{Fungible, IssueAndBurn, TokenDossier};
 use sp_runtime::{
     traits::{
-        AccountIdConversion, AtLeast32Bit, AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedDiv,
-        CheckedMul, CheckedSub, Convert, MaybeSerializeDeserialize, Member, One,
-        SaturatedConversion, Saturating, UniqueSaturatedInto, Zero,
+        AccountIdConversion, AtLeast32Bit, CheckedAdd, CheckedMul, Convert, Member, One,
+        SaturatedConversion, UniqueSaturatedInto, Zero,
     },
-    DispatchError, DispatchResult, ModuleId, Perbill, RuntimeDebug,
+    DispatchError, DispatchResult, ModuleId,
 };
-use sp_std::{cmp, convert::TryFrom, fmt::Debug, result};
 use sp_std::{ops::Div, prelude::*};
 
 type TokenDossierOf = TokenDossier;
@@ -199,7 +196,7 @@ decl_module! {
                 Self::input_liquidity(&who, native_token_transferred, &trade_token_id, trade_token_amount, &mut exchange)?;
                 <Exchanges<T>>::mutate(&exchange_id, |e| *e = Some(exchange));
                 // add lp token to the miner, also add the total supply
-                T::FungibleToken::issue(&lp_token_id, &who, liquidity_minted);
+                T::FungibleToken::issue(&lp_token_id, &who, liquidity_minted)?;
                 Self::deposit_event(RawEvent::AddLiquidity(
                     exchange_id, who.clone(), native_token_transferred,	trade_token_amount, liquidity_minted)
                 );
@@ -226,7 +223,7 @@ decl_module! {
             deadline: T::BlockNumber
         ) {
             let who = ensure_signed(origin)?;
-            let mut exchange = Self::exchanges(&exchange_id).unwrap();
+            let exchange = Self::exchanges(&exchange_id).unwrap();
             let lp_token_id = exchange.lp_token;
             let trade_token_id = exchange.trade_token;
 
@@ -278,7 +275,7 @@ decl_module! {
         ) {
             let buyer = ensure_signed(origin)?;
             let mut exchange = Self::exchanges(&exchange_id).ok_or(Error::<T>::ExchangeNotExists)?;
-            Self::native_to_trade_input(&mut exchange, native_sold, min_trade_tokens, deadline, &buyer, &recipient);
+            Self::native_to_trade_input(&mut exchange, native_sold, min_trade_tokens, deadline, &buyer, &recipient)?;
         }
 
         #[weight = 0]
@@ -292,7 +289,7 @@ decl_module! {
         ) {
             let buyer = ensure_signed(origin)?;
             let mut exchange = Self::exchanges(&exchange_id).ok_or(Error::<T>::ExchangeNotExists)?;
-            Self::trade_to_native_input(&mut exchange, trade_token_sold, min_native_tokens, deadline, &buyer, &recipient);
+            Self::trade_to_native_input(&mut exchange, trade_token_sold, min_native_tokens, deadline, &buyer, &recipient)?;
         }
 
         #[weight = 0]
@@ -305,7 +302,7 @@ decl_module! {
         ) {
             let buyer = ensure_signed(origin)?;
             let mut exchange = Self::exchanges(&exchange_id).ok_or(Error::<T>::ExchangeNotExists)?;
-            Self::native_to_trade_output(&mut exchange, trade_token_bought, deadline, &buyer, &recipient);
+            Self::native_to_trade_output(&mut exchange, trade_token_bought, deadline, &buyer, &recipient)?;
         }
 
         #[weight = 0]
@@ -318,7 +315,7 @@ decl_module! {
         ) {
             let buyer = ensure_signed(origin)?;
             let mut exchange = Self::exchanges(&exchange_id).ok_or(Error::<T>::ExchangeNotExists)?;
-            Self::trade_to_native_output(&mut exchange, native_token_bought, deadline, &buyer, &recipient);
+            Self::trade_to_native_output(&mut exchange, native_token_bought, deadline, &buyer, &recipient)?;
         }
 
     }
@@ -330,7 +327,7 @@ impl<T: Config> Module<T> {
         T::ModuleId::get().into_account()
     }
 
-    fn create_lp_token(exchange_id: T::ExchangeId,
+    fn create_lp_token(_exchange_id: T::ExchangeId,
 					   max_zombies: u32,
 					   min_balance: u32) -> Result<T::AssetId, DispatchError> {
         // create a new lp token for exchange
