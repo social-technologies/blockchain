@@ -69,7 +69,6 @@ members = [
 	"frame/contracts",
 	"frame/contracts/rpc",
 	"frame/contracts/rpc/runtime-api",
-	"frame/democracy",
 	"frame/elections",
 	"frame/evm",
 	"frame/executive",
