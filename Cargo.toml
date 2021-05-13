@@ -70,7 +70,6 @@ members = [
 	"frame/contracts/rpc",
 	"frame/contracts/rpc/runtime-api",
 	"frame/democracy",
-	"frame/did",
 	"frame/elections",
 	"frame/evm",
 	"frame/executive",
