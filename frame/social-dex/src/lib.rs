@@ -160,8 +160,8 @@ decl_module! {
             ensure!(amount0 > 0u32.into() && amount1 > 0u32.into(),  Error::<T>::InsufficientLiquidityBurned);
             T::FungibleToken::burn(&social_token_id, &to, liquidity)?;
 
-			T::FungibleToken::transfer(&social_token_id, &Self::token0(), &to, amount0);
-			T::FungibleToken::transfer(&social_token_id, &Self::token1(), &to, amount1);
+			T::FungibleToken::transfer(&social_token_id, &Self::token0(), &to, amount0)?;
+			T::FungibleToken::transfer(&social_token_id, &Self::token1(), &to, amount1)?;
 
             let balance0 = T::FungibleToken::balances(&social_token_id, &Self::token0());
             let balance1 = T::FungibleToken::balances(&social_token_id, &Self::token1());
@@ -189,10 +189,10 @@ decl_module! {
             ensure!(to != token0 && to != token1, Error::<T>::InvalidTo);
 
             if amount0_out > 0u32.into() {
-				T::FungibleToken::transfer(&social_token_id, &token0, &to, amount0_out);
+				T::FungibleToken::transfer(&social_token_id, &token0, &to, amount0_out)?;
             }
             if amount1_out > 0u32.into() {
-				T::FungibleToken::transfer(&social_token_id, &token1, &to, amount1_out);
+				T::FungibleToken::transfer(&social_token_id, &token1, &to, amount1_out)?;
             }
             // TODO:
             // if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
@@ -313,7 +313,7 @@ impl<T: Config> Module<T> {
         Ok(())
     }
 
-    fn safe_transfer(
+    fn _safe_transfer(
         _token: &T::AccountId,
         to: &T::AccountId,
         amount: BalanceOf<T>,
