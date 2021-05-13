@@ -106,7 +106,6 @@ pub fn config_endowed(
 		}),
 		pallet_im_online: Some(Default::default()),
 		pallet_authority_discovery: Some(Default::default()),
-		pallet_democracy: Some(Default::default()),
 		pallet_collective_Instance1: Some(Default::default()),
 		pallet_collective_Instance2: Some(Default::default()),
 		pallet_membership_Instance1: Some(Default::default()),
