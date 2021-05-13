@@ -177,7 +177,7 @@ decl_module! {
         }
 
         #[weight = 10_000 + T::DbWeight::get().writes(1)]
-        fn swap(origin, amount0_out: BalanceOf<T>, amount1_out: BalanceOf<T>, to: T::AccountId, data: Vec<u8>) -> DispatchResult {
+        fn swap(origin, amount0_out: BalanceOf<T>, amount1_out: BalanceOf<T>, to: T::AccountId, _data: Vec<u8>) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             ensure!(amount0_out > 0u32.into() || amount1_out > 0u32.into(), Error::<T>::InsufficientOutputAmount);
             let social_token_id = Self::social_token_id();
