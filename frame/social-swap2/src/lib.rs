@@ -197,8 +197,6 @@ decl_module! {
             if amount1_out > 0u32.into() {
 				T::FungibleToken::transfer(&social_token_id, &token1, &to, amount1_out)?;
             }
-            // TODO:
-            // if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
             let balance0 = T::FungibleToken::balances(&social_token_id, &Self::token0());
             let balance1 = T::FungibleToken::balances(&social_token_id, &Self::token1());
 
