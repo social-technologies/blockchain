@@ -122,7 +122,7 @@ decl_module! {
 
         #[weight = 0]
         fn create_exchange(
-			origin,
+			_origin,
 			token_id: T::AssetId,
 			#[compact] max_zombies: u32,
 			#[compact] min_balance: u32) -> DispatchResult {
