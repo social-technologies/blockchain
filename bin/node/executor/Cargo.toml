@@ -37,6 +37,7 @@ pallet-indices = { version = "3.0.0", path = "../../../frame/indices" }
 pallet-session = { version = "3.0.0", path = "../../../frame/session" }
 pallet-timestamp = { version = "3.0.0", path = "../../../frame/timestamp" }
 pallet-transaction-payment = { version = "3.0.0", path = "../../../frame/transaction-payment" }
+pallet-social-network-dao = { version = "3.0.0", path = "../../../frame/social-network-dao" }
 pallet-social-network-treasury = { version = "0.1.0", path = "../../../frame/social-network-treasury" }
 sp-application-crypto = { version = "3.0.0", path = "../../../primitives/application-crypto" }
 sp-runtime = { version = "3.0.0", path = "../../../primitives/runtime" }
