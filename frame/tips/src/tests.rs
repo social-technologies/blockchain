@@ -22,7 +22,10 @@
 use crate as tips;
 use super::*;
 use std::cell::RefCell;
-use frame_support::{assert_noop, assert_ok, parameter_types, weights::Weight, traits::Contains};
+use frame_support::{
+		assert_noop, assert_ok, ord_parameter_types, parameter_types, weights::Weight,
+		traits::{Contains, TestRandomness},
+};
 use sp_runtime::Permill;
 use sp_core::H256;
 use sp_runtime::{
@@ -30,9 +33,13 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup, BadOrigin},
 };
+use frame_system::EnsureSignedBy;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+type AccountId = u128;
+type Balance = u64;
+type BlockNumber = u64;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -41,9 +48,13 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Module, Call, Config, Storage, Event<T>},
+		Assets: pallet_assets::{Module, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
-		Treasury: pallet_treasury::{Module, Call, Storage, Config, Event<T>},
 		TipsModTestInst: tips::{Module, Call, Storage, Event<T>},
+		SocialGuardians: pallet_social_guardians::{Module, Call, Storage, Event<T>},
+		Session: pallet_session::{Module, Call, Storage, Event, Config<T>},
+		SocialNetworkDao: pallet_social_network_dao::{Module, Call, Storage, Config<T>, Event<T>},
+		Staking: pallet_staking::{Module, Call, Storage, Config<T>, Event<T>},
 	}
 );
 
@@ -89,9 +100,134 @@ impl pallet_balances::Config for Test {
 	type AccountStore = System;
 	type WeightInfo = ();
 }
-thread_local! {
-	static TEN_TO_FOURTEEN: RefCell<Vec<u128>> = RefCell::new(vec![10,11,12,13,14]);
+
+parameter_types! {
+	pub const AssetDepositBase: u64 = 1;
+	pub const AssetDepositPerZombie: u64 = 1;
+	pub const StringLimit: u32 = 50;
+	pub const MetadataDepositBase: u64 = 1;
+	pub const MetadataDepositPerByte: u64 = 1;
 }
+
+impl pallet_assets::Config for Test {
+	type Currency = Balances;
+	type Event = Event;
+	type Balance = u64;
+	type AssetId = u32;
+	type ForceOrigin = frame_system::EnsureRoot<u128>;
+	type AssetDepositBase = AssetDepositBase;
+	type AssetDepositPerZombie = AssetDepositPerZombie;
+	type StringLimit = StringLimit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type WeightInfo = ();
+}
+
+impl pallet_social_guardians::Config for Test {
+	type Event = Event;
+}
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = 5;
+}
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+impl pallet_session::historical::Config for Test {
+	type FullIdentification = pallet_staking::Exposure<AccountId, Balance>;
+	type FullIdentificationOf = pallet_staking::ExposureOf<Test>;
+}
+
+sp_runtime::impl_opaque_keys! {
+	pub struct SessionKeys {
+		pub foo: sp_runtime::testing::UintAuthorityId,
+	}
+}
+
+pub struct TestSessionHandler;
+impl pallet_session::SessionHandler<AccountId> for TestSessionHandler {
+	const KEY_TYPE_IDS: &'static [sp_runtime::KeyTypeId] = &[];
+
+	fn on_genesis_session<Ks: sp_runtime::traits::OpaqueKeys>(_validators: &[(AccountId, Ks)]) {}
+
+	fn on_new_session<Ks: sp_runtime::traits::OpaqueKeys>(
+		_: bool,
+		_: &[(AccountId, Ks)],
+		_: &[(AccountId, Ks)],
+	) {
+	}
+
+	fn on_disabled(_: usize) {}
+}
+
+impl pallet_session::Config for Test {
+	type SessionManager = pallet_session::historical::NoteHistoricalRoot<Test, Staking>;
+	type Keys = SessionKeys;
+	type ShouldEndSession = pallet_session::PeriodicSessions<(), ()>;
+	type NextSessionRotation = pallet_session::PeriodicSessions<(), ()>;
+	type SessionHandler = TestSessionHandler;
+	type Event = Event;
+	type ValidatorId = AccountId;
+	type ValidatorIdOf = pallet_staking::StashOf<Test>;
+	type DisabledValidatorsThreshold = ();
+	type WeightInfo = ();
+}
+
+pallet_staking_reward_curve::build! {
+	const I_NPOS: sp_runtime::curve::PiecewiseLinear<'static> = curve!(
+		min_inflation: 0_025_000,
+		max_inflation: 0_100_000,
+		ideal_stake: 0_500_000,
+		falloff: 0_050_000,
+		max_piece_count: 40,
+		test_precision: 0_005_000,
+	);
+}
+parameter_types! {
+	pub const RewardCurve: &'static sp_runtime::curve::PiecewiseLinear<'static> = &I_NPOS;
+	pub const MaxNominatorRewardedPerValidator: u32 = 64;
+	pub const UnsignedPriority: u64 = 1 << 20;
+}
+
+pub type Extrinsic = sp_runtime::testing::TestXt<Call, ()>;
+
+impl<C> frame_system::offchain::SendTransactionTypes<C> for Test
+where
+	Call: From<C>,
+{
+	type OverarchingCall = Call;
+	type Extrinsic = Extrinsic;
+}
+
+impl pallet_staking::Config for Test {
+	type Currency = Balances;
+	type UnixTime = pallet_timestamp::Module<Self>;
+	type CurrencyToVote = frame_support::traits::SaturatingCurrencyToVote;
+	type RewardRemainder = ();
+	type Event = Event;
+	type Slash = ();
+	type Reward = ();
+	type SessionsPerEra = ();
+	type SlashDeferDuration = ();
+	type SlashCancelOrigin = frame_system::EnsureRoot<Self::AccountId>;
+	type BondingDuration = ();
+	type SessionInterface = Self;
+	type RewardCurve = RewardCurve;
+	type NextNewSession = Session;
+	type ElectionLookahead = ();
+	type Call = Call;
+	type MaxNominatorRewardedPerValidator = MaxNominatorRewardedPerValidator;
+	type UnsignedPriority = UnsignedPriority;
+	type MaxIterations = ();
+	type MinSolutionScoreBump = ();
+	type OffchainSolutionWeightLimit = ();
+	type WeightInfo = ();
+}
+
 pub struct TenToFourteen;
 impl Contains<u128> for TenToFourteen {
 	fn sorted_members() -> Vec<u128> {
@@ -114,21 +250,58 @@ impl ContainsLengthBound for TenToFourteen {
 	}
 	fn min_len() -> usize { 0 }
 }
+
+thread_local! {
+	static TEN_TO_FOURTEEN: RefCell<Vec<u128>> = RefCell::new(vec![10,11,12,13,14]);
+}
+const NET: u64 = 1000;
+const HOURS: u64 = 3600;
+const DAYS: u64 = 86400;
+parameter_types! {
+	pub const CandidateDeposit: Balance = 10 * NET;
+	pub const WrongSideDeduction: Balance = 2 * NET;
+	pub const MaxStrikes: u32 = 10;
+	pub const RotationPeriod: BlockNumber = 80 * HOURS;
+	pub const PeriodSpend: Balance = 500 * NET;
+	pub const MaxLockDuration: BlockNumber = 36 * 30 * DAYS;
+	pub const ChallengePeriod: BlockNumber = 7 * DAYS;
+	pub const SocietyModuleId: ModuleId = ModuleId(*b"py/socie");
+}
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
 	pub const ProposalBondMinimum: u64 = 1;
 	pub const SpendPeriod: u64 = 2;
 	pub const Burn: Permill = Permill::from_percent(50);
-	pub const DataDepositPerByte: u64 = 1;
-	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
+	pub const SocialNetworkDaoModuleId: ModuleId = ModuleId(*b"st/sndao");
+	pub const BountyUpdatePeriod: u32 = 20;
+	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
+	pub const BountyValueMinimum: u64 = 1;
 	pub const MaximumReasonLength: u32 = 16384;
+	pub const DataDepositPerByte: Balance = 1;
 }
-impl pallet_treasury::Config for Test {
-	type ModuleId = TreasuryModuleId;
-	type Currency = pallet_balances::Module<Test>;
+ord_parameter_types! {
+	pub const FounderSetAccount: u128 = 1;
+	pub const SuspensionJudgementSetAccount: u128 = 2;
+}
+
+impl pallet_social_network_dao::Config for Test {
+	type Event = Event;
+	type Currency = pallet_balances::Module<Self>;
+	type Randomness = TestRandomness;
+	type CandidateDeposit = CandidateDeposit;
+	type WrongSideDeduction = WrongSideDeduction;
+	type MaxStrikes = MaxStrikes;
+	type PeriodSpend = PeriodSpend;
+	type MembershipChanged = ();
+	type RotationPeriod = RotationPeriod;
+	type MaxLockDuration = MaxLockDuration;
+	type FounderSetOrigin = EnsureSignedBy<FounderSetAccount, u128>;
+	type SuspensionJudgementOrigin = EnsureSignedBy<SuspensionJudgementSetAccount, u128>;
+	type ChallengePeriod = ChallengePeriod;
+	type ModuleId = SocialNetworkDaoModuleId;
+
 	type ApproveOrigin = frame_system::EnsureRoot<u128>;
 	type RejectOrigin = frame_system::EnsureRoot<u128>;
-	type Event = Event;
 	type OnSlash = ();
 	type ProposalBond = ProposalBond;
 	type ProposalBondMinimum = ProposalBondMinimum;
@@ -138,6 +311,7 @@ impl pallet_treasury::Config for Test {
 	type WeightInfo = ();
 	type SpendFunds = ();
 }
+
 parameter_types! {
 	pub const TipCountdown: u64 = 1;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
@@ -154,15 +328,66 @@ impl Config for Test {
 	type WeightInfo = ();
 }
 
-pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	pallet_balances::GenesisConfig::<Test>{
-		// Total issuance will be 200 with treasury account initialized at ED.
-		balances: vec![(0, 100), (1, 98), (2, 1)],
-	}.assimilate_storage(&mut t).unwrap();
-	pallet_treasury::GenesisConfig::default().assimilate_storage::<Test, _>(&mut t).unwrap();
-	t.into()
+pub struct EnvBuilder {
+	members: Vec<u128>,
+	balance: u64,
+	balances: Vec<(u128, u64)>,
+	pot: u64,
+	max_members: u32,
 }
+
+impl EnvBuilder {
+	pub fn new() -> Self {
+		Self {
+			members: vec![10],
+			balance: 10_000,
+			balances: vec![(0, 100), (1, 98), (2, 1)],
+			pot: 0,
+			max_members: 100,
+		}
+	}
+
+	pub fn execute<R, F: FnOnce() -> R>(mut self, f: F) -> R {
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		self.balances.push((SocialNetworkDao::account_id(), self.balance.max(self.pot)));
+		pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances,
+		}.assimilate_storage(&mut t).unwrap();
+		pallet_social_network_dao::GenesisConfig::<Test>{
+			members: self.members,
+			pot: self.pot,
+			max_members: self.max_members,
+		}.assimilate_storage(&mut t).unwrap();
+		let mut ext: sp_io::TestExternalities = t.into();
+		ext.execute_with(f)
+	}
+	#[allow(dead_code)]
+	pub fn with_members(mut self, m: Vec<u128>) -> Self {
+		self.members = m;
+		self
+	}
+	#[allow(dead_code)]
+	pub fn with_balances(mut self, b: Vec<(u128, u64)>) -> Self {
+		self.balances = b;
+		self
+	}
+	#[allow(dead_code)]
+	pub fn with_pot(mut self, p: u64) -> Self {
+		self.pot = p;
+		self
+	}
+	#[allow(dead_code)]
+	pub fn with_balance(mut self, b: u64) -> Self {
+		self.balance = b;
+		self
+	}
+	#[allow(dead_code)]
+	pub fn with_max_members(mut self, n: u32) -> Self {
+		self.max_members = n;
+		self
+	}
+}
+
 
 fn last_event() -> RawEvent<u64, u128, H256> {
 	System::events().into_iter().map(|r| r.event)
@@ -175,9 +400,9 @@ fn last_event() -> RawEvent<u64, u128, H256> {
 
 #[test]
 fn genesis_config_works() {
-	new_test_ext().execute_with(|| {
-		assert_eq!(Treasury::pot(), 0);
-		assert_eq!(Treasury::proposal_count(), 0);
+	EnvBuilder::new().execute(|| {
+		assert_eq!(SocialNetworkDao::pot(), 0);
+		assert_eq!(SocialNetworkDao::proposal_count(), 0);
 	});
 }
 
@@ -187,8 +412,8 @@ fn tip_hash() -> H256 {
 
 #[test]
 fn tip_new_cannot_be_used_twice() {
-	new_test_ext().execute_with(|| {
-		Balances::make_free_balance_be(&Treasury::account_id(), 101);
+	EnvBuilder::new().execute(|| {
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
 		assert_ok!(TipsModTestInst::tip_new(Origin::signed(10), b"awesome.dot".to_vec(), 3, 10));
 		assert_noop!(
 			TipsModTestInst::tip_new(Origin::signed(11), b"awesome.dot".to_vec(), 3, 10),
@@ -199,8 +424,8 @@ fn tip_new_cannot_be_used_twice() {
 
 #[test]
 fn report_awesome_and_tip_works() {
-	new_test_ext().execute_with(|| {
-		Balances::make_free_balance_be(&Treasury::account_id(), 101);
+	EnvBuilder::new().execute(|| {
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
 		assert_ok!(TipsModTestInst::report_awesome(Origin::signed(0), b"awesome.dot".to_vec(), 3));
 		assert_eq!(Balances::reserved_balance(0), 12);
 		assert_eq!(Balances::free_balance(0), 88);
@@ -226,8 +451,8 @@ fn report_awesome_and_tip_works() {
 
 #[test]
 fn report_awesome_from_beneficiary_and_tip_works() {
-	new_test_ext().execute_with(|| {
-		Balances::make_free_balance_be(&Treasury::account_id(), 101);
+	EnvBuilder::new().execute(|| {
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
 		assert_ok!(TipsModTestInst::report_awesome(Origin::signed(0), b"awesome.dot".to_vec(), 0));
 		assert_eq!(Balances::reserved_balance(0), 12);
 		assert_eq!(Balances::free_balance(0), 88);
@@ -244,11 +469,11 @@ fn report_awesome_from_beneficiary_and_tip_works() {
 
 #[test]
 fn close_tip_works() {
-	new_test_ext().execute_with(|| {
+	EnvBuilder::new().execute(|| {
 		System::set_block_number(1);
 
-		Balances::make_free_balance_be(&Treasury::account_id(), 101);
-		assert_eq!(Treasury::pot(), 100);
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
+		assert_eq!(SocialNetworkDao::treasury_pot(), 100);
 
 		assert_ok!(TipsModTestInst::tip_new(Origin::signed(10), b"awesome.dot".to_vec(), 3, 10));
 
@@ -279,10 +504,10 @@ fn close_tip_works() {
 
 #[test]
 fn slash_tip_works() {
-	new_test_ext().execute_with(|| {
+	EnvBuilder::new().execute(|| {
 		System::set_block_number(1);
-		Balances::make_free_balance_be(&Treasury::account_id(), 101);
-		assert_eq!(Treasury::pot(), 100);
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
+		assert_eq!(SocialNetworkDao::treasury_pot(), 100);
 
 		assert_eq!(Balances::reserved_balance(0), 0);
 		assert_eq!(Balances::free_balance(0), 100);
@@ -313,9 +538,9 @@ fn slash_tip_works() {
 
 #[test]
 fn retract_tip_works() {
-	new_test_ext().execute_with(|| {
+	EnvBuilder::new().execute(|| {
 		// with report awesome
-		Balances::make_free_balance_be(&Treasury::account_id(), 101);
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
 		assert_ok!(TipsModTestInst::report_awesome(Origin::signed(0), b"awesome.dot".to_vec(), 3));
 		let h = tip_hash();
 		assert_ok!(TipsModTestInst::tip(Origin::signed(10), h.clone(), 10));
@@ -327,7 +552,7 @@ fn retract_tip_works() {
 		assert_noop!(TipsModTestInst::close_tip(Origin::signed(0), h.into()), Error::<Test>::UnknownTip);
 
 		// with tip new
-		Balances::make_free_balance_be(&Treasury::account_id(), 101);
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
 		assert_ok!(TipsModTestInst::tip_new(Origin::signed(10), b"awesome.dot".to_vec(), 3, 10));
 		let h = tip_hash();
 		assert_ok!(TipsModTestInst::tip(Origin::signed(11), h.clone(), 10));
@@ -341,8 +566,8 @@ fn retract_tip_works() {
 
 #[test]
 fn tip_median_calculation_works() {
-	new_test_ext().execute_with(|| {
-		Balances::make_free_balance_be(&Treasury::account_id(), 101);
+	EnvBuilder::new().execute(|| {
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
 		assert_ok!(TipsModTestInst::tip_new(Origin::signed(10), b"awesome.dot".to_vec(), 3, 0));
 		let h = tip_hash();
 		assert_ok!(TipsModTestInst::tip(Origin::signed(11), h.clone(), 10));
@@ -355,8 +580,8 @@ fn tip_median_calculation_works() {
 
 #[test]
 fn tip_changing_works() {
-	new_test_ext().execute_with(|| {
-		Balances::make_free_balance_be(&Treasury::account_id(), 101);
+	EnvBuilder::new().execute(|| {
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
 		assert_ok!(TipsModTestInst::tip_new(Origin::signed(10), b"awesome.dot".to_vec(), 3, 10000));
 		let h = tip_hash();
 		assert_ok!(TipsModTestInst::tip(Origin::signed(11), h.clone(), 10000));
@@ -474,13 +699,13 @@ fn genesis_funding_works() {
 	let initial_funding = 100;
 	pallet_balances::GenesisConfig::<Test>{
 		// Total issuance will be 200 with treasury account initialized with 100.
-		balances: vec![(0, 100), (Treasury::account_id(), initial_funding)],
+		balances: vec![(0, 100), (SocialNetworkDao::account_id(), initial_funding)],
 	}.assimilate_storage(&mut t).unwrap();
-	pallet_treasury::GenesisConfig::default().assimilate_storage::<Test, _>(&mut t).unwrap();
+	pallet_social_network_dao::GenesisConfig::<Test>::default().assimilate_storage(&mut t).unwrap();
 	let mut t: sp_io::TestExternalities = t.into();
 
 	t.execute_with(|| {
-		assert_eq!(Balances::free_balance(Treasury::account_id()), initial_funding);
-		assert_eq!(Treasury::pot(), initial_funding - Balances::minimum_balance());
+		assert_eq!(Balances::free_balance(SocialNetworkDao::account_id()), initial_funding);
+		assert_eq!(SocialNetworkDao::treasury_pot(), initial_funding - Balances::minimum_balance());
 	});
 }

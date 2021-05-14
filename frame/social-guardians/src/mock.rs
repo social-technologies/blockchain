@@ -217,6 +217,7 @@ impl ExtBuilder {
             assets: (1..=17)
                 .map(|id| (id, owner, admin, max_zombies, min_balance))
                 .collect(),
+            accounts: vec![],
         }
         .assimilate_storage(&mut t)
         .unwrap();
