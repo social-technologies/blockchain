@@ -303,6 +303,7 @@ fn successful_execution_with_foreign_code_gives_ok() {
 }
 
 #[test]
+#[ignore]
 fn full_native_block_import_works() {
 	let mut t = new_test_ext(compact_code_unwrap(), false);
 
