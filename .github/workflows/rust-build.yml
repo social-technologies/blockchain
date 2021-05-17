@@ -20,7 +20,7 @@ jobs:
       uses: hecrj/setup-rust-action@v1.3.4
       with:
         rust-version: nightly
-        targets: x86_64-unknown-linux-gnu
+        targets: x86_64-unknown-linux-gnu, wasm32-unknown-unknown
         components: clippy, rustfmt
 
     - name: Build
