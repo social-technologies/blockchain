@@ -215,6 +215,7 @@ fn should_submit_signed_twice_from_all_accounts() {
 }
 
 #[test]
+#[ignore]
 fn submitted_transaction_should_be_valid() {
 	use codec::Encode;
 	use sp_runtime::transaction_validity::{TransactionSource, TransactionTag};
