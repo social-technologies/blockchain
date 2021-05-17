@@ -13,13 +13,18 @@ jobs:
 
     runs-on: ubuntu-latest
 
+
     steps:
     - uses: actions/checkout@v2
-    - name: Install rust nightly
-      run: rustup toolchain install nightly
-    - name: Install WASM toolchain
-      run: rustup target add wasm32-unknown-unknown
+    - name: Install rust
+        uses: hecrj/setup-rust-action@v1.3.4
+        with:
+          rust-version: stable
+          targets: x86_64-unknown-linux-gnu
+          components: clippy, rustfmt
+
     - name: Build
-      run: cargo build --verbose
+      run: cargo check --workspace --all-targets
+      
     - name: Run tests
-      run: cargo test --workspace --verbose
+      run: cargo test --workspace --all-targets --all-features
