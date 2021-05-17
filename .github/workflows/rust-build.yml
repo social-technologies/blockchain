@@ -19,7 +19,7 @@ jobs:
     - name: Install rust
       uses: hecrj/setup-rust-action@v1.3.4
       with:
-        rust-version: stable
+        rust-version: nightly
         targets: x86_64-unknown-linux-gnu
         components: clippy, rustfmt
 
