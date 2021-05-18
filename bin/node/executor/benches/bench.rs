@@ -49,7 +49,7 @@ const SPEC_VERSION: u32 = node_runtime::VERSION.spec_version;
 
 const HEAP_PAGES: u64 = 20;
 
-const NET: u128 = 1000;
+const EARTH: u128 = 1000;
 
 type TestExternalities<H> = CoreTestExternalities<H, u64>;
 
@@ -155,7 +155,7 @@ fn test_blocks(genesis_config: &GenesisConfig, executor: &NativeExecutor<Executo
 	block1_extrinsics.extend((0..20).map(|i| {
 		CheckedExtrinsic {
 			signed: Some((alice(), signed_extra(i, 0))),
-			function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 1 * NET)),
+			function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 1 * EARTH)),
 		}
 	}));
 	let block1 = construct_block(

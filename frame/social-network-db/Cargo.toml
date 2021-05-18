@@ -1,6 +1,6 @@
 [package]
 authors = ["Social Technologies <developers@social.network>"]
-description = 'FRAME pallet to manage the social network database.'
+description = 'FRAME pallet to manage the earth blockchain database.'
 edition = '2018'
 homepage = 'https://social.network'
 license = 'Apache-2.0'

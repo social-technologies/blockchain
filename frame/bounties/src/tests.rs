@@ -256,15 +256,15 @@ impl ContainsLengthBound for TenToFourteen {
 thread_local! {
 	static TEN_TO_FOURTEEN: RefCell<Vec<u128>> = RefCell::new(vec![10,11,12,13,14]);
 }
-const NET: u64 = 1000;
+const EARTH: u64 = 1000;
 const HOURS: u64 = 3600;
 const DAYS: u64 = 86400;
 parameter_types! {
-	pub const CandidateDeposit: Balance = 10 * NET;
-	pub const WrongSideDeduction: Balance = 2 * NET;
+	pub const CandidateDeposit: Balance = 10 * EARTH;
+	pub const WrongSideDeduction: Balance = 2 * EARTH;
 	pub const MaxStrikes: u32 = 10;
 	pub const RotationPeriod: BlockNumber = 80 * HOURS;
-	pub const PeriodSpend: Balance = 500 * NET;
+	pub const PeriodSpend: Balance = 500 * EARTH;
 	pub const MaxLockDuration: BlockNumber = 36 * 30 * DAYS;
 	pub const ChallengePeriod: BlockNumber = 7 * DAYS;
 	pub const SocietyModuleId: ModuleId = ModuleId(*b"py/socie");

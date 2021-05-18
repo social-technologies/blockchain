@@ -206,14 +206,14 @@ mod multiplier_tests {
 					<Runtime as pallet_transaction_payment::Config>::WeightToFee::calc(&tx_weight);
 				let adjusted_fee = fm.saturating_mul_acc_int(fee);
 				println!(
-					"iteration {}, new fm = {:?}. Fee at this point is: {} units / {} MICRONET, \
-					{} MILLINET, {} NET",
+					"iteration {}, new fm = {:?}. Fee at this point is: {} units / {} MICROEARTH, \
+					{} MILLIEARTH, {} EARTH",
 					iterations,
 					fm,
 					adjusted_fee,
-					adjusted_fee / MICRONET,
-					adjusted_fee / MILLINET,
-					adjusted_fee / NET,
+					adjusted_fee / MICROEARTH,
+					adjusted_fee / MILLIEARTH,
+					adjusted_fee / EARTH,
 				);
 			}
 		});

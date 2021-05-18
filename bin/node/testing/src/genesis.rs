@@ -43,16 +43,16 @@ pub fn config_endowed(
 ) -> GenesisConfig {
 
 	let mut endowed = vec![
-		(alice(), 111 * NET),
-		(bob(), 100 * NET),
-		(charlie(), 100_000_000 * NET),
-		(dave(), 111 * NET),
-		(eve(), 101 * NET),
-		(ferdie(), 100 * NET),
+		(alice(), 111 * EARTH),
+		(bob(), 100 * EARTH),
+		(charlie(), 100_000_000 * EARTH),
+		(dave(), 111 * EARTH),
+		(eve(), 101 * EARTH),
+		(ferdie(), 100 * EARTH),
 	];
 
 	endowed.extend(
-		extra_endowed.into_iter().map(|endowed| (endowed, 100*NET))
+		extra_endowed.into_iter().map(|endowed| (endowed, 100*EARTH))
 	);
 
 	GenesisConfig {
@@ -87,9 +87,9 @@ pub fn config_endowed(
 		}),
 		pallet_staking: Some(StakingConfig {
 			stakers: vec![
-				(dave(), alice(), 111 * NET, StakerStatus::Validator),
-				(eve(), bob(), 100 * NET, StakerStatus::Validator),
-				(ferdie(), charlie(), 100 * NET, StakerStatus::Validator)
+				(dave(), alice(), 111 * EARTH, StakerStatus::Validator),
+				(eve(), bob(), 100 * EARTH, StakerStatus::Validator),
+				(ferdie(), charlie(), 100 * EARTH, StakerStatus::Validator)
 			],
 			validator_count: 3,
 			minimum_validator_count: 0,

@@ -1,11 +1,11 @@
-# Social Network DAO
+# Earth DAO
 
 - [`society::Trait`](https://docs.rs/pallet-society/latest/pallet_society/trait.Trait.html)
 - [`Call`](https://docs.rs/pallet-society/latest/pallet_society/enum.Call.html)
 
 ## Overview
 
-The Social Network DAO is an economic game which incentivizes users to participate
+The Earth DAO is an economic game which incentivizes users to participate
 and maintain a membership society.
 
 ### User Types
