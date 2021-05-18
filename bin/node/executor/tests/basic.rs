@@ -87,7 +87,7 @@ fn changes_trie_block() -> (Vec<u8>, Hash) {
 			},
 			CheckedExtrinsic {
 				signed: Some((alice(), signed_extra(0, 0))),
-				function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 69 * NET)),
+				function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 69 * EARTH)),
 			},
 		]
 	)
@@ -109,7 +109,7 @@ fn blocks() -> ((Vec<u8>, Hash), (Vec<u8>, Hash)) {
 			},
 			CheckedExtrinsic {
 				signed: Some((alice(), signed_extra(0, 0))),
-				function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 69 * NET)),
+				function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 69 * EARTH)),
 			},
 		]
 	);
@@ -124,11 +124,11 @@ fn blocks() -> ((Vec<u8>, Hash), (Vec<u8>, Hash)) {
 			},
 			CheckedExtrinsic {
 				signed: Some((bob(), signed_extra(0, 0))),
-				function: Call::Balances(pallet_balances::Call::transfer(alice().into(), 5 * NET)),
+				function: Call::Balances(pallet_balances::Call::transfer(alice().into(), 5 * EARTH)),
 			},
 			CheckedExtrinsic {
 				signed: Some((alice(), signed_extra(1, 0))),
-				function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 15 * NET)),
+				function: Call::Balances(pallet_balances::Call::transfer(bob().into(), 15 * EARTH)),
 			}
 		]
 	);
@@ -221,15 +221,15 @@ fn successful_execution_with_native_equivalent_code_gives_ok() {
 	let mut t = new_test_ext(compact_code_unwrap(), false);
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(alice()),
-		(0u32, 0u32, 0u32, 111 * NET, 0u128, 0u128, 0u128).encode()
+		(0u32, 0u32, 0u32, 111 * EARTH, 0u128, 0u128, 0u128).encode()
 	);
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(bob()),
-		(0u32, 0u32, 0u32, 0 * NET, 0u128, 0u128, 0u128).encode()
+		(0u32, 0u32, 0u32, 0 * EARTH, 0u128, 0u128, 0u128).encode()
 	);
 	t.insert(
 		<pallet_balances::TotalIssuance<Runtime>>::hashed_key().to_vec(),
-		(111 * NET).encode()
+		(111 * EARTH).encode()
 	);
 	t.insert(<frame_system::BlockHash<Runtime>>::hashed_key_for(0), vec![0u8; 32]);
 
@@ -254,8 +254,8 @@ fn successful_execution_with_native_equivalent_code_gives_ok() {
 	assert!(r.is_ok());
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * NET - fees);
-		assert_eq!(Balances::total_balance(&bob()), 69 * NET);
+		assert_eq!(Balances::total_balance(&alice()), 42 * EARTH - fees);
+		assert_eq!(Balances::total_balance(&bob()), 69 * EARTH);
 	});
 }
 
@@ -264,15 +264,15 @@ fn successful_execution_with_foreign_code_gives_ok() {
 	let mut t = new_test_ext(bloaty_code_unwrap(), false);
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(alice()),
-		(0u32, 0u32, 0u32, 111 * NET, 0u128, 0u128, 0u128).encode()
+		(0u32, 0u32, 0u32, 111 * EARTH, 0u128, 0u128, 0u128).encode()
 	);
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(bob()),
-		(0u32, 0u32, 0u32, 0 * NET, 0u128, 0u128, 0u128).encode()
+		(0u32, 0u32, 0u32, 0 * EARTH, 0u128, 0u128, 0u128).encode()
 	);
 	t.insert(
 		<pallet_balances::TotalIssuance<Runtime>>::hashed_key().to_vec(),
-		(111 * NET).encode()
+		(111 * EARTH).encode()
 	);
 	t.insert(<frame_system::BlockHash<Runtime>>::hashed_key_for(0), vec![0u8; 32]);
 
@@ -297,8 +297,8 @@ fn successful_execution_with_foreign_code_gives_ok() {
 	assert!(r.is_ok());
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * NET - fees);
-		assert_eq!(Balances::total_balance(&bob()), 69 * NET);
+		assert_eq!(Balances::total_balance(&alice()), 42 * EARTH - fees);
+		assert_eq!(Balances::total_balance(&bob()), 69 * EARTH);
 	});
 }
 
@@ -324,8 +324,8 @@ fn full_native_block_import_works() {
 	).0.unwrap();
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * NET - fees);
-		assert_eq!(Balances::total_balance(&bob()), 169 * NET);
+		assert_eq!(Balances::total_balance(&alice()), 42 * EARTH - fees);
+		assert_eq!(Balances::total_balance(&bob()), 169 * EARTH);
 		alice_last_known_balance = Balances::total_balance(&alice());
 		let events = vec![
 			EventRecord {
@@ -340,7 +340,7 @@ fn full_native_block_import_works() {
 				event: Event::pallet_balances(pallet_balances::Event::Transfer(
 					alice().into(),
 					bob().into(),
-					69 * NET,
+					69 * EARTH,
 				)),
 				topics: vec![],
 			},
@@ -373,11 +373,11 @@ fn full_native_block_import_works() {
 	t.execute_with(|| {
 		assert_eq!(
 			Balances::total_balance(&alice()),
-			alice_last_known_balance - 10 * NET - fees,
+			alice_last_known_balance - 10 * EARTH - fees,
 		);
 		assert_eq!(
 			Balances::total_balance(&bob()),
-			179 * NET - fees,
+			179 * EARTH - fees,
 		);
 		let events = vec![
 			EventRecord {
@@ -393,7 +393,7 @@ fn full_native_block_import_works() {
 					pallet_balances::Event::Transfer(
 						bob().into(),
 						alice().into(),
-						5 * NET,
+						5 * EARTH,
 					)
 				),
 				topics: vec![],
@@ -416,7 +416,7 @@ fn full_native_block_import_works() {
 					pallet_balances::Event::Transfer(
 						alice().into(),
 						bob().into(),
-						15 * NET,
+						15 * EARTH,
 					)
 				),
 				topics: vec![],
@@ -456,8 +456,8 @@ fn full_wasm_block_import_works() {
 	).0.unwrap();
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * NET - fees);
-		assert_eq!(Balances::total_balance(&bob()), 169 * NET);
+		assert_eq!(Balances::total_balance(&alice()), 42 * EARTH - fees);
+		assert_eq!(Balances::total_balance(&bob()), 169 * EARTH);
 		alice_last_known_balance = Balances::total_balance(&alice());
 	});
 
@@ -474,11 +474,11 @@ fn full_wasm_block_import_works() {
 	t.execute_with(|| {
 		assert_eq!(
 			Balances::total_balance(&alice()),
-			alice_last_known_balance - 10 * NET + 10 * MICRONET - fees,
+			alice_last_known_balance - 10 * EARTH + 10 * MICROEARTH - fees,
 		);
 		assert_eq!(
 			Balances::total_balance(&bob()),
-			169 * NET + 10 * NET + 10 * MICRONET - fees,
+			169 * EARTH + 10 * EARTH + 10 * MICROEARTH - fees,
 		);
 	});
 }
@@ -604,7 +604,7 @@ fn deploying_wasm_contract_should_work() {
 				signed: Some((charlie(), signed_extra(0, 0))),
 				function: Call::Contracts(
 					pallet_contracts::Call::instantiate_with_code::<Runtime>(
-						1000 * NET + subsistence,
+						1000 * EARTH + subsistence,
 						500_000_000,
 						transfer_code,
 						Vec::new(),
@@ -697,7 +697,7 @@ fn panic_execution_gives_error() {
 	let mut t = new_test_ext(bloaty_code_unwrap(), false);
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(alice()),
-		(0u32, 0u32, 0u32, 0 * NET, 0u128, 0u128, 0u128).encode()
+		(0u32, 0u32, 0u32, 0 * EARTH, 0u128, 0u128, 0u128).encode()
 	);
 	t.insert(<pallet_balances::TotalIssuance<Runtime>>::hashed_key().to_vec(), 0_u128.encode());
 	t.insert(<frame_system::BlockHash<Runtime>>::hashed_key_for(0), vec![0u8; 32]);
@@ -726,15 +726,15 @@ fn successful_execution_gives_ok() {
 	let mut t = new_test_ext(compact_code_unwrap(), false);
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(alice()),
-		(0u32, 0u32, 0u32, 111 * NET, 0u128, 0u128, 0u128).encode()
+		(0u32, 0u32, 0u32, 111 * EARTH, 0u128, 0u128, 0u128).encode()
 	);
 	t.insert(
 		<frame_system::Account<Runtime>>::hashed_key_for(bob()),
-		(0u32, 0u32, 0u32, 0 * NET, 0u128, 0u128, 0u128).encode()
+		(0u32, 0u32, 0u32, 0 * EARTH, 0u128, 0u128, 0u128).encode()
 	);
 	t.insert(
 		<pallet_balances::TotalIssuance<Runtime>>::hashed_key().to_vec(),
-		(111 * NET).encode()
+		(111 * EARTH).encode()
 	);
 	t.insert(<frame_system::BlockHash<Runtime>>::hashed_key_for(0), vec![0u8; 32]);
 
@@ -747,7 +747,7 @@ fn successful_execution_gives_ok() {
 	).0;
 	assert!(r.is_ok());
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 111 * NET);
+		assert_eq!(Balances::total_balance(&alice()), 111 * EARTH);
 	});
 
 	let fees = t.execute_with(|| transfer_fee(&xt()));
@@ -765,8 +765,8 @@ fn successful_execution_gives_ok() {
 		.expect("Extrinsic failed");
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&alice()), 42 * NET - fees);
-		assert_eq!(Balances::total_balance(&bob()), 69 * NET);
+		assert_eq!(Balances::total_balance(&alice()), 42 * EARTH - fees);
+		assert_eq!(Balances::total_balance(&bob()), 69 * EARTH);
 	});
 }
 

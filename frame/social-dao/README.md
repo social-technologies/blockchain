@@ -19,7 +19,7 @@ Societies on social.network are collaboration spaces which feature pooling of as
 
 ## Functions - TODO
 
-The `pallet-social-dao` is a runtime module on the Social Network blockchain and is implemented as follows:
+The `pallet-social-dao` is a runtime module on the earth blockchain blockchain and is implemented as follows:
 
 ```
 createSocialDAO(name, ticker, supply, owner) - anyone can call

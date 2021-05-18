@@ -317,13 +317,13 @@
 			"website": null
 		},
 		{
-			"prefix": 252,
-			"network": "social-network",
-			"displayName": "Social Network",
-			"symbols": ["NET"],
+			"prefix": 3021,
+			"network": "earth",
+			"displayName": "Earth Blockchain",
+			"symbols": ["EARTH"],
 			"decimals": [18],
 			"standardAccount": "*25519",
-			"website": "https://social.network"
+			"website": "https://earth.social.network"
 		},
 	]
 }

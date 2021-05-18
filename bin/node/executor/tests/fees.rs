@@ -125,7 +125,7 @@ fn new_account_info(free_dollars: u128) -> Vec<u8> {
 		nonce: 0u32,
 		consumers: 0,
 		providers: 0,
-		data: (free_dollars * NET, 0 * NET, 0 * NET, 0 * NET),
+		data: (free_dollars * EARTH, 0 * EARTH, 0 * EARTH, 0 * EARTH),
 	}.encode()
 }
 
@@ -143,7 +143,7 @@ fn transaction_fee_is_correct() {
 	t.insert(<frame_system::Account<Runtime>>::hashed_key_for(bob()), new_account_info(10));
 	t.insert(
 		<pallet_balances::TotalIssuance<Runtime>>::hashed_key().to_vec(),
-		(110 * NET).encode()
+		(110 * EARTH).encode()
 	);
 	t.insert(<frame_system::BlockHash<Runtime>>::hashed_key_for(0), vec![0u8; 32]);
 
@@ -172,14 +172,14 @@ fn transaction_fee_is_correct() {
 	assert!(r.is_ok());
 
 	t.execute_with(|| {
-		assert_eq!(Balances::total_balance(&bob()), (10 + 69) * NET);
+		assert_eq!(Balances::total_balance(&bob()), (10 + 69) * EARTH);
 		// Components deducted from alice's balances:
 		// - Base fee
 		// - Weight fee
 		// - Length fee
 		// - Tip
 		// - Creation-fee of bob's account.
-		let mut balance_alice = (100 - 69) * NET;
+		let mut balance_alice = (100 - 69) * EARTH;
 
 		let base_weight = ExtrinsicBaseWeight::get();
 		let base_fee = IdentityFee::<Balance>::calc(&base_weight);

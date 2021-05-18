@@ -322,7 +322,7 @@ impl pallet_scheduler::Config for Runtime {
 
 parameter_types! {
 	pub const EpochDuration: u64 = EPOCH_DURATION_IN_SLOTS;
-	pub const ExpectedBlockTime: Moment = MILLINETECS_PER_BLOCK;
+	pub const ExpectedBlockTime: Moment = MILLIEARTHECS_PER_BLOCK;
 	pub const ReportLongevity: u64 =
 		BondingDuration::get() as u64 * SessionsPerEra::get() as u64 * EpochDuration::get();
 }
@@ -351,7 +351,7 @@ impl pallet_babe::Config for Runtime {
 }
 
 parameter_types! {
-	pub const IndexDeposit: Balance = 1 * NET;
+	pub const IndexDeposit: Balance = 1 * EARTH;
 }
 
 impl pallet_indices::Config for Runtime {
@@ -363,7 +363,7 @@ impl pallet_indices::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: Balance = 1 * MILLINET;
+	pub const ExistentialDeposit: Balance = 1 * MILLIEARTH;
 	// For weight estimation, we assume that the most locks on an individual account will be 50.
 	// This number may need to be adjusted in the future if this assumption no longer holds true.
 	pub const MaxLocks: u32 = 50;
@@ -380,7 +380,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 10 * MICRONET;
+	pub const TransactionByteFee: Balance = 10 * MICROEARTH;
 	pub const TargetBlockFullness: Perquintill = Perquintill::from_percent(25);
 	pub AdjustmentVariable: Multiplier = Multiplier::saturating_from_rational(1, 100_000);
 	pub MinimumMultiplier: Multiplier = Multiplier::saturating_from_rational(1, 1_000_000_000u128);
@@ -511,11 +511,11 @@ parameter_types! {
 	pub const VotingPeriod: BlockNumber = 4 * 24 * 60 * MINUTES;
 	pub const FastTrackVotingPeriod: BlockNumber = 1 * 24 * 60 * MINUTES;
 	pub const InstantAllowed: bool = true;
-	pub const MinimumDeposit: Balance = 100 * NET;
+	pub const MinimumDeposit: Balance = 100 * EARTH;
 	pub const EnactmentPeriod: BlockNumber = 30 * 24 * 60 * MINUTES;
 	pub const CooloffPeriod: BlockNumber = 28 * 24 * 60 * MINUTES;
 	// One cent: $10,000 / MB
-	pub const PreimageByteDeposit: Balance = 1 * MILLINET;
+	pub const PreimageByteDeposit: Balance = 1 * MILLIEARTH;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
 }
@@ -539,7 +539,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 }
 
 parameter_types! {
-	pub const CandidacyBond: Balance = 10 * NET;
+	pub const CandidacyBond: Balance = 10 * EARTH;
 	// 1 storage item created, key size is 32 bytes, value size is 16+16.
 	pub const VotingBondBase: Balance = deposit(1, 64);
 	// additional data per vote is 32 bytes (account id).
@@ -639,7 +639,7 @@ parameter_types! {
 	pub const DepositPerStorageByte: Balance = deposit(0, 1);
 	pub const DepositPerStorageItem: Balance = deposit(1, 0);
 	pub RentFraction: Perbill = Perbill::from_rational_approximation(1u32, 30 * DAYS);
-	pub const SurchargeReward: Balance = 150 * MICRONET;
+	pub const SurchargeReward: Balance = 150 * MICROEARTH;
 	pub const SignedClaimHandicap: u32 = 2;
 	pub const MaxDepth: u32 = 32;
 	pub const MaxValueSize: u32 = 16 * 1024;
@@ -791,9 +791,9 @@ impl pallet_grandpa::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BasicDeposit: Balance = 10 * NET;       // 258 bytes on-chain
-	pub const FieldDeposit: Balance = 250 * MILLINET; // 66 bytes on-chain
-	pub const SubAccountDeposit: Balance = 2 * NET;   // 53 bytes on-chain
+	pub const BasicDeposit: Balance = 10 * EARTH;       // 258 bytes on-chain
+	pub const FieldDeposit: Balance = 250 * MILLIEARTH; // 66 bytes on-chain
+	pub const SubAccountDeposit: Balance = 2 * EARTH;   // 53 bytes on-chain
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -815,10 +815,10 @@ impl pallet_identity::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ConfigDepositBase: Balance = 5 * NET;
-	pub const FriendDepositFactor: Balance = 50 * MILLINET;
+	pub const ConfigDepositBase: Balance = 5 * EARTH;
+	pub const FriendDepositFactor: Balance = 50 * MILLIEARTH;
 	pub const MaxFriends: u16 = 9;
-	pub const RecoveryDeposit: Balance = 5 * NET;
+	pub const RecoveryDeposit: Balance = 5 * EARTH;
 }
 
 impl pallet_recovery::Config for Runtime {
@@ -832,11 +832,11 @@ impl pallet_recovery::Config for Runtime {
 }
 
 parameter_types! {
-	pub const CandidateDeposit: Balance = 10 * NET;
-	pub const WrongSideDeduction: Balance = 2 * NET;
+	pub const CandidateDeposit: Balance = 10 * EARTH;
+	pub const WrongSideDeduction: Balance = 2 * EARTH;
 	pub const MaxStrikes: u32 = 10;
 	pub const RotationPeriod: BlockNumber = 80 * HOURS;
-	pub const PeriodSpend: Balance = 500 * NET;
+	pub const PeriodSpend: Balance = 500 * EARTH;
 	pub const MaxLockDuration: BlockNumber = 36 * 30 * DAYS;
 	pub const ChallengePeriod: BlockNumber = 7 * DAYS;
 	pub const SocietyModuleId: ModuleId = ModuleId(*b"py/socie");
@@ -860,7 +860,7 @@ impl pallet_society::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinVestedTransfer: Balance = 100 * NET;
+	pub const MinVestedTransfer: Balance = 100 * EARTH;
 }
 
 impl pallet_vesting::Config for Runtime {
@@ -900,11 +900,11 @@ impl pallet_lottery::Config for Runtime {
 }
 
 parameter_types! {
-	pub const AssetDepositBase: Balance = 100 * NET;
-	pub const AssetDepositPerZombie: Balance = 1 * NET;
+	pub const AssetDepositBase: Balance = 100 * EARTH;
+	pub const AssetDepositPerZombie: Balance = 1 * EARTH;
 	pub const StringLimit: u32 = 50;
-	pub const MetadataDepositBase: Balance = 10 * NET;
-	pub const MetadataDepositPerByte: Balance = 1 * NET;
+	pub const MetadataDepositBase: Balance = 10 * EARTH;
+	pub const MetadataDepositPerByte: Balance = 1 * EARTH;
 }
 
 impl pallet_assets::Config for Runtime {
@@ -997,7 +997,7 @@ impl pallet_chainbridge::Config for Runtime {
 
 parameter_types! {
 	pub HashId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_HASH");
-	pub NativeTokenId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET");
+	pub NativeTokenId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"EARTH");
 	pub Erc721Id: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_NFT");
 }
 
@@ -1050,20 +1050,20 @@ parameter_types! {
 }
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 1 * NET;
+	pub const ProposalBondMinimum: Balance = 1 * EARTH;
 	pub const SpendPeriod: BlockNumber = 7 * DAYS;
 	pub const Burn: Permill = Permill::from_percent(50);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
 	pub const TipFindersFee: Percent = Percent::from_percent(20);
-	pub const TipReportDepositBase: Balance = 1 * MILLINET;
-	pub const DataDepositPerByte: Balance = 1 * MILLINET;
-	pub const BountyDepositBase: Balance = 1 * NET;
+	pub const TipReportDepositBase: Balance = 1 * MILLIEARTH;
+	pub const DataDepositPerByte: Balance = 1 * MILLIEARTH;
+	pub const BountyDepositBase: Balance = 1 * EARTH;
 	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
 	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
 	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
-	pub const BountyValueMinimum: Balance = 1 * NET;
+	pub const BountyValueMinimum: Balance = 1 * EARTH;
 }
 
 impl pallet_social_network_dao::Config for Runtime {

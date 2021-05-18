@@ -42,7 +42,7 @@ use codec::{Decode, Encode};
 use node_runtime::{
 	Call,
 	CheckedExtrinsic,
-	constants::currency::NET,
+	constants::currency::EARTH,
 	UncheckedExtrinsic,
 	MinimumPeriod,
 	SystemCall,
@@ -328,7 +328,7 @@ impl<'a> Iterator for BlockContentIterator<'a> {
 								sp_runtime::MultiAddress::Id(receiver),
 								// Transfer so that ending balance would be 1 less than existential deposit
 								// so that we kill the sender account.
-								100*NET - (node_runtime::ExistentialDeposit::get() - 1),
+								100*EARTH - (node_runtime::ExistentialDeposit::get() - 1),
 							)
 						)
 					},
