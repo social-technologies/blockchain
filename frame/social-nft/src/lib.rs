@@ -8,10 +8,7 @@ use frame_support::{
 };
 use frame_system::{self as system, ensure_signed};
 use sp_core::U256;
-use sp_runtime::{
-    RuntimeDebug,
-    traits::StaticLookup,
-};
+use sp_runtime::{traits::StaticLookup, RuntimeDebug};
 use sp_std::prelude::*;
 
 mod mock;
@@ -125,7 +122,7 @@ decl_module! {
 
             Ok(())
         }
-    
+
         /// Approve token to another address.
         #[weight = 195_000_000]
         pub fn approve(origin, to: <T::Lookup as StaticLookup>::Source, id: NftId) -> DispatchResult {
@@ -213,7 +210,7 @@ impl<T: Config> Module<T> {
     pub fn do_approve(from: T::AccountId, to: T::AccountId, id: NftId) -> DispatchResult {
         let owner = Self::owner_of(id).ok_or(Error::<T>::NftIdDoesNotExist)?;
         ensure!(
-            &owner == &from || Self::is_approved_for_all(&owner, &from),
+            owner == from || Self::is_approved_for_all(&owner, &from),
             Error::<T>::NotOwnerOrApprovedForAll
         );
         ensure!(owner != to, Error::<T>::ApprovalToCurrentOwner);
@@ -227,7 +224,7 @@ impl<T: Config> Module<T> {
     pub fn do_set_approval_for_all(
         sender: T::AccountId,
         operator: T::AccountId,
-        approved: bool
+        approved: bool,
     ) -> DispatchResult {
         ensure!(sender != operator, Error::<T>::ApproveToCaller);
 

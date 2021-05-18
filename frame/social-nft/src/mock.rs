@@ -34,35 +34,34 @@ pub const USER_B: u64 = 0x2;
 pub const USER_C: u64 = 0x3;
 pub const ENDOWED_BALANCE: u64 = 100_000_000;
 
-
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
-	pub BlockWeights: frame_system::limits::BlockWeights =
-		frame_system::limits::BlockWeights::simple_max(1024);
+    pub const BlockHashCount: u64 = 250;
+    pub BlockWeights: frame_system::limits::BlockWeights =
+        frame_system::limits::BlockWeights::simple_max(1024);
 }
 impl frame_system::Config for Test {
-	type BaseCallFilter = ();
-	type BlockWeights = ();
-	type BlockLength = ();
-	type DbWeight = ();
-	type Origin = Origin;
-	type Index = u64;
-	type BlockNumber = u64;
-	type Call = Call;
-	type Hash = H256;
-	type Hashing = BlakeTwo256;
-	type AccountId = u64; // u64 is not enough to hold bytes used to generate bounty account
-	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
-	type Event = Event;
-	type BlockHashCount = BlockHashCount;
-	type Version = ();
-	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u64>;
-	type OnNewAccount = ();
-	type OnKilledAccount = ();
-	type SystemWeightInfo = ();
-	type SS58Prefix = ();
+    type BaseCallFilter = ();
+    type BlockWeights = ();
+    type BlockLength = ();
+    type DbWeight = ();
+    type Origin = Origin;
+    type Index = u64;
+    type BlockNumber = u64;
+    type Call = Call;
+    type Hash = H256;
+    type Hashing = BlakeTwo256;
+    type AccountId = u64; // u64 is not enough to hold bytes used to generate bounty account
+    type Lookup = IdentityLookup<Self::AccountId>;
+    type Header = Header;
+    type Event = Event;
+    type BlockHashCount = BlockHashCount;
+    type Version = ();
+    type PalletInfo = PalletInfo;
+    type AccountData = pallet_balances::AccountData<u64>;
+    type OnNewAccount = ();
+    type OnKilledAccount = ();
+    type SystemWeightInfo = ();
+    type SS58Prefix = ();
 }
 
 parameter_types! {
@@ -74,13 +73,13 @@ ord_parameter_types! {
 }
 
 impl pallet_balances::Config for Test {
-	type MaxLocks = ();
-	type Balance = u64;
-	type Event = Event;
-	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = ();
+    type MaxLocks = ();
+    type Balance = u64;
+    type Event = Event;
+    type DustRemoval = ();
+    type ExistentialDeposit = ExistentialDeposit;
+    type AccountStore = System;
+    type WeightInfo = ();
 }
 
 parameter_types! {
