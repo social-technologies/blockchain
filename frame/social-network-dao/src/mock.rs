@@ -348,6 +348,67 @@ impl EnvBuilder {
 	}
 }
 
+pub struct EnvBuilder2 {
+	members: Vec<u128>,
+	balance: u64,
+	balances: Vec<(u128, u64)>,
+	pot: u64,
+	max_members: u32,
+}
+
+impl EnvBuilder2 {
+	pub fn new() -> Self {
+		Self {
+			members: vec![10],
+			balance: 10_000,
+			balances: vec![(0, 100), (1, 98), (2, 1)],
+			pot: 0,
+			max_members: 100,
+		}
+	}
+
+	pub fn execute<R, F: FnOnce() -> R>(mut self, f: F) -> R {
+		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		self.balances.push((SocialNetworkDao::account_id(), self.balance.max(self.pot)));
+		pallet_balances::GenesisConfig::<Test> {
+			balances: self.balances,
+		}.assimilate_storage(&mut t).unwrap();
+		pallet_social_network_dao::GenesisConfig::<Test>{
+			members: self.members,
+			pot: self.pot,
+			max_members: self.max_members,
+		}.assimilate_storage(&mut t).unwrap();
+		let mut ext: sp_io::TestExternalities = t.into();
+		ext.execute_with(f)
+	}
+	#[allow(dead_code)]
+	pub fn with_members(mut self, m: Vec<u128>) -> Self {
+		self.members = m;
+		self
+	}
+	#[allow(dead_code)]
+	pub fn with_balances(mut self, b: Vec<(u128, u64)>) -> Self {
+		self.balances = b;
+		self
+	}
+	#[allow(dead_code)]
+	pub fn with_pot(mut self, p: u64) -> Self {
+		self.pot = p;
+		self
+	}
+	#[allow(dead_code)]
+	pub fn with_balance(mut self, b: u64) -> Self {
+		self.balance = b;
+		self
+	}
+	#[allow(dead_code)]
+	pub fn with_max_members(mut self, n: u32) -> Self {
+		self.max_members = n;
+		self
+	}
+}
+
+
 /// Run until a particular block.
 pub fn run_to_block(n: u64) {
 	while System::block_number() < n {

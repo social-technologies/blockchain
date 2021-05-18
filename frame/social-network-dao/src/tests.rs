@@ -17,12 +17,15 @@
 
 //! Tests for the module.
 
-use super::*;
-use mock::*;
+use super::{GenesisConfig, *};
+use mock::{Event, *};
 
-use frame_support::{assert_ok, assert_noop};
-use sp_runtime::traits::BadOrigin;
-use sp_core::blake2_256;
+use frame_support::{
+	Parameter, assert_ok, assert_noop, impl_outer_origin, impl_outer_event,
+	traits::{Contains, OnInitialize}
+};
+use sp_runtime::traits::{BadOrigin, BlakeTwo256};
+use sp_core::{H256, blake2_256};
 
 #[test]
 fn founding_works() {
@@ -883,5 +886,100 @@ fn bids_ordered_correctly() {
 		}
 
 		assert_eq!(<Bids<Test>>::get(), final_list);
+	});
+}
+
+#[test]
+fn genesis_config_works() {
+	EnvBuilder2::new().execute(|| {
+		assert_eq!(SocialNetworkDao::pot(), 0);
+		assert_eq!(SocialNetworkDao::proposal_count(), 0);
+	});
+}
+
+#[test]
+fn minting_works() {
+	EnvBuilder2::new().execute(|| {
+		// Check that accumulate works when we have Some value in Dummy already.
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
+		assert_eq!(SocialNetworkDao::treasury_pot(), 100);
+	});
+}
+
+#[test]
+fn spend_proposal_takes_min_deposit() {
+	EnvBuilder2::new().execute(|| {
+		assert_ok!(SocialNetworkDao::propose_spend(Origin::signed(0), 1, 3));
+		assert_eq!(Balances::free_balance(0), 99);
+		assert_eq!(Balances::reserved_balance(0), 1);
+	});
+}
+
+#[test]
+fn spend_proposal_takes_proportional_deposit() {
+	EnvBuilder2::new().execute(|| {
+		assert_ok!(SocialNetworkDao::propose_spend(Origin::signed(0), 100, 3));
+		assert_eq!(Balances::free_balance(0), 95);
+		assert_eq!(Balances::reserved_balance(0), 5);
+	});
+}
+
+#[test]
+fn spend_proposal_fails_when_proposer_poor() {
+	EnvBuilder2::new().execute(|| {
+		assert_noop!(
+			SocialNetworkDao::propose_spend(Origin::signed(2), 100, 3),
+			Error::<Test, _>::InsufficientProposersBalance,
+		);
+	});
+}
+
+#[test]
+fn accepted_spend_proposal_ignored_outside_spend_period() {
+	EnvBuilder2::new().execute(|| {
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
+
+		assert_ok!(SocialNetworkDao::propose_spend(Origin::signed(0), 100, 3));
+		assert_ok!(SocialNetworkDao::approve_proposal(Origin::root(), 0));
+
+		<SocialNetworkDao as OnInitialize<u64>>::on_initialize(1);
+		assert_eq!(Balances::free_balance(3), 0);
+		assert_eq!(SocialNetworkDao::treasury_pot(), 100);
+	});
+}
+
+#[test]
+fn reject_already_rejected_spend_proposal_fails() {
+	EnvBuilder2::new().execute(|| {
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
+
+		assert_ok!(SocialNetworkDao::propose_spend(Origin::signed(0), 100, 3));
+		assert_ok!(SocialNetworkDao::reject_proposal(Origin::root(), 0));
+		assert_noop!(SocialNetworkDao::reject_proposal(Origin::root(), 0), Error::<Test, _>::InvalidIndex);
+	});
+}
+
+#[test]
+fn reject_non_existent_spend_proposal_fails() {
+	EnvBuilder2::new().execute(|| {
+		assert_noop!(SocialNetworkDao::reject_proposal(Origin::root(), 0), Error::<Test, _>::InvalidIndex);
+	});
+}
+
+#[test]
+fn accept_non_existent_spend_proposal_fails() {
+	EnvBuilder2::new().execute(|| {
+		assert_noop!(SocialNetworkDao::approve_proposal(Origin::root(), 0), Error::<Test, _>::InvalidIndex);
+	});
+}
+
+#[test]
+fn accept_already_rejected_spend_proposal_fails() {
+	EnvBuilder2::new().execute(|| {
+		Balances::make_free_balance_be(&SocialNetworkDao::account_id(), 101);
+
+		assert_ok!(SocialNetworkDao::propose_spend(Origin::signed(0), 100, 3));
+		assert_ok!(SocialNetworkDao::reject_proposal(Origin::root(), 0));
+		assert_noop!(SocialNetworkDao::approve_proposal(Origin::root(), 0), Error::<Test, _>::InvalidIndex);
 	});
 }
