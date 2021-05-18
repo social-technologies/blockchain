@@ -106,7 +106,7 @@ decl_module! {
             ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
             match <pallet_social_nft::Module<T>>::tokens(&token_id) {
                 Some(token) => {
-                    <pallet_social_nft::Module<T>>::burn_token(source, token_id)?;
+                    <pallet_social_nft::Module<T>>::do_burn(source, token_id)?;
                     let resource_id = T::Erc721Id::get();
                     let tid: &mut [u8] = &mut[0; 32];
                     token_id.to_big_endian(tid);
@@ -140,7 +140,7 @@ decl_module! {
         #[weight = 195_000_000]
         pub fn mint_erc721(origin, recipient: T::AccountId, id: U256, metadata: Vec<u8>, royalty: T::Balance, r_id: ResourceId) -> DispatchResult {
             T::BridgeOrigin::ensure_origin(origin)?;
-            <pallet_social_nft::Module<T>>::mint_token(recipient, id, metadata, royalty)?;
+            <pallet_social_nft::Module<T>>::do_mint(recipient, id, metadata, royalty)?;
             Ok(())
         }
     }
