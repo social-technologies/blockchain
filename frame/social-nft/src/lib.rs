@@ -41,9 +41,9 @@ decl_event! {
         Transferred(AccountId, AccountId, NftId),
         /// Token removed from the system. \[token_id\]
         Burned(NftId),
-        /// Approval for all. \[owner, to, approved\]
+        /// An operator is enabled or disabled for an owner. \[owner, to, approved\]
         ApprovalForAll(AccountId, AccountId, bool),
-        /// Token Approval to an account. \[sender, to, token_id\]
+        /// The approved address for an NFT is changed or reaffirmed. \[sender, to, token_id\]
         Approval(AccountId, AccountId, NftId),
     }
 }
