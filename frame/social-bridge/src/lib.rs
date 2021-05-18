@@ -107,7 +107,7 @@ decl_module! {
             ensure!(<bridge::Module<T>>::chain_whitelisted(dest_id), Error::<T>::InvalidTransfer);
             match <erc721::Module<T>>::tokens(&token_id) {
                 Some(token) => {
-                    <erc721::Module<T>>::burn_token(source, token_id)?;
+                    <erc721::Module<T>>::do_burn(source, token_id)?;
                     let resource_id = T::Erc721Id::get();
                     let tid: &mut [u8] = &mut[0; 32];
                     token_id.to_big_endian(tid);
@@ -141,7 +141,7 @@ decl_module! {
         #[weight = 195_000_000]
         pub fn mint_erc721(origin, recipient: T::AccountId, id: U256, metadata: Vec<u8>, _r_id: ResourceId) -> DispatchResult {
             T::BridgeOrigin::ensure_origin(origin)?;
-            <erc721::Module<T>>::mint_token(recipient, id, metadata)?;
+            <erc721::Module<T>>::do_mint(recipient, id, metadata)?;
             Ok(())
         }
     }
