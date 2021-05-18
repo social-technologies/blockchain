@@ -323,6 +323,18 @@ fn set_approval_for_all_should_work() {
 }
 
 #[test]
+fn set_approval_for_all_for_same_account_should_not_work() {
+    new_test_ext().execute_with(|| {
+        assert_eq!(SocialNft::is_approved_for_all(USER_C, USER_A), false);
+        assert_noop!(
+            SocialNft::set_approval_for_all(Origin::signed(USER_C), USER_C, true),
+            Error::<Test>::ApproveToCaller
+        );
+        assert_eq!(SocialNft::is_approved_for_all(USER_C, USER_A), false);
+    })
+}
+
+#[test]
 fn approve_should_work() {
     new_test_ext().execute_with(|| {
         let id_a: U256 = 1.into();
@@ -356,5 +368,26 @@ fn approve_should_work() {
         ));
         assert_ok!(SocialNft::approve(Origin::signed(USER_A), USER_C, id_b));
         assert_eq!(SocialNft::token_approvals(id_a), USER_C);
+    })
+}
+
+#[test]
+fn approve_for_same_account_should_not_work() {
+    new_test_ext().execute_with(|| {
+        let id_a: U256 = 1.into();
+        let metadata_a: Vec<u8> = vec![1, 2, 3];
+
+        assert_ok!(SocialNft::mint(
+            Origin::signed(USER_C),
+            USER_C,
+            id_a,
+            metadata_a
+        ));
+        assert_eq!(SocialNft::owner_of(id_a).unwrap(), USER_C);
+        assert_noop!(
+            SocialNft::approve(Origin::signed(USER_C), USER_C, id_a),
+            Error::<Test>::ApprovalToCurrentOwner
+        );
+        assert!(!<TokenApprovals<Test>>::contains_key(id_a));
     })
 }
