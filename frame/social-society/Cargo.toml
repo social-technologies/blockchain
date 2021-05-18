@@ -1,10 +1,10 @@
 [package]
 authors = ["Social Technologies <sangoku@social.network>"]
 description = 'FRAME pallet to manage the Social DAOs.'
-edition = '2021'
+edition = '2018'
 homepage = 'https://social.network'
 license = 'Apache-2.0'
-name = 'pallet-social-dao'
+name = 'pallet-social-society'
 repository = 'https://github.com/social-network/v3/'
 version = '0.1.0'
 
@@ -23,23 +23,22 @@ serde = { version = "1.0.101", optional = true, features = ["derive"] }
 
 frame-support = { default-features = false, version = '3.0.0', path = '../support' }
 frame-system = { default-features = false, version = '3.0.0', path = '../system' }
-pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
+pallet-social-network-dao = { default-features = false, version = '3.0.0', path = '../social-network-dao' }
+pallet-assets = { default-features = false, version = "3.0.0", path = "../assets" }
 pallet-treasury = { default-features = false, version = '3.0.0', path = '../treasury' }
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
-pallet-social-validators = { default-features = false, version = '0.1.0', path = '../social-validators' }
+pallet-social-guardians = { default-features = false, version = '0.1.0', path = '../social-guardians' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
 sp-std = { default-features = false, version = '3.0.0', path = '../../primitives/std' }
 
 [dev-dependencies]
 pallet-balances = { default-features = false, version = '3.0.0', path = '../balances' }
-pallet-social-tokens = { default-features = false, version = '0.1.0', path = '../social-tokens' }
 pallet-offences = { default-features = false, version = '3.0.0', path = '../offences' }
 pallet-timestamp = { default-features = false, version = '3.0.0', path = '../timestamp' }
-pallet-treasury = { default-features = false, version = '3.0.0', path = '../treasury' }
+pallet-social-network-dao = { default-features = false, version = '3.0.0', path = '../social-network-dao' }
 pallet-session = { default-features = false, version = '3.0.0', path = '../session' }
 pallet-staking = { default-features = false, version = '3.0.0', path = '../staking' }
 pallet-staking-reward-curve = { version = '3.0.0',  path = "../staking/reward-curve" }
-pallet-social-validators = { default-features = false, version = '0.1.0', path = '../social-validators' }
 sp-core = { default-features = false, version = '3.0.0', path = '../../primitives/core' }
 sp-io = { default-features = false, version = '3.0.0', path = '../../primitives/io' }
 sp-runtime = { default-features = false, version = '3.0.0', path = '../../primitives/runtime' }
@@ -52,6 +51,8 @@ std = [
     'codec/std',
     'frame-support/std',
     'frame-system/std',
-    'pallet-treasury/std',
+    'pallet-social-network-dao/std',
     'pallet-staking/std',
+    'pallet-assets/std',
+    'pallet-social-guardians/std'
 ]

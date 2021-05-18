@@ -102,6 +102,7 @@ members = [
 	"frame/social-nft",
   "frame/social-orbit-db-manifests",
 	"frame/social-swap",
+	"frame/social-network-dao",
 	"frame/social-network-treasury",
 	"frame/social-usernames",
 	"frame/society",

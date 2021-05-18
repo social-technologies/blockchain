@@ -81,6 +81,7 @@ pallet-scheduler = { version = "3.0.0", default-features = false, path = "../../
 pallet-social-bridge = { version = "0.1.0", default-features = false, path = "../../../frame/social-bridge" }
 pallet-social-guardians = { version = "0.1.0", default-features = false, path = "../../../frame/social-guardians" }
 pallet-social-nft = { version = "0.0.1", default-features = false, path = "../../../frame/social-nft" }
+pallet-social-network-dao = { version = "3.0.0", default-features = false, path = "../../../frame/social-network-dao" }
 pallet-social-orbit-db-manifests = { version = "0.1.0", default-features = false, path = "../../../frame/social-orbit-db-manifests" }
 pallet-social-swap = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap" }
 pallet-social-swap2 = { version = "0.1.0", default-features = false, path = "../../../frame/social-swap2" }
@@ -88,11 +89,10 @@ pallet-social-dex = { version = "0.1.0", default-features = false, path = "../..
 pallet-social-network-treasury = { version = "0.1.0", default-features = false, path = "../../../frame/social-network-treasury" }
 pallet-social-usernames = { version = "0.1.0", default-features = false, path = "../../../frame/social-usernames" }
 
-pallet-society = { version = "3.0.0", default-features = false, path = "../../../frame/society" }
+pallet-social-society = { version = "0.1.0", default-features = false, path = "../../../frame/social-society" }
 pallet-sudo = { version = "3.0.0", default-features = false, path = "../../../frame/sudo" }
 pallet-timestamp = { version = "3.0.0", default-features = false, path = "../../../frame/timestamp" }
 pallet-tips = { version = "3.0.0", default-features = false, path = "../../../frame/tips" }
-pallet-treasury = { version = "3.0.0", default-features = false, path = "../../../frame/treasury" }
 pallet-utility = { version = "3.0.0", default-features = false, path = "../../../frame/utility" }
 pallet-transaction-payment = { version = "3.0.0", default-features = false, path = "../../../frame/transaction-payment" }
 pallet-transaction-payment-rpc-runtime-api = { version = "3.0.0", default-features = false, path = "../../../frame/transaction-payment/rpc/runtime-api/" }
@@ -159,22 +159,22 @@ std = [
 	"pallet-tips/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
-	"pallet-treasury/std",
 	"sp-transaction-pool/std",
 	"pallet-utility/std",
 	"sp-version/std",
-	"pallet-society/std",
 	"pallet-recovery/std",
 	"pallet-vesting/std",
-  "pallet-evm/std",
-  "pallet-social-network-treasury/std",
-  "pallet-social-guardians/std",
-  "pallet-social-usernames/std",
-  "pallet-chainbridge/std",
-  "pallet-social-bridge/std",
-  "pallet-social-nft/std",
-  "pallet-social-swap/std",
-  "pallet-social-dex/std",
+	"pallet-evm/std",
+	"pallet-social-network-treasury/std",
+	"pallet-social-guardians/std",
+	"pallet-social-usernames/std",
+	"pallet-chainbridge/std",
+	"pallet-social-bridge/std",
+	"pallet-social-nft/std",
+	"pallet-social-swap/std",
+	"pallet-social-dex/std",
+	"pallet-social-network-dao/std",
+  "pallet-social-society/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",
@@ -198,11 +198,9 @@ runtime-benchmarks = [
 	"pallet-multisig/runtime-benchmarks",
 	"pallet-proxy/runtime-benchmarks",
 	"pallet-scheduler/runtime-benchmarks",
-	"pallet-society/runtime-benchmarks",
 	"pallet-staking/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-tips/runtime-benchmarks",
-	"pallet-treasury/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"pallet-vesting/runtime-benchmarks",
 	"pallet-offences-benchmarking",

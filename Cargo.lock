@@ -4371,13 +4371,14 @@ dependencies = [
  "pallet-social-bridge",
  "pallet-social-dex",
  "pallet-social-guardians",
+ "pallet-social-network-dao",
  "pallet-social-network-treasury",
  "pallet-social-nft",
  "pallet-social-orbit-db-manifests",
+ "pallet-social-society",
  "pallet-social-swap",
  "pallet-social-swap2",
  "pallet-social-usernames",
- "pallet-society",
  "pallet-staking",
  "pallet-staking-reward-curve",
  "pallet-sudo",
@@ -4385,7 +4386,6 @@ dependencies = [
  "pallet-tips",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
- "pallet-treasury",
  "pallet-utility",
  "pallet-vesting",
  "parity-scale-codec",
@@ -4427,11 +4427,11 @@ dependencies = [
  "pallet-grandpa",
  "pallet-indices",
  "pallet-session",
+ "pallet-social-network-dao",
  "pallet-society",
  "pallet-staking",
  "pallet-timestamp",
  "pallet-transaction-payment",
- "pallet-treasury",
  "parity-scale-codec",
  "sc-block-builder",
  "sc-cli",
@@ -4745,7 +4745,7 @@ dependencies = [
  "frame-support 3.0.0",
  "frame-system 3.0.0",
  "pallet-balances",
- "pallet-treasury",
+ "pallet-social-network-dao",
  "parity-scale-codec",
  "serde",
  "sp-core 3.0.0",
@@ -5428,6 +5428,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-social-network-dao"
+version = "3.0.0"
+dependencies = [
+ "frame-support 3.0.0",
+ "frame-system 3.0.0",
+ "impl-trait-for-tuples 0.2.1",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-session",
+ "pallet-social-guardians",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "rand_chacha 0.2.2",
+ "serde",
+ "sp-core 3.0.0",
+ "sp-io 3.0.0",
+ "sp-runtime 3.0.0",
+ "sp-std 3.0.0",
+]
+
+[[package]]
 name = "pallet-social-network-treasury"
 version = "0.1.0"
 dependencies = [
@@ -5481,6 +5504,31 @@ dependencies = [
  "sp-io 3.0.0",
  "sp-runtime 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 3.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "pallet-social-society"
+version = "0.1.0"
+dependencies = [
+ "frame-support 3.0.0",
+ "frame-system 3.0.0",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-offences",
+ "pallet-session",
+ "pallet-social-guardians",
+ "pallet-social-network-dao",
+ "pallet-staking",
+ "pallet-staking-reward-curve",
+ "pallet-timestamp",
+ "pallet-treasury",
+ "parity-scale-codec",
+ "serde",
+ "sp-core 3.0.0",
+ "sp-io 3.0.0",
+ "sp-runtime 3.0.0",
+ "sp-staking 3.0.0",
+ "sp-std 3.0.0",
 ]
 
 [[package]]
@@ -5651,7 +5699,7 @@ dependencies = [
  "frame-support 3.0.0",
  "frame-system 3.0.0",
  "pallet-balances",
- "pallet-treasury",
+ "pallet-social-network-dao",
  "parity-scale-codec",
  "serde",
  "sp-core 3.0.0",
