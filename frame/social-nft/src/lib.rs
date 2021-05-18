@@ -60,9 +60,9 @@ decl_event! {
 		SetBidAmount(NftId),
         /// Approval for all. \[owner, to, approved\]
         ApprovalForAll(AccountId, AccountId, bool),
-        /// Token Approval to an account. \[sender, to, token_id\]
+        /// The approved address for an NFT is changed or reaffirmed. \[sender, to, token_id\]
         Approval(AccountId, AccountId, NftId),
-    } @Ricardo
+    }
 }
 
 decl_error! {
@@ -119,7 +119,7 @@ decl_module! {
 
         /// Creates a new token with the given token ID and metadata, and gives ownership to owner
         #[weight = 195_000_000]
-        pub fn mint(origin, owner: <T::Lookup as StaticLookup>::Source, id: NftId, royalty: T::Balance, metadata: Vec<u8>) -> DispatchResult {
+        pub fn mint(origin, owner: <T::Lookup as StaticLookup>::Source, id: NftId, metadata: Vec<u8>, royalty: T::Balance) -> DispatchResult {
             let owner = T::Lookup::lookup(owner)?;
 
             Self::do_mint(owner, id, metadata, royalty)?;
