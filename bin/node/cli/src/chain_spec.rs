@@ -237,8 +237,8 @@ pub fn testnet_genesis(
 	});
 	let num_endowed_accounts = endowed_accounts.len();
 
-	const ENDOWMENT: Balance = 7_777_377 * EARTH;
-	const STASH: Balance = 100 * EARTH;
+	const ENDOWMENT: Balance = 7_777_377_777 * EARTH;
+	const STASH: Balance = 100_000 * EARTH;
 
 	GenesisConfig {
 		frame_system: Some(SystemConfig {

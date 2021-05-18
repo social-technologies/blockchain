@@ -111,7 +111,7 @@ pub fn wasm_binary_unwrap() -> &'static [u8] {
 /// Runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("social-network"),
-	impl_name: create_runtime_str!("chi"),
+	impl_name: create_runtime_str!("earth"),
 	authoring_version: 1,
 	// Per convention: if the runtime behavior changes, increment spec_version
 	// and set impl_version to 0. If only runtime
@@ -138,11 +138,11 @@ pub struct DealWithFees;
 impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item=NegativeImbalance>) {
 		if let Some(fees) = fees_then_tips.next() {
-			// for fees, 30% to social-network-dao, 70% to author
+			// for fees, 30% to the Earth DAO, 70% to author
 			let mut split = fees.ration(30, 70);
 			if let Some(tips) = fees_then_tips.next() {
-				// for tips, if any, 80% to social-network-dao, 20% to author (though this can be anything)
-				tips.ration_merge_into(80, 20, &mut split);
+				// for tips, if any, 70% to the Earth DAO, 30% to author (though this can be anything)
+				tips.ration_merge_into(70, 30, &mut split);
 			}
 			SocialNetworkDao::on_unbalanced(split.0);
 			Author::on_unbalanced(split.1);
@@ -182,7 +182,7 @@ parameter_types! {
 		})
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 81;
 }
 
 const_assert!(NORMAL_DISPATCH_RATIO.deconstruct() >= AVERAGE_ON_INITIALIZE_RATIO.deconstruct());
@@ -322,7 +322,7 @@ impl pallet_scheduler::Config for Runtime {
 
 parameter_types! {
 	pub const EpochDuration: u64 = EPOCH_DURATION_IN_SLOTS;
-	pub const ExpectedBlockTime: Moment = MILLIEARTHECS_PER_BLOCK;
+	pub const ExpectedBlockTime: Moment = MILLISECS_PER_BLOCK;
 	pub const ReportLongevity: u64 =
 		BondingDuration::get() as u64 * SessionsPerEra::get() as u64 * EpochDuration::get();
 }
@@ -996,9 +996,9 @@ impl pallet_chainbridge::Config for Runtime {
 }
 
 parameter_types! {
-	pub HashId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_HASH");
+	pub HashId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"EARTH_HASH");
 	pub NativeTokenId: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"EARTH");
-	pub Erc721Id: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"NET_NFT");
+	pub Erc721Id: pallet_chainbridge::ResourceId = pallet_chainbridge::derive_resource_id(ChainId::get(), b"EARTH_NFT");
 }
 
 impl pallet_social_bridge::Config for Runtime {
@@ -1046,7 +1046,7 @@ impl pallet_social_swap2::Config for Runtime {
 }
 
 parameter_types! {
-	pub const SocialNetworkDaoModuleId: ModuleId = ModuleId(*b"st/sndao");
+	pub const SocialNetworkDaoModuleId: ModuleId = ModuleId(*b"st/earth");
 }
 parameter_types! {
 	pub const ProposalBond: Permill = Permill::from_percent(5);
