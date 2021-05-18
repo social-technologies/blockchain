@@ -8,10 +8,7 @@ use frame_support::{
 };
 use frame_system::{self as system, ensure_signed};
 use sp_core::U256;
-use sp_runtime::{
-    RuntimeDebug,
-    traits::StaticLookup,
-};
+use sp_runtime::{traits::StaticLookup, RuntimeDebug};
 use sp_std::prelude::*;
 use sp_runtime::traits::{Zero, One};
 use sp_runtime::{
@@ -329,7 +326,7 @@ impl<T: Config> Module<T> {
         // let owner = Self::owner_of(id).ok_or(Error::<T>::NftIdDoesNotExist)?;
 		let (creator, owner) = Self::owner_of(id);
         ensure!(
-            &owner == &from || Self::is_approved_for_all(&owner, &from),
+            owner == from || Self::is_approved_for_all(&owner, &from),
             Error::<T>::NotOwnerOrApprovedForAll
         );
         ensure!(owner != to, Error::<T>::ApprovalToCurrentOwner);
@@ -343,7 +340,7 @@ impl<T: Config> Module<T> {
     pub fn do_set_approval_for_all(
         sender: T::AccountId,
         operator: T::AccountId,
-        approved: bool
+        approved: bool,
     ) -> DispatchResult {
         ensure!(sender != operator, Error::<T>::ApproveToCaller);
 

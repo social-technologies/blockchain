@@ -238,13 +238,17 @@ fn transfer_tokens_from_not_owner_should_not_work() {
         let id_a: U256 = 1.into();
         let metadata_a: Vec<u8> = vec![1, 2, 3];
 
-        assert_ok!(Erc721::mint(Origin::signed(USER_C), USER_A, id_a, metadata_a));
+        assert_ok!(Erc721::mint(
+            Origin::signed(USER_C),
+            USER_A,
+            id_a,
+            metadata_a
+        ));
         assert_eq!(Erc721::owner_of(id_a).unwrap(), USER_A);
 
         assert_noop!(
             Erc721::transfer(Origin::signed(USER_C), USER_B, id_a),
             Error::<Test>::NotOwner
-
         );
         assert_eq!(Erc721::owner_of(id_a).unwrap(), USER_A);
     })
@@ -254,9 +258,17 @@ fn transfer_tokens_from_not_owner_should_not_work() {
 fn set_approval_for_all_should_work() {
     new_test_ext().execute_with(|| {
         assert_eq!(Erc721::is_approved_for_all(USER_C, USER_A), false);
-        assert_ok!(Erc721::set_approval_for_all(Origin::signed(USER_C), USER_A, true));
+        assert_ok!(Erc721::set_approval_for_all(
+            Origin::signed(USER_C),
+            USER_A,
+            true
+        ));
         assert_eq!(Erc721::is_approved_for_all(USER_C, USER_A), true);
-        assert_ok!(Erc721::set_approval_for_all(Origin::signed(USER_C), USER_A, false));
+        assert_ok!(Erc721::set_approval_for_all(
+            Origin::signed(USER_C),
+            USER_A,
+            false
+        ));
         assert_eq!(Erc721::is_approved_for_all(USER_C, USER_A), false);
     })
 }
@@ -269,14 +281,28 @@ fn approve_should_work() {
         let metadata_a: Vec<u8> = vec![1, 2, 3];
         let metadata_b: Vec<u8> = vec![4, 5, 6];
 
-        assert_ok!(Erc721::mint(Origin::signed(USER_C), USER_A, id_a, metadata_a));
+        assert_ok!(Erc721::mint(
+            Origin::signed(USER_C),
+            USER_A,
+            id_a,
+            metadata_a
+        ));
         assert_eq!(Erc721::owner_of(id_a).unwrap(), USER_A);
         assert_ok!(Erc721::approve(Origin::signed(USER_A), USER_C, id_a));
         assert_eq!(Erc721::token_approvals(id_a), USER_C);
 
-        assert_ok!(Erc721::mint(Origin::signed(USER_C), USER_B, id_b, metadata_b));
+        assert_ok!(Erc721::mint(
+            Origin::signed(USER_C),
+            USER_B,
+            id_b,
+            metadata_b
+        ));
         assert_eq!(Erc721::owner_of(id_a).unwrap(), USER_A);
-        assert_ok!(Erc721::set_approval_for_all(Origin::signed(USER_B), USER_A, true));
+        assert_ok!(Erc721::set_approval_for_all(
+            Origin::signed(USER_B),
+            USER_A,
+            true
+        ));
         assert_ok!(Erc721::approve(Origin::signed(USER_A), USER_C, id_b));
         assert_eq!(Erc721::token_approvals(id_a), USER_C);
     })
