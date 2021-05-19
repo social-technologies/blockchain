@@ -35,6 +35,7 @@ pub const USER_A: u64 = 0x1;
 pub const USER_B: u64 = 0x2;
 pub const USER_C: u64 = 0x3;
 pub const ENDOWED_BALANCE: u64 = 100_000_000;
+pub const ROYALTY:u128 = 2;
 
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
@@ -126,12 +127,6 @@ impl Config for Test {
     type Event = Event;
     type Identifier = Erc721Id;
 }
-
-pub const USER_A: u64 = 0x1;
-pub const USER_B: u64 = 0x2;
-pub const USER_C: u64 = 0x3;
-pub const ENDOWED_BALANCE: u64 = 100_000_000;
-pub const ROYALTY:u128 = 2;
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();

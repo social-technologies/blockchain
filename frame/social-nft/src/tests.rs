@@ -45,43 +45,27 @@ fn mint_and_burn_tokens_should_work() {
             metadata_b.clone(),
 			ROYALTY
         ));
-        // assert_eq!(
-        //     SocialNft::tokens(id_b).unwrap(),
-        //     Erc721Token {
-        //         id: id_b,
-        //         metadata: metadata_b.clone(),
-		// 		royalty: ROYALTY
-        //     }
-        // );
+        assert_eq!(
+            SocialNft::tokens(id_b).unwrap(),
+            Erc721Token {
+                id: id_b,
+                metadata: metadata_b.clone(),
+				royalty: ROYALTY
+            }
+        );
         assert_eq!(SocialNft::token_count(), 2.into());
         assert_eq!(SocialNft::max_token_id(), 2.into());
-        assert_noop!(
-            SocialNft::mint(Origin::signed(1), USER_A, id_b, metadata_b, ROYALTY), // SocialNft::mint(Origin::root(), USER_A, id_b, metadata_b),
-            Error::<Test>::TokenAlreadyExists
-        );
-
-        assert_ok!(SocialNft::burn(Origin::signed(1), id_a)); // assert_ok!(SocialNft::burn(Origin::root(), id_a));
-        assert_eq!(SocialNft::token_count(), 1.into());
-        assert_eq!(SocialNft::max_token_id(), 2.into());
-        assert!(!<Tokens<Test>>::contains_key(&id_a));
-        assert!(!<TokenCreatorAndOwner<Test>>::contains_key(&id_a));
-
-        assert_ok!(SocialNft::burn(Origin::signed(1), id_b)); // assert_ok!(SocialNft::burn(Origin::root(), id_b));
-        assert_eq!(SocialNft::token_count(), 0.into());
-        assert_eq!(SocialNft::max_token_id(), 2.into());
-        assert!(!<Tokens<Test>>::contains_key(&id_b));
-        assert!(!<TokenCreatorAndOwner<Test>>::contains_key(&id_b));
         assert_eq!(SocialNft::balance_of(USER_A), 2.into());
         assert_eq!(SocialNft::balance_of(USER_C), 0.into());
         assert_noop!(
-            SocialNft::mint(Origin::signed(USER_C), USER_A, id_b, metadata_b, ROYALTY),
+            SocialNft::mint(Origin::signed(1), USER_A, id_b, metadata_b, ROYALTY), // SocialNft::mint(Origin::root(), USER_A, id_b, metadata_b),
             Error::<Test>::TokenAlreadyExists
         );
 
         assert_ok!(SocialNft::approve(Origin::signed(USER_A), USER_C, id_a));
         assert_eq!(SocialNft::token_approvals(id_a), USER_C);
 
-        assert_ok!(SocialNft::burn(Origin::signed(USER_A), id_a));
+		assert_ok!(SocialNft::burn(Origin::signed(USER_A), id_a));
         assert_eq!(SocialNft::token_count(), 1.into());
         assert_eq!(SocialNft::max_token_id(), 2.into());
         assert_eq!(SocialNft::balance_of(USER_A), 1.into());
@@ -381,9 +365,10 @@ fn approve_for_same_account_should_not_work() {
             Origin::signed(USER_C),
             USER_C,
             id_a,
-            metadata_a
+            metadata_a,
+			ROYALTY
         ));
-        assert_eq!(SocialNft::owner_of(id_a).unwrap(), USER_C);
+        assert_eq!(SocialNft::owner_of(id_a).0, USER_C);
         assert_noop!(
             SocialNft::approve(Origin::signed(USER_C), USER_C, id_a),
             Error::<Test>::ApprovalToCurrentOwner

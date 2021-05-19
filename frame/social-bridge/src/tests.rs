@@ -255,7 +255,7 @@ fn mint_erc721() {
                 metadata.clone(),
                 resource_id,
             ),
-            erc721::Error::<Test>::TokenAlreadyExists
+            pallet_social_nft::Error::<Test>::TokenAlreadyExists
         );
     })
 }
