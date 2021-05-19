@@ -297,7 +297,7 @@ impl<T: Config> Module<T> {
 			Self::deposit_event(RawEvent::SetBidAmount(id));
 		}
 
-		Ok(()) @Ricardo
+		Ok(())
 	}
 
 	pub fn remove_bid_token(sender: T::AccountId, id: NftId) -> DispatchResult {
